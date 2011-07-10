@@ -98,6 +98,7 @@
 #define BUTTON3_TRIS		(PRODL)
 #define	BUTTON3_IO			(PRODL)
 
+
 //I2C I/O Pins
 #define I2C_SCL_TRIS		(TRISCbits.TRISC3)
 #define I2C_SDA_TRIS		(TRISCbits.TRISC4)
@@ -107,6 +108,7 @@
 #define I2C_SPICON1			(SSP1CON1)
 #define I2C_SPICON1bits		(SSP1CON1bits)
 #define I2C_SPICON2			(SSP1CON2)
+
 
 // ENC28J60 I/O pins
 //#define ENC_RST_TRIS		(TRISDbits.TRISD2)	// Not connected by default

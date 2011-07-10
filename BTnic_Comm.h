@@ -3,9 +3,9 @@
 
 #include "HardwareProfile.h"
 
-#define I2C_BTSLAVE_ADDR		0x10
-#define I2C_BTNICSLAVE_ADDR		0x11
-#define I2C_MASTER_BAUDRATE		0x67 //100kHz @ 41.667
+#define I2C_BTSLAVE_ADDR		0x20 //0x10 7-Bit address with LSB = 0
+#define I2C_BTNICSLAVE_ADDR		0x22 //0x11 7-bit address with LSB = 0
+#define I2C_MASTER_BAUDRATE		0x77 //100kHz @ 41.667
 #define I2C_NO_SLEW_OR_SMBUS	0x80
 #define I2C_SLAVE_7BIT			0x36
 #define I2C_MASTER				0x28

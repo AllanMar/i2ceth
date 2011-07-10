@@ -20,8 +20,10 @@ void BTCommInit(void)
 	//Enter Slave Mode
 	PIE1bits.SSPIE = 0;           //Turn off I2C/SPI interrupt    
 	PIR1bits.SSPIF = 0;           //Clear any pending interrupt    
-	OpenI2C(SLAVE_7, SLEW_OFF);
-	SSPADD = I2C_BTNICSLAVE_ADDR;
+
+	SSP1STAT = 0x80;   //Disable SMBus & Slew Rate Control
+ 	SSP1CON1 = 0x26;  //I2C 7-Bit Slave
+	SSP1ADD = I2C_BTNICSLAVE_ADDR;
 	PIE1bits.SSPIE = 1; 
 
 	//Enable I2C interrupts    
@@ -34,42 +36,38 @@ unsigned char BTCommTX(unsigned char* reqMsg)
 	unsigned char c;
 	BTCommState = BT_COMMSTATE_WAIT;
 	BTCommTimer = TickGet();
-
-	OpenI2C(MASTER, SLEW_OFF);
-	SSPADD = I2C_MASTER_BAUDRATE; //Set I2C Speed
-
-	while ((SSP1CON2 & 0x1F) | (SSP1STATbits.R_W)); //Idle
-
-	//Start
-    SSP1CON2bits.SEN=1;
-	while(SSP1CON2bits.SEN);
-
-    while ((SSP1CON2 & 0x1F) | (SSP1STATbits.R_W)); //Idle
-    WriteI2C(I2C_BTSLAVE_ADDR);
-    while ((SSP1CON2 & 0x1F) | (SSP1STATbits.R_W)); //Idle
 	
+	PIE1bits.SSPIE = 0;           //Turn off I2C/SPI interrupt    
+	PIR1bits.SSPIF = 0;           //Clear any pending interrupt    
+
+	SSP1CON1 = 0x00;
+ 	SSP1CON1 = 0x28;  //I2C Master
+	SSP1ADD = I2C_MASTER_BAUDRATE; //Set I2C Speed
+	SSP1CON2 = 0x00;
+
+	IdleI2C1();
+	StartI2C1();
+	IdleI2C1();
+    WriteI2C1(I2C_BTSLAVE_ADDR);
+	IdleI2C1();
+
     while(*reqMsg != '\0') {
 		c = *reqMsg++;
 		if (c == '&') c = '\t';
 		else if (c == '+') c = ' ';
-		WriteI2C(c);
-	    while ((SSP1CON2 & 0x1F) | (SSP1STATbits.R_W)); //Idle
+		WriteI2C1(c);
+		IdleI2C1();
     }
-	WriteI2C('\r');
-	while ((SSP1CON2 & 0x1F) | (SSP1STATbits.R_W)); //Idle
-    SSP1CON2bits.PEN=1;while(SSP1CON2bits.PEN); //Stop
+
+	WriteI2C1('\r');
+	IdleI2C1();
+	StopI2C1();
 	
 	//Re-Enter Slave Mode
-	PIE1bits.SSPIE = 0;           //Turn off I2C/SPI interrupt    
-	PIR1bits.SSPIF = 0;           //Clear any pending interrupt    
-	OpenI2C(SLAVE_7, SLEW_OFF);
-	SSPADD = I2C_BTNICSLAVE_ADDR;
+	SSP1CON1 = 0x00;
+ 	SSP1CON1 = 0x26;  //I2C 7-Bit Slave
+	SSP1ADD = I2C_BTNICSLAVE_ADDR;
 	PIE1bits.SSPIE = 1; 
-
-	//Enable I2C interrupts    
-	INTCONbits.PEIE = 1;          //Turn on peripheral interrupts    
-	INTCONbits.GIE = 1;           //Turn on global interrupts
-
 	return 0u;
 }
 
@@ -78,14 +76,14 @@ void BTCommRX(void)
 {
 	unsigned char dummy;
 	if (SSP1CON1bits.SSPOV) {	//Check for overflow
-		dummy = ReadI2C();		//Do a dummy read
-		SSPCON1bits.SSPOV = 0;	//Clear the overflow flag
+		dummy = ReadI2C1();		//Do a dummy read
+		SSP1CON1bits.SSPOV = 0;	//Clear the overflow flag
 	}
 	else {
-		switch (SSPSTAT & I2C_SLAVESTATE_BITMASK)
+		switch (SSP1STAT & I2C_SLAVESTATE_BITMASK)
 		{
 			case I2C_SLAVESTATE_WRITE_ADDR:
-				dummy = ReadI2C();	//Dummy read of address
+				dummy = ReadI2C1();	//Dummy read of address
 				break;
 			case I2C_SLAVESTATE_WRITE_DATA:
 				if (BTCommState == BT_COMMSTATE_WAIT)
@@ -101,7 +99,7 @@ void BTCommRX(void)
 					BTCommBuffer[BTCommLen++] = '"';
 				}
 				if (BTCommState == BT_COMMSTATE_RX || BTCommState == BT_COMMSTATE_ASYNCRX) {
-					unsigned char byteIn = ReadI2C();
+					unsigned char byteIn = ReadI2C1();
 					switch (byteIn) {
 						case '\t':
 							//End Field/Start New
@@ -133,8 +131,8 @@ void BTCommRX(void)
 				break;
 			case I2C_SLAVESTATE_NACK:
 				// Reset the SSP Unit
-				OpenI2C(SLAVE_7, SLEW_OFF);
-				SSPADD = I2C_BTNICSLAVE_ADDR;
+				SSP1CON1 = 0x26;  //I2C 7-Bit Slave
+				SSP1ADD = I2C_BTNICSLAVE_ADDR;
 				break;
 		}
 	}	

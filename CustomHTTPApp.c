@@ -163,8 +163,6 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 			case SM_BTNIC_WAIT_TO_SEND:
 				if (BTCommGetStatus() == BT_COMMSTATE_IDLE)
 				{
-					curHTTP.data[0] = 'G';
-					curHTTP.data[1] = '\0';
 					if (BTCommTX(curHTTP.data) == 0)
 						curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
 				}
