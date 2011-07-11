@@ -168,7 +168,7 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 					//If idle here then TX timeout occurred
 					if (BTCommGetStatus() == BT_COMMSTATE_IDLE) 
 					{
-						strcpy(curHTTP.data, (rom char*) "TX TIMEOUT");
+						strcpy(curHTTP.data, "TX TIMEOUT");
 						return HTTP_IO_DONE;
 					}
 					if (retValue == 0)
@@ -180,7 +180,7 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 				//If idle here then WAIT timeout occurred
 				if (BTCommGetStatus() == BT_COMMSTATE_IDLE)
 				{
-					strcpy(curHTTP.data, (rom char*) "WAIT TIMEOUT");
+					strcpy(curHTTP.data, "WAIT TIMEOUT");
 					return HTTP_IO_DONE;
 				}
 				
