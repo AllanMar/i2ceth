@@ -150,7 +150,8 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 {
 	BYTE *ptr;
 	BYTE filename[20];
-	
+	int retValue;
+
 	// Load the file name
 	// Make sure BYTE filename[] above is large enough for your longest name
 	MPFSGetFilename(curHTTP.file, filename, 20);
@@ -161,15 +162,27 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 		switch(curHTTP.smPost)
 		{
 			case SM_BTNIC_WAIT_TO_SEND:
-				if (BTCommGetStatus() == BT_COMMSTATE_IDLE)
+				if (BTCommGetStatus() == BT_COMMSTATE_IDLE || BTCommGetStatus() == BT_COMMSTATE_TX)
 				{
-					if (BTCommTX(curHTTP.data) == 0)
+					retValue = BTCommTX(curHTTP.data);
+					//If idle here then TX timeout occurred
+					if (BTCommGetStatus() == BT_COMMSTATE_IDLE) 
+					{
+						strcpy(curHTTP.data, "TX TIMEOUT");
+						return HTTP_IO_DONE;
+					}
+					if (retValue == 0)
 						curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
 				}
 				return HTTP_IO_WAITING;
 			case SM_BTNIC_WAIT_FOR_RESP:
 				if (BTCommGetStatus() == BT_COMMSTATE_MSG) return HTTP_IO_DONE;
-				if (BTCommGetStatus() == BT_COMMSTATE_IDLE) return HTTP_IO_DONE;
+				//If idle here then WAIT timeout occurred
+				if (BTCommGetStatus() == BT_COMMSTATE_IDLE)
+				{
+					strcpy(curHTTP.data, "WAIT TIMEOUT");
+					return HTTP_IO_DONE;
+				}
 				
 				return HTTP_IO_WAITING;
 		}
@@ -254,12 +267,6 @@ void HTTPPrint_BTNic_CGI(void)
 
 	while(len && curHTTP.callbackPos)
 	{
-		if (BTCommGetStatus() != BT_COMMSTATE_MSG) {
-			//Unexpected this is. Hmmmm?
-			curHTTP.callbackPos = 0u;
-			TCPPutROMString(sktHTTP, (ROM void*)"ERROR");
-			return;
-		}
 		len -= TCPPut(sktHTTP, BTCommGetRsp());
 		curHTTP.callbackPos--;
 	}

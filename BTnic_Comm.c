@@ -31,11 +31,13 @@ void BTCommInit(void)
 	INTCONbits.GIE = 1;           //Turn on global interrupts
 }
 
-unsigned char BTCommTX(unsigned char* reqMsg)
+int BTCommTX(unsigned char* reqMsg)
 {
 	unsigned char c;
-	BTCommState = BT_COMMSTATE_WAIT;
-	BTCommTimer = TickGet();
+	if (BTCommState == BT_COMMSTATE_IDLE) {
+		BTCommState = BT_COMMSTATE_TX;
+		BTCommTimer = TickGet();
+	}
 	
 	PIE1bits.SSPIE = 0;           //Turn off I2C/SPI interrupt    
 	PIR1bits.SSPIF = 0;           //Clear any pending interrupt    
@@ -45,30 +47,67 @@ unsigned char BTCommTX(unsigned char* reqMsg)
 	SSP1ADD = I2C_MASTER_BAUDRATE; //Set I2C Speed
 	SSP1CON2 = 0x00;
 
+	PIR2bits.BCL1IF = 0; //Clear any previous collision flag
+
 	IdleI2C1();
 	StartI2C1();
-	IdleI2C1();
-    WriteI2C1(I2C_BTSLAVE_ADDR);
-	IdleI2C1();
+    if (PIR2bits.BCL1IF) return ( -1 );	// test for bus collision
 
-    while(*reqMsg != '\0') {
+    if (WriteI2C1(I2C_BTSLAVE_ADDR)) 
+	{
+		StopI2C1();
+		return ( -3 );	// set error for write collision
+	}
+
+	if (SSP1CON2bits.ACKSTAT) 
+	{                 
+		StopI2C1();                  
+		return ( -2 );      // return with Not Ack error condition                      
+	}
+
+    while(*reqMsg != '\0') 
+	{
 		c = *reqMsg++;
 		if (c == '&') c = '\t';
 		else if (c == '+') c = ' ';
-		WriteI2C1(c);
-		IdleI2C1();
+		if (WriteI2C1(c))
+		{
+			StopI2C1();
+			return ( -3 );	// set error for write collision
+		}
+		if (SSP1CON2bits.ACKSTAT) 
+		{                 
+			StopI2C1();                  
+			return ( -2 );      // return with Not Ack error condition                      
+		}
     }
 
-	WriteI2C1('\r');
-	IdleI2C1();
+	if (WriteI2C1('\r'))
+	{
+		StopI2C1();
+		return ( -3 );	// set error for write collision
+	}
+	if (SSP1CON2bits.ACKSTAT) 
+	{                 
+		StopI2C1();                  
+		return ( -2 );      // return with Not Ack error condition                      
+	}
+
 	StopI2C1();
+	while ( SSP1CON2bits.PEN );      // wait until stop condition is over
+    if (PIR2bits.BCL1IF) return ( -1 );	// test for bus collision
+
+	BTCommTimer = TickGet();
+	BTCommState = BT_COMMSTATE_WAIT;
 	
 	//Re-Enter Slave Mode
 	SSP1CON1 = 0x00;
  	SSP1CON1 = 0x26;  //I2C 7-Bit Slave
 	SSP1ADD = I2C_BTNICSLAVE_ADDR;
+
+	PIR1bits.SSPIF = 0;
 	PIE1bits.SSPIE = 1; 
-	return 0u;
+	return 0;
 }
 
 //Called by ISR
@@ -141,9 +180,21 @@ void BTCommRX(void)
 
 unsigned char BTCommGetStatus() 
 { 
+	//Handle TX Timeout
+	if (BTCommState == BT_COMMSTATE_TX && (TickGet() - BTCommTimer > (BT_TIMEOUT_TX * TICK_SECOND))) 
+	{
+		BTCommState = BT_COMMSTATE_IDLE;
+	}
+
+	//Handle Response Wait Timeout
+	if (BTCommState == BT_COMMSTATE_WAIT && (TickGet() - BTCommTimer > (BT_TIMEOUT_WAIT * TICK_SECOND))) 
+	{
+		BTCommState = BT_COMMSTATE_IDLE;
+	}
+
 	//TO DO: ASYNCMSG Processing
 	if (BTCommState == BT_COMMSTATE_ASYNCRX) BTCommState = BT_COMMSTATE_IDLE;
-	if (BTCommState == BT_COMMSTATE_WAIT && (TickGet() - BTCommTimer > (TICK_SECOND*5))) BTCommState = BT_COMMSTATE_IDLE;
+
 	return BTCommState; 
 }
 unsigned int BTCommGetRspLen() { return BTCommLen; }

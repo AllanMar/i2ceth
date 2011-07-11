@@ -23,17 +23,21 @@
 #define BTCOMM_BUFFER_SIZE 240
 
 #define BT_COMMSTATE_IDLE		0x00 //Connection available
+#define BT_COMMSTATE_TX			0x01 //Sending request
 #define BT_COMMSTATE_WAIT		0x03 //Waiting for response
 #define BT_COMMSTATE_RX			0x04 //Receiving response
-#define BT_COMMSTATE_MSG	0x05 //Response in buffer
+#define BT_COMMSTATE_MSG		0x05 //Response in buffer
 #define BT_COMMSTATE_ASYNCRX	0x06 //Receiving unsolicited message
 #define BT_COMMSTATE_ASYNCMSG	0x07 //Unsolicited message in buffer
 
 #define SM_BTNIC_WAIT_TO_SEND				(0u)
 #define SM_BTNIC_WAIT_FOR_RESP				(1u)
 
+#define BT_TIMEOUT_TX 1ul //Wait 1s
+#define BT_TIMEOUT_WAIT 5ul
+
 void BTCommInit(void);
-unsigned char BTCommTX(unsigned char*);
+int BTCommTX(unsigned char*);
 void BTCommRX(void);
 unsigned char BTCommGetStatus(void);
 unsigned int BTCommGetRspLen(void);
