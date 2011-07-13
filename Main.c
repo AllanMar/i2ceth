@@ -32,6 +32,7 @@ static void InitializeBoard(void);
 void LowISR(void)
 {
     TickUpdate();
+	BTCommRX();
 }
 
 /*
@@ -47,8 +48,10 @@ void LowVector(void){_asm goto LowISR _endasm}
 /*
 #pragma code highVector=0x8
 void HighVector(void){_asm goto HighISR _endasm}
-#pragma code // Return to default code section
 */
+
+#pragma code // Return to default code section
+
 
 void main(void)
 {

@@ -161,31 +161,44 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 	{
 		switch(curHTTP.smPost)
 		{
-			case SM_BTNIC_WAIT_TO_SEND:
-				if (BTCommGetStatus() == BT_COMMSTATE_IDLE || BTCommGetStatus() == BT_COMMSTATE_TX)
+			case SM_BTNIC_TX_RETRY:
+				if (BTCommGetState() == BT_COMMSTATE_IDLE) 
+				{
+					BTCommSetRsp("TX TIMEOUT");
+					return HTTP_IO_DONE;
+				}
+
+			case SM_BTNIC_START:
+				if (BTCommGetState() == BT_COMMSTATE_IDLE || BTCommGetState() == BT_COMMSTATE_TX)
 				{
 					retValue = BTCommTX(curHTTP.data);
 					//If idle here then TX timeout occurred
-					if (BTCommGetStatus() == BT_COMMSTATE_IDLE) 
-					{
-						strcpy(curHTTP.data, "TX TIMEOUT");
-						return HTTP_IO_DONE;
-					}
-					if (retValue == 0)
-						curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
+					if (retValue == 0) curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
+					else curHTTP.smPost = SM_BTNIC_TX_RETRY;
 				}
 				return HTTP_IO_WAITING;
 			case SM_BTNIC_WAIT_FOR_RESP:
-				if (BTCommGetStatus() == BT_COMMSTATE_MSG) return HTTP_IO_DONE;
+				if (BTCommGetState() == BT_COMMSTATE_MSG) return HTTP_IO_DONE;
 				//If idle here then WAIT timeout occurred
-				if (BTCommGetStatus() == BT_COMMSTATE_IDLE)
+				if (BTCommGetState() == BT_COMMSTATE_IDLE)
 				{
-					strcpy(curHTTP.data, "WAIT TIMEOUT");
+					BTCommSetRsp("WAIT TIMEOUT");
 					return HTTP_IO_DONE;
 				}
-				
+				return HTTP_IO_WAITING;
+			default: 
+				curHTTP.smPost = SM_BTNIC_START;
 				return HTTP_IO_WAITING;
 		}
+	} 
+	else if (!memcmppgm2ram(filename, "index.html", 10))
+	{
+
+	}
+	else
+	{
+		curHTTP.smPost = SM_BTNIC_START;
+		return HTTP_IO_WAITING;
 	}
 
 	return HTTP_IO_DONE;
@@ -232,10 +245,13 @@ void HTTPPrint_BTVer(void)
 
 void HTTPPrint_BTStatus(void)
 {
-	switch (BTCommGetStatus())
+	switch (BTCommGetState())
 	{
 		case BT_COMMSTATE_IDLE:
 			TCPPutROMString(sktHTTP, (ROM void*)"IDLE");
+			break;
+		case BT_COMMSTATE_TX:
+			TCPPutROMString(sktHTTP, (ROM void*)"TX");
 			break;
 		case BT_COMMSTATE_WAIT:
 			TCPPutROMString(sktHTTP, (ROM void*)"WAIT");
@@ -271,4 +287,39 @@ void HTTPPrint_BTNic_CGI(void)
 		curHTTP.callbackPos--;
 	}
 	return;
+}
+
+void HTTPPrint_SSP1CON1(void)
+{
+	unsigned char string[9];
+	itoa(SSP1CON1, string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_SSP1CON2(void)
+{
+	unsigned char string[9];
+	itoa(SSP1CON2, string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_SSP1STAT(void)
+{
+	unsigned char string[9];
+	itoa(SSP1STAT, string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_BTCommTimer(void)
+{
+	unsigned char string[20];
+	ultoa(BTCommGetTimer() / (TICK_SECOND / 1000), string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_TickGet(void)
+{
+	unsigned char string[20];
+	ultoa(TickGet() / (TICK_SECOND / 1000), string);
+	TCPPutString(sktHTTP, string);
 }

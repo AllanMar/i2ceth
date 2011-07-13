@@ -22,25 +22,31 @@
 //Note: Larger values cause a link error. See: http://www.microchip.com/forums/tm.aspx?m=310090
 #define BTCOMM_BUFFER_SIZE 240
 
-#define BT_COMMSTATE_IDLE		0x00 //Connection available
-#define BT_COMMSTATE_TX			0x01 //Sending request
-#define BT_COMMSTATE_WAIT		0x03 //Waiting for response
-#define BT_COMMSTATE_RX			0x04 //Receiving response
-#define BT_COMMSTATE_MSG		0x05 //Response in buffer
-#define BT_COMMSTATE_ASYNCRX	0x06 //Receiving unsolicited message
-#define BT_COMMSTATE_ASYNCMSG	0x07 //Unsolicited message in buffer
+#define BT_COMMSTATE_IDLE		0 //Connection available
+#define BT_COMMSTATE_TX			1 //Sending request
+#define BT_COMMSTATE_WAIT		3 //Waiting for response
+#define BT_COMMSTATE_RX			4 //Receiving response
+#define BT_COMMSTATE_MSG		5 //Response in buffer
+#define BT_COMMSTATE_ASYNCRX	6 //Receiving unsolicited message
+#define BT_COMMSTATE_ASYNCMSG	7 //Unsolicited message in buffer
 
-#define SM_BTNIC_WAIT_TO_SEND				(0u)
-#define SM_BTNIC_WAIT_FOR_RESP				(1u)
+#define SM_BTNIC_START			0
+#define SM_BTNIC_TX_RETRY		1
+#define SM_BTNIC_WAIT_FOR_RESP	2
 
-#define BT_TIMEOUT_TX 1ul //Wait 1s
-#define BT_TIMEOUT_WAIT 5ul
+#define BT_TIMEOUT_TX 	5000 //ms
+#define BT_TIMEOUT_WAIT 20000 //ms
+#define BT_TIMEOUT_RX 	20000 //ms
+#define BT_TIMEOUT_MSG	5000 //ms
 
 void BTCommInit(void);
-int BTCommTX(unsigned char*);
+int BTCommTX(char*);
 void BTCommRX(void);
-unsigned char BTCommGetStatus(void);
+char BTCommGetState(void);
+void BTCommSetState(char);
 unsigned int BTCommGetRspLen(void);
-unsigned char BTCommGetRsp(void);
+char BTCommGetRsp(void);
+unsigned long BTCommGetTimer(void);
+void BTCommSetRsp(far rom char*);
 	
 #endif

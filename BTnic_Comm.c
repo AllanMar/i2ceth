@@ -2,9 +2,9 @@
 #include <i2c.h>
 #include "TCPIP Stack/Tick.h"
 
-volatile unsigned char BTCommBuffer[BTCOMM_BUFFER_SIZE];
+volatile char BTCommBuffer[BTCOMM_BUFFER_SIZE];
 volatile unsigned int BTCommLen, BTCommCur;
-volatile unsigned char BTCommState;
+volatile BYTE BTCommState;
 volatile unsigned long BTCommTimer;
 
 void BTCommInit(void)
@@ -14,33 +14,29 @@ void BTCommInit(void)
 	I2C_SDA_TRIS = 1;
 	
 	//Reset BTCommState
-	BTCommLen = BTCommCur = 0;
-	BTCommState = BT_COMMSTATE_IDLE;
+	BTCommSetState(BT_COMMSTATE_IDLE);
 
 	//Enter Slave Mode
-	PIE1bits.SSPIE = 0;           //Turn off I2C/SPI interrupt    
-	PIR1bits.SSPIF = 0;           //Clear any pending interrupt    
+	PIE1bits.SSP1IE = 0;           //Turn off I2C/SPI interrupt    
+	PIR1bits.SSP1IF = 0;           //Clear any pending interrupt    
 
 	SSP1STAT = 0x80;   //Disable SMBus & Slew Rate Control
  	SSP1CON1 = 0x26;  //I2C 7-Bit Slave
 	SSP1ADD = I2C_BTNICSLAVE_ADDR;
-	PIE1bits.SSPIE = 1; 
+	PIE1bits.SSP1IE = 1; 
 
 	//Enable I2C interrupts    
 	INTCONbits.PEIE = 1;          //Turn on peripheral interrupts    
 	INTCONbits.GIE = 1;           //Turn on global interrupts
 }
 
-int BTCommTX(unsigned char* reqMsg)
+int BTCommTX(char* reqMsg)
 {
-	unsigned char c;
-	if (BTCommState == BT_COMMSTATE_IDLE) {
-		BTCommState = BT_COMMSTATE_TX;
-		BTCommTimer = TickGet();
-	}
+	char c;
+	if (BTCommState == BT_COMMSTATE_IDLE) BTCommSetState(BT_COMMSTATE_TX);
 	
-	PIE1bits.SSPIE = 0;           //Turn off I2C/SPI interrupt    
-	PIR1bits.SSPIF = 0;           //Clear any pending interrupt    
+	PIE1bits.SSP1IE = 0;           //Turn off I2C/SPI interrupt    
+	PIR1bits.SSP1IF = 0;           //Clear any pending interrupt    
 
 	SSP1CON1 = 0x00;
  	SSP1CON1 = 0x28;  //I2C Master
@@ -97,43 +93,41 @@ int BTCommTX(unsigned char* reqMsg)
 	while ( SSP1CON2bits.PEN );      // wait until stop condition is over
     if (PIR2bits.BCL1IF) return ( -1 );	// test for bus collision
 
-	BTCommTimer = TickGet();
-	BTCommState = BT_COMMSTATE_WAIT;
+	BTCommSetState(BT_COMMSTATE_WAIT);
 	
 	//Re-Enter Slave Mode
 	SSP1CON1 = 0x00;
  	SSP1CON1 = 0x26;  //I2C 7-Bit Slave
 	SSP1ADD = I2C_BTNICSLAVE_ADDR;
 
-	PIR1bits.SSPIF = 0;
-	PIE1bits.SSPIE = 1; 
+	PIR1bits.SSP1IF = 0;
+	PIE1bits.SSP1IE = 1; 
 	return 0;
 }
 
 //Called by ISR
 void BTCommRX(void)
 {
-	unsigned char dummy;
 	if (SSP1CON1bits.SSPOV) {	//Check for overflow
-		dummy = ReadI2C1();		//Do a dummy read
+		ReadI2C1();		//Do a dummy read
 		SSP1CON1bits.SSPOV = 0;	//Clear the overflow flag
 	}
 	else {
 		switch (SSP1STAT & I2C_SLAVESTATE_BITMASK)
 		{
 			case I2C_SLAVESTATE_WRITE_ADDR:
-				dummy = ReadI2C1();	//Dummy read of address
+				ReadI2C1();	//Dummy read of address
 				break;
 			case I2C_SLAVESTATE_WRITE_DATA:
 				if (BTCommState == BT_COMMSTATE_WAIT)
 				{
-					BTCommState = BT_COMMSTATE_RX;
+					BTCommSetState(BT_COMMSTATE_RX);
 					BTCommBuffer[BTCommLen++] = '[';
 					BTCommBuffer[BTCommLen++] = '"';
 				}
-				else if (BTCommState == BT_COMMSTATE_ASYNCRX)
+				else if (BTCommState == BT_COMMSTATE_IDLE || BTCommState == BT_COMMSTATE_TX)
 				{
-					BTCommState = BT_COMMSTATE_ASYNCMSG;
+					BTCommSetState(BT_COMMSTATE_ASYNCRX);
 					BTCommBuffer[BTCommLen++] = '[';
 					BTCommBuffer[BTCommLen++] = '"';
 				}
@@ -153,8 +147,8 @@ void BTCommRX(void)
 							//End Field & Message
 							BTCommBuffer[BTCommLen++] = '"';
 							BTCommBuffer[BTCommLen++] = ']';
-							if (BTCommState == BT_COMMSTATE_RX) BTCommState = BT_COMMSTATE_MSG;
-							else BTCommState = BT_COMMSTATE_ASYNCMSG;
+							if (BTCommState == BT_COMMSTATE_RX) BTCommSetState(BT_COMMSTATE_MSG);
+							else BTCommSetState(BT_COMMSTATE_ASYNCMSG);
 							break;
 						default:
 							BTCommBuffer[BTCommLen++] = byteIn;
@@ -170,44 +164,60 @@ void BTCommRX(void)
 				break;
 			case I2C_SLAVESTATE_NACK:
 				// Reset the SSP Unit
+				SSP1CON1 = 0x00;
 				SSP1CON1 = 0x26;  //I2C 7-Bit Slave
+				SSP1CON2 = 0x00;
 				SSP1ADD = I2C_BTNICSLAVE_ADDR;
+				//if (BTCommState != BT_COMMSTATE_MSG) BTCommSetState(BT_COMMSTATE_IDLE);
 				break;
 		}
 	}	
-	PIR1bits.SSPIF = 0; //Clear SSPIF Interrupt Flag
+	PIR1bits.SSP1IF = 0; //Clear SSPIF Interrupt Flag
 }
 
-unsigned char BTCommGetStatus() 
+char BTCommGetState() 
 { 
-	//Handle TX Timeout
-	if (BTCommState == BT_COMMSTATE_TX && (TickGet() - BTCommTimer > (BT_TIMEOUT_TX * TICK_SECOND))) 
-	{
-		BTCommState = BT_COMMSTATE_IDLE;
-	}
+	int timeout = 0;
+	if 		(BTCommState == BT_COMMSTATE_TX) timeout = BT_TIMEOUT_TX;
+	else if (BTCommState == BT_COMMSTATE_WAIT) timeout = BT_TIMEOUT_WAIT;
+	else if (BTCommState == BT_COMMSTATE_RX) timeout = BT_TIMEOUT_RX;
+	else if (BTCommState == BT_COMMSTATE_MSG) timeout = BT_TIMEOUT_MSG;
 
-	//Handle Response Wait Timeout
-	if (BTCommState == BT_COMMSTATE_WAIT && (TickGet() - BTCommTimer > (BT_TIMEOUT_WAIT * TICK_SECOND))) 
-	{
-		BTCommState = BT_COMMSTATE_IDLE;
-	}
+	if (timeout && TickGet() - BTCommTimer > (timeout * (TICK_SECOND / 1000))) BTCommSetState(BT_COMMSTATE_IDLE);
 
 	//TO DO: ASYNCMSG Processing
-	if (BTCommState == BT_COMMSTATE_ASYNCRX) BTCommState = BT_COMMSTATE_IDLE;
+	if (BTCommState == BT_COMMSTATE_ASYNCMSG) BTCommSetState(BT_COMMSTATE_IDLE);
 
 	return BTCommState; 
 }
-unsigned int BTCommGetRspLen() { return BTCommLen; }
 
-unsigned char BTCommGetRsp()
+void BTCommSetState(char state)
 {
-	if (BTCommState != BT_COMMSTATE_MSG || BTCommState != BT_COMMSTATE_ASYNCMSG) return '\0';
-	//Last byte state handling
-	if (BTCommCur == BTCommLen - 1u) {
-		BTCommLen = BTCommCur = 0u;
-		BTCommState = BT_COMMSTATE_IDLE;
-		return BTCommBuffer[BTCommLen - 1u];
-	}
-	return BTCommBuffer[BTCommCur++];
+	BTCommState = state;
+	BTCommTimer = TickGet();
+	if (state == BT_COMMSTATE_IDLE) BTCommLen = BTCommCur = 0;
 }
 
+unsigned int BTCommGetRspLen() { return BTCommLen; }
+
+char BTCommGetRsp()
+{
+	char byteOut;
+	//if (BTCommState != BT_COMMSTATE_MSG && BTCommState != BT_COMMSTATE_ASYNCMSG) return '\0';
+	//Last byte state handling
+	byteOut = BTCommBuffer[BTCommCur++];
+	if (BTCommCur == BTCommLen) BTCommSetState(BT_COMMSTATE_IDLE);
+	return byteOut;
+}
+
+unsigned long BTCommGetTimer()
+{
+	return BTCommTimer;
+}
+
+void BTCommSetRsp(far rom char* data)
+{
+	strcpypgm2ram(BTCommBuffer, data);
+	BTCommLen = strlen(BTCommBuffer);
+	BTCommSetState(BT_COMMSTATE_MSG);
+}

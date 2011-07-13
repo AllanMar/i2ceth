@@ -90,7 +90,7 @@
 #define STACK_USE_SNTP_CLIENT			// Simple Network Time Protocol for obtaining current date/time from Internet
 //#define STACK_USE_UDP_PERFORMANCE_TEST	// Module for testing UDP TX performance characteristics.  NOTE: Enabling this will cause a huge amount of UDP broadcast packets to flood your network on the discard port.  Use care when enabling this on production networks, especially with VPNs (could tunnel broadcast traffic across a limited bandwidth connection).
 //#define STACK_USE_TCP_PERFORMANCE_TEST	// Module for testing TCP TX performance characteristics
-#define STACK_USE_DYNAMICDNS_CLIENT		// Dynamic DNS client updater module
+//#define STACK_USE_DYNAMICDNS_CLIENT		// Dynamic DNS client updater module
 //#define STACK_USE_BERKELEY_API			// Berekely Sockets APIs are available
 
 
@@ -131,7 +131,7 @@
  *   For MPFS Classic, this setting must match the Reserved setting
  *	 on the Advanced Settings page of the MPFS2 Utility.
  */
-#define MPFS_RESERVE_BLOCK                (4096ul)
+//#define MPFS_RESERVE_BLOCK                (4096ul)
 
 /* MPFS File Handles
  *   Maximum number of simultaneously open MPFS2 files.
@@ -428,13 +428,13 @@
 
 	// Indicate what file to serve when no specific one is requested
 	#define HTTP_DEFAULT_FILE		"index.html"
-	#define HTTPS_DEFAULT_FILE		"index.htm"
+	#define HTTPS_DEFAULT_FILE		"index.html"
 	#define HTTP_DEFAULT_LEN		(11u)		// For buffer overrun protection.
 												// Set to longest length of above two strings.
 
 	// Configure MPFS over HTTP updating
 	// Comment this line to disable updating via HTTP
-	#define HTTP_MPFS_UPLOAD		"mpfsupload"
+	//#define HTTP_MPFS_UPLOAD		"mpfsupload"
 	//#define HTTP_MPFS_UPLOAD_REQUIRES_AUTH	// Require password for MPFS uploads
 		// Certain firewall and router combinations cause the MPFS2 Utility to fail
 		// when uploading.  If this happens, comment out this definition.
