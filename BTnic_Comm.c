@@ -140,10 +140,10 @@ void BTCommRX(void)
 							BTCommBuffer[BTCommLen++] = ',';
 							BTCommBuffer[BTCommLen++] = '"';
 							break;
-						case '\r':
-							//Ignore Carriage return
-							break;
 						case '\n':
+							//Ignore New Line (Workaround: Not getting this on I2C TX so processing on Carriage Return for now)
+							break;
+						case '\r':
 							//End Field & Message
 							BTCommBuffer[BTCommLen++] = '"';
 							BTCommBuffer[BTCommLen++] = ']';
@@ -168,7 +168,6 @@ void BTCommRX(void)
 				SSP1CON1 = 0x26;  //I2C 7-Bit Slave
 				SSP1CON2 = 0x00;
 				SSP1ADD = I2C_BTNICSLAVE_ADDR;
-				//if (BTCommState != BT_COMMSTATE_MSG) BTCommSetState(BT_COMMSTATE_IDLE);
 				break;
 		}
 	}	
@@ -220,4 +219,9 @@ void BTCommSetRsp(far rom char* data)
 	strcpypgm2ram(BTCommBuffer, data);
 	BTCommLen = strlen(BTCommBuffer);
 	BTCommSetState(BT_COMMSTATE_MSG);
+}
+
+char BTCommGetBuffer(unsigned int index)
+{
+	return BTCommBuffer[index];
 }

@@ -161,45 +161,37 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 	{
 		switch(curHTTP.smPost)
 		{
+			case SM_BTNIC_START:
+				if (BTCommGetState() != BT_COMMSTATE_IDLE) return HTTP_IO_WAITING;
+				curHTTP.smPost = SM_BTNIC_TX_RETRY;
+
 			case SM_BTNIC_TX_RETRY:
+				retValue = BTCommTX(curHTTP.data);
+				//If idle here then TX timeout occurred
 				if (BTCommGetState() == BT_COMMSTATE_IDLE) 
 				{
 					BTCommSetRsp("TX TIMEOUT");
 					return HTTP_IO_DONE;
 				}
-
-			case SM_BTNIC_START:
-				if (BTCommGetState() == BT_COMMSTATE_IDLE || BTCommGetState() == BT_COMMSTATE_TX)
-				{
-					retValue = BTCommTX(curHTTP.data);
-					//If idle here then TX timeout occurred
-					if (retValue == 0) curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
-					else curHTTP.smPost = SM_BTNIC_TX_RETRY;
-				}
-				return HTTP_IO_WAITING;
+				if (retValue != 0) return HTTP_IO_WAITING;
+				curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
+				
 			case SM_BTNIC_WAIT_FOR_RESP:
-				if (BTCommGetState() == BT_COMMSTATE_MSG) return HTTP_IO_DONE;
-				//If idle here then WAIT timeout occurred
-				if (BTCommGetState() == BT_COMMSTATE_IDLE)
+				switch (BTCommGetState())
 				{
-					BTCommSetRsp("WAIT TIMEOUT");
-					return HTTP_IO_DONE;
+					case BT_COMMSTATE_MSG:
+						return HTTP_IO_DONE;
+					case BT_COMMSTATE_IDLE:
+						BTCommSetRsp("WAIT TIMEOUT");
+						return HTTP_IO_DONE;
+					default:
+						return HTTP_IO_WAITING;
 				}
-				return HTTP_IO_WAITING;
 			default: 
 				curHTTP.smPost = SM_BTNIC_START;
 				return HTTP_IO_WAITING;
 		}
 	} 
-	else if (!memcmppgm2ram(filename, "index.html", 10))
-	{
-
-	}
-	else
-	{
-		curHTTP.smPost = SM_BTNIC_START;
-		return HTTP_IO_WAITING;
-	}
 
 	return HTTP_IO_DONE;
 }
@@ -243,7 +235,7 @@ void HTTPPrint_BTVer(void)
 	TCPPutROMString(sktHTTP, (ROM void*)"1.0");
 }
 
-void HTTPPrint_BTStatus(void)
+void HTTPPrint_BTState(void)
 {
 	switch (BTCommGetState())
 	{
@@ -322,4 +314,20 @@ void HTTPPrint_TickGet(void)
 	unsigned char string[20];
 	ultoa(TickGet() / (TICK_SECOND / 1000), string);
 	TCPPutString(sktHTTP, string);
+}
+
+unsigned int msgLen;
+void HTTPPrint_BTBuffer(void)
+{
+	WORD len;
+	len = TCPIsPutReady(sktHTTP);
+
+	if(curHTTP.callbackPos == 0u) msgLen = curHTTP.callbackPos = BTCommGetRspLen();
+
+	while(len && curHTTP.callbackPos)
+	{
+		len -= TCPPut(sktHTTP, BTCommGetBuffer(msgLen - curHTTP.callbackPos));
+		curHTTP.callbackPos--;
+	}
+	return;
 }

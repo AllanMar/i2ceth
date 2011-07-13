@@ -32,23 +32,21 @@ static void InitializeBoard(void);
 void LowISR(void)
 {
     TickUpdate();
-	BTCommRX();
 }
 
-/*
+
 #pragma interruptlow HighISR
 void HighISR(void)
 {
+	if (PIR1bits.SSP1IF) BTCommRX();
 }
-*/
 
 #pragma code lowVector=0x18
 void LowVector(void){_asm goto LowISR _endasm}
 
-/*
 #pragma code highVector=0x8
 void HighVector(void){_asm goto HighISR _endasm}
-*/
+
 
 #pragma code // Return to default code section
 

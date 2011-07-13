@@ -20,12 +20,13 @@ extern BYTE curHTTPID;
 void HTTPPrint(DWORD callbackID);
 void HTTPPrint_BTVer(void);
 void HTTPPrint_BTNic_CGI(void);
-void HTTPPrint_BTStatus(void);
 void HTTPPrint_SSP1CON1(void);
 void HTTPPrint_SSP1CON2(void);
 void HTTPPrint_SSP1STAT(void);
 void HTTPPrint_BTCommTimer(void);
 void HTTPPrint_TickGet(void);
+void HTTPPrint_BTState(void);
+void HTTPPrint_BTBuffer(void);
 
 void HTTPPrint(DWORD callbackID)
 {
@@ -36,9 +37,6 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x00000002:
 			HTTPPrint_BTNic_CGI();
-			break;
-        case 0x00000003:
-			HTTPPrint_BTStatus();
 			break;
         case 0x00000004:
 			HTTPPrint_SSP1CON1();
@@ -54,6 +52,12 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x00000008:
 			HTTPPrint_TickGet();
+			break;
+        case 0x00000009:
+			HTTPPrint_BTState();
+			break;
+        case 0x0000000a:
+			HTTPPrint_BTBuffer();
 			break;
 		default:
 			// Output notification for undefined values
