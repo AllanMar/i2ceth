@@ -61,22 +61,25 @@ int BTCommTX(char* reqMsg)
 		return ( -2 );      // return with Not Ack error condition                      
 	}
 
-    while(*reqMsg != '\0') 
-	{
-		c = *reqMsg++;
-		if (c == '&') c = '\t';
-		else if (c == '+') c = ' ';
-		if (WriteI2C1(c))
+	while (1) {
+	    while(*reqMsg != '\0') 
 		{
-			StopI2C1();
-			return ( -3 );	// set error for write collision
-		}
-		if (SSP1CON2bits.ACKSTAT) 
-		{                 
-			StopI2C1();                  
-			return ( -2 );      // return with Not Ack error condition                      
-		}
-    }
+			c = *reqMsg++;
+			if (c == '+') c = ' ';
+			if (WriteI2C1(c))
+			{
+				StopI2C1();
+				return ( -3 );	// set error for write collision
+			}
+			if (SSP1CON2bits.ACKSTAT) 
+			{                 
+				StopI2C1();                  
+				return ( -2 );      // return with Not Ack error condition                      
+			}
+	    }
+		if (*(reqMsg + 1) == '\0') break;
+		*reqMsg = '\t';
+	}
 
 	if (WriteI2C1('\r'))
 	{
