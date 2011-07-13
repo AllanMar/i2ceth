@@ -1,5 +1,5 @@
 MPLINK 4.37, Linker
-Linker Map File - Created Wed Jul 13 15:39:58 2011
+Linker Map File - Created Wed Jul 13 16:13:25 2011
 
                                  Section Info
                   Section       Type    Address   Location Size(Bytes)
@@ -9,41 +9,41 @@ Linker Map File - Created Wed Jul 13 15:39:58 2011
                highVector       code   0x000008    program   0x000006
           .romdata_Main.o    romdata   0x00000e    program   0x000006
          .romdata_HTTP2.o    romdata   0x000014    program   0x000003
-          .romdata_SNTP.o    romdata   0x000017    program   0x000000
+        .romdata_Random.o    romdata   0x000017    program   0x000000
       .romdata_StackTsk.o    romdata   0x000017    program   0x000000
            .idata_RSA.o_i    romdata   0x000017    program   0x000000
        .idata_fxm3232.o_i    romdata   0x000017    program   0x000000
       .romdata_fxd3232u.o    romdata   0x000017    program   0x000000
          .idata_MPFS2.o_i    romdata   0x000017    program   0x000000
            .idata_SSL.o_i    romdata   0x000017    program   0x000000
-          .idata_ICMP.o_i    romdata   0x000017    program   0x000000
-           .romdata_UDP.o    romdata   0x000017    program   0x000000
       .idata_fxd1616u.o_i    romdata   0x000017    program   0x000000
- .romdata_CustomHTTPApp.o    romdata   0x000017    program   0x000000
-    .idata_BTnic_Comm.o_i    romdata   0x000017    program   0x000000
+          .idata_ICMP.o_i    romdata   0x000017    program   0x000000
       .romdata_i2c_open.o    romdata   0x000017    program   0x000000
+ .romdata_CustomHTTPApp.o    romdata   0x000017    program   0x000000
+           .romdata_UDP.o    romdata   0x000017    program   0x000000
+    .idata_BTnic_Comm.o_i    romdata   0x000017    program   0x000000
     .romdata_BTnic_Comm.o    romdata   0x000017    program   0x000000
-      .idata_i2c_writ.o_i    romdata   0x000017    program   0x000000
       .idata_MPFSImg2.o_i    romdata   0x000017    program   0x000000
+      .idata_i2c_writ.o_i    romdata   0x000017    program   0x000000
         .idata_BigInt.o_i    romdata   0x000017    program   0x000000
          .romdata_c018i.o    romdata   0x000017    program   0x000000
            .romdata_DNS.o    romdata   0x000017    program   0x000000
       .idata_Announce.o_i    romdata   0x000017    program   0x000001
         .idata___init.o_i    romdata   0x000017    program   0x000000
            .romdata_ARP.o    romdata   0x000017    program   0x000000
-        .idata_Hashes.o_i    romdata   0x000017    program   0x000000
-         .idata_Delay.o_i    romdata   0x000017    program   0x000000
           .romdata_NBNS.o    romdata   0x000017    program   0x000000
+         .idata_Delay.o_i    romdata   0x000017    program   0x000000
+          .idata_NBNS.o_i    romdata   0x000017    program   0x000000
       .idata_i2c1writ.o_i    romdata   0x000017    program   0x000000
       .idata_ETH97J60.o_i    romdata   0x000017    program   0x000000
       .romdata_ETH97J60.o    romdata   0x000017    program   0x000000
-          .idata_NBNS.o_i    romdata   0x000017    program   0x000000
+        .idata_Hashes.o_i    romdata   0x000017    program   0x000000
        .idata_Helpers.o_i    romdata   0x000017    program   0x000000
        .romdata_Helpers.o    romdata   0x000017    program   0x000000
         .idata_Random.o_i    romdata   0x000017    program   0x000000
       .romdata_i2c1read.o    romdata   0x000017    program   0x000000
             .romdata_IP.o    romdata   0x000017    program   0x000000
-        .romdata_Random.o    romdata   0x000017    program   0x000000
+          .romdata_SNTP.o    romdata   0x000017    program   0x000000
                 lowVector       code   0x000018    program   0x000006
                    .cinit    romdata   0x00001e    program   0x0000aa
               .code_TCP.o       code   0x0000c8    program   0x0089de
@@ -61,72 +61,72 @@ Linker Map File - Created Wed Jul 13 15:39:58 2011
              .stringtable    romdata   0x013244    program   0x000498
                    STDLIB       code   0x0136dc    program   0x000440
                .code_IP.o       code   0x013b1c    program   0x0003fa
-             .code_Main.o       code   0x013f16    program   0x0002e2
-      .romdata_MPFSImg2.o    romdata   0x0141f8    program   0x0002bf
-      .idata_i2c1read.o_i    romdata   0x0144b7    program   0x000000
-       .romdata_fxm3232.o    romdata   0x0144b7    program   0x000000
-           .romdata_RSA.o    romdata   0x0144b7    program   0x000000
-      .idata_fxd3232u.o_i    romdata   0x0144b7    program   0x000000
-        .romdata_Hashes.o    romdata   0x0144b7    program   0x000000
-      .romdata_fxd1616u.o    romdata   0x0144b7    program   0x000000
-      .romdata_i2c1writ.o    romdata   0x0144b7    program   0x000000
-           .romdata_SSL.o    romdata   0x0144b7    program   0x000000
-        .romdata___init.o    romdata   0x0144b7    program   0x000000
-      .romdata_i2c_writ.o    romdata   0x0144b7    program   0x000000
-      .idata_i2c_open.o_i    romdata   0x0144b7    program   0x000000
-        .romdata_BigInt.o    romdata   0x0144b7    program   0x000000
-          .romdata_ICMP.o    romdata   0x0144b7    program   0x000000
-         .romdata_Delay.o    romdata   0x0144b7    program   0x000000
-         .romdata_MPFS2.o    romdata   0x0144b7    program   0x000000
-      .idata_StackTsk.o_i    romdata   0x0144b7    program   0x000000
-          .romdata_DHCP.o    romdata   0x0144b7    program   0x000000
-        .idata_Reboot.o_i    romdata   0x0144b7    program   0x000001
-        .romdata_Reboot.o    romdata   0x0144b7    program   0x000000
-      .romdata_Announce.o    romdata   0x0144b7    program   0x000000
-          .romdata_Tick.o    romdata   0x0144b7    program   0x000000
-       .romdata_ARCFOUR.o    romdata   0x0144b7    program   0x000000
-         .idata_c018i.o_i    romdata   0x0144b7    program   0x000000
-         .code_Announce.o       code   0x0144b8    program   0x0002ac
-         .code_StackTsk.o       code   0x014764    program   0x00027e
-                   STRING       code   0x0149e2    program   0x00023c
-           .code_Reboot.o       code   0x014c1e    program   0x000162
-             .code_ICMP.o       code   0x014d80    program   0x000146
-             .code_Tick.o       code   0x014ec6    program   0x000140
-                     PROG       code   0x015006    program   0x0000ce
-               _cinit_scn       code   0x0150d4    program   0x00009e
-         .code_i2c1writ.o       code   0x015172    program   0x000080
-          .code_fxm3232.o       code   0x0151f2    program   0x000070
-         .code_fxd3232u.o       code   0x015262    program   0x000048
-         .code_fxd1616u.o       code   0x0152aa    program   0x00002c
-                    .code       code   0x0152d6    program   0x00002c
-             _startup_scn       code   0x015302    program   0x00001c
-         .code_i2c1read.o       code   0x01531e    program   0x00001a
-           .romdata_TCP.o    romdata   0x015338    program   0x000012
-              SEED_DATA_i    romdata   0x01534a    program   0x000002
-           .idata_UDP.o_i    romdata   0x01534c    program   0x000002
-          .idata_Tick.o_i    romdata   0x01534e    program   0x000004
-           .idata_TCP.o_i    romdata   0x015352    program   0x000002
-          .idata_SNTP.o_i    romdata   0x015354    program   0x000009
-          .idata_Main.o_i    romdata   0x01535d    program   0x000004
-            .idata_IP.o_i    romdata   0x015361    program   0x000002
-         .idata_HTTP2.o_i    romdata   0x015363    program   0x00006c
-           .idata_DNS.o_i    romdata   0x0153cf    program   0x000003
-          .idata_DHCP.o_i    romdata   0x0153d2    program   0x000008
- .idata_CustomHTTPApp.o_i    romdata   0x0153da    program   0x000002
-           .idata_ARP.o_i    romdata   0x0153dc    program   0x000001
-       .idata_ARCFOUR.o_i    romdata   0x0153dd    program   0x000000
-         .code_i2c_open.o       code   0x0153de    program   0x000000
-         .code_i2c_writ.o       code   0x0153de    program   0x000000
-         .code_MPFSImg2.o       code   0x0153de    program   0x000000
-              .code_SSL.o       code   0x0153de    program   0x000000
-            .code_Delay.o       code   0x0153de    program   0x000000
-              .code_RSA.o       code   0x0153de    program   0x000000
-           .code_Random.o       code   0x0153de    program   0x000000
-           .code_Hashes.o       code   0x0153de    program   0x000000
-             .code_NBNS.o       code   0x0153de    program   0x000000
-            .code_c018i.o       code   0x0153de    program   0x000000
-           .code_BigInt.o       code   0x0153de    program   0x000000
-          .code_ARCFOUR.o       code   0x0153de    program   0x000000
+      .romdata_MPFSImg2.o    romdata   0x013f16    program   0x0003b7
+        .romdata_BigInt.o    romdata   0x0142cd    program   0x000000
+        .romdata___init.o    romdata   0x0142cd    program   0x000000
+      .romdata_i2c1writ.o    romdata   0x0142cd    program   0x000000
+        .romdata_Hashes.o    romdata   0x0142cd    program   0x000000
+      .idata_i2c1read.o_i    romdata   0x0142cd    program   0x000000
+       .romdata_fxm3232.o    romdata   0x0142cd    program   0x000000
+      .idata_fxd3232u.o_i    romdata   0x0142cd    program   0x000000
+           .romdata_RSA.o    romdata   0x0142cd    program   0x000000
+      .romdata_fxd1616u.o    romdata   0x0142cd    program   0x000000
+           .romdata_SSL.o    romdata   0x0142cd    program   0x000000
+      .idata_i2c_open.o_i    romdata   0x0142cd    program   0x000000
+      .romdata_i2c_writ.o    romdata   0x0142cd    program   0x000000
+         .idata_c018i.o_i    romdata   0x0142cd    program   0x000000
+         .romdata_Delay.o    romdata   0x0142cd    program   0x000000
+      .idata_StackTsk.o_i    romdata   0x0142cd    program   0x000000
+          .romdata_Tick.o    romdata   0x0142cd    program   0x000000
+          .romdata_DHCP.o    romdata   0x0142cd    program   0x000000
+          .romdata_ICMP.o    romdata   0x0142cd    program   0x000000
+         .romdata_MPFS2.o    romdata   0x0142cd    program   0x000000
+        .idata_Reboot.o_i    romdata   0x0142cd    program   0x000001
+        .romdata_Reboot.o    romdata   0x0142cd    program   0x000000
+       .romdata_ARCFOUR.o    romdata   0x0142cd    program   0x000000
+      .romdata_Announce.o    romdata   0x0142cd    program   0x000000
+             .code_Main.o       code   0x0142ce    program   0x0002e2
+         .code_Announce.o       code   0x0145b0    program   0x0002ac
+         .code_StackTsk.o       code   0x01485c    program   0x00027e
+                   STRING       code   0x014ada    program   0x00023c
+           .code_Reboot.o       code   0x014d16    program   0x000162
+             .code_ICMP.o       code   0x014e78    program   0x000146
+             .code_Tick.o       code   0x014fbe    program   0x000140
+                     PROG       code   0x0150fe    program   0x0000ce
+               _cinit_scn       code   0x0151cc    program   0x00009e
+         .code_i2c1writ.o       code   0x01526a    program   0x000080
+          .code_fxm3232.o       code   0x0152ea    program   0x000070
+         .code_fxd3232u.o       code   0x01535a    program   0x000048
+         .code_fxd1616u.o       code   0x0153a2    program   0x00002c
+                    .code       code   0x0153ce    program   0x00002c
+             _startup_scn       code   0x0153fa    program   0x00001c
+         .code_i2c1read.o       code   0x015416    program   0x00001a
+           .romdata_TCP.o    romdata   0x015430    program   0x000012
+              SEED_DATA_i    romdata   0x015442    program   0x000002
+           .idata_UDP.o_i    romdata   0x015444    program   0x000002
+          .idata_Tick.o_i    romdata   0x015446    program   0x000004
+           .idata_TCP.o_i    romdata   0x01544a    program   0x000002
+          .idata_SNTP.o_i    romdata   0x01544c    program   0x000009
+          .idata_Main.o_i    romdata   0x015455    program   0x000004
+            .idata_IP.o_i    romdata   0x015459    program   0x000002
+         .idata_HTTP2.o_i    romdata   0x01545b    program   0x00006c
+           .idata_DNS.o_i    romdata   0x0154c7    program   0x000003
+          .idata_DHCP.o_i    romdata   0x0154ca    program   0x000008
+ .idata_CustomHTTPApp.o_i    romdata   0x0154d2    program   0x000002
+           .idata_ARP.o_i    romdata   0x0154d4    program   0x000001
+       .idata_ARCFOUR.o_i    romdata   0x0154d5    program   0x000000
+              .code_RSA.o       code   0x0154d6    program   0x000000
+           .code_Hashes.o       code   0x0154d6    program   0x000000
+            .code_c018i.o       code   0x0154d6    program   0x000000
+              .code_SSL.o       code   0x0154d6    program   0x000000
+         .code_MPFSImg2.o       code   0x0154d6    program   0x000000
+          .code_ARCFOUR.o       code   0x0154d6    program   0x000000
+            .code_Delay.o       code   0x0154d6    program   0x000000
+           .code_BigInt.o       code   0x0154d6    program   0x000000
+         .code_i2c_writ.o       code   0x0154d6    program   0x000000
+             .code_NBNS.o       code   0x0154d6    program   0x000000
+         .code_i2c_open.o       code   0x0154d6    program   0x000000
+           .code_Random.o       code   0x0154d6    program   0x000000
                 MATH_DATA      udata   0x000000       data   0x000014
                  .tmpdata      udata   0x000014       data   0x00000e
    HTTP_CONNECTION_STATES      udata   0x000060       data   0x000084
@@ -231,8 +231,8 @@ Linker Map File - Created Wed Jul 13 15:39:58 2011
                               Program Memory Usage 
                                Start         End      
                            ---------   ---------      
-                            0x000000    0x0153dc      
-            87005 out of 131072 program addresses used, program memory utilization is 66%
+                            0x000000    0x0154d4      
+            87253 out of 131072 program addresses used, program memory utilization is 66%
 
 
 
@@ -244,7 +244,7 @@ Linker Map File - Created Wed Jul 13 15:39:58 2011
                ARPProcess   0x01231c    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ARP.c
                    ARPPut   0x0121aa    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ARP.c
                ARPResolve   0x0124f4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ARP.c
-               AnnounceIP   0x0144b8    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
+               AnnounceIP   0x0145b0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
           BTCommGetBuffer   0x01321c    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\BTnic_Comm.c
              BTCommGetRsp   0x01316c    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\BTnic_Comm.c
           BTCommGetRspLen   0x013160    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\BTnic_Comm.c
@@ -271,17 +271,17 @@ Linker Map File - Created Wed Jul 13 15:39:58 2011
              DNSPutString   0x00fbb4    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\DNS.c
                DNSResolve   0x00f0f0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\DNS.c
             DNSResolveROM   0x00f14e    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\DNS.c
-            DiscoveryTask   0x0145cc    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
-                 FXD1616U   0x0152aa    program     extern C:\MCC18\src\traditional\math\fxd1616u.c
-                 FXD3232U   0x015262    program     extern C:\MCC18\src\traditional\math\fxd3232u.c
-                 FXM1616U   0x015006    program     extern C:\MCC18\src\traditional\math\fxm1616u.asm
-                 FXM2424U   0x015042    program     extern C:\MCC18\src\traditional\math\fxm2424u.asm
-                  FXM3232   0x0151f2    program     extern C:\MCC18\src\traditional\math\fxm3232.c
+            DiscoveryTask   0x0146c4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
+                 FXD1616U   0x0153a2    program     extern C:\MCC18\src\traditional\math\fxd1616u.c
+                 FXD3232U   0x01535a    program     extern C:\MCC18\src\traditional\math\fxd3232u.c
+                 FXM1616U   0x0150fe    program     extern C:\MCC18\src\traditional\math\fxm1616u.asm
+                 FXM2424U   0x01513a    program     extern C:\MCC18\src\traditional\math\fxm2424u.asm
+                  FXM3232   0x0152ea    program     extern C:\MCC18\src\traditional\math\fxm3232.c
        FindMatchingSocket   0x0052ea    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
        FindMatchingSocket   0x00ee78    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\UDP.c
         FormatNetBIOSName   0x00e0f2    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
       GenerateRandomDWORD   0x00d052    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
-              GetTickCopy   0x014ed6    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+              GetTickCopy   0x014fce    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
             HTTPCheckAuth   0x011924    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\CustomHTTPApp.c
            HTTPExecuteGet   0x01198c    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\CustomHTTPApp.c
           HTTPExecutePost   0x011ab2    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\CustomHTTPApp.c
@@ -314,15 +314,15 @@ HTTPHeaderParseContentLength   0x00a9f6    program     static C:\Users\Matt\Docu
             HTTPURLDecode   0x00aae6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\HTTP2.c
                 HTTP_CRLF   0x000014    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\HTTP2.c
              HandleTCPSeg   0x005f06    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
-                  HighISR   0x013fd0    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+                  HighISR   0x014388    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
                HighVector   0x000008    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-              ICMPProcess   0x014d80    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ICMP.c
+              ICMPProcess   0x014e78    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ICMP.c
               IPGetHeader   0x013b1c    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\IP.c
               IPPutHeader   0x013c90    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\IP.c
             IPSetRxBuffer   0x013df4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\IP.c
-            InitAppConfig   0x01411c    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-          InitializeBoard   0x0140f6    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-                   LowISR   0x013f16    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+            InitAppConfig   0x0144d4    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+          InitializeBoard   0x0144ae    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+                   LowISR   0x0142ce    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
                 LowVector   0x000018    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
         MACCalcRxChecksum   0x0104b6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ETH97J60.c
              MACDiscardRx   0x00ffd8    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ETH97J60.c
@@ -364,7 +364,7 @@ HTTPHeaderParseContentLength   0x00a9f6    program     static C:\Users\Matt\Docu
                MPFSOpenID   0x00bd66    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\MPFS2.c
               MPFSOpenROM   0x00b9da    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\MPFS2.c
                  MPFSSeek   0x00c3ca    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\MPFS2.c
-               MPFS_Start   0x0141f8    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\MPFSImg2.c
+               MPFS_Start   0x013f16    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\MPFSImg2.c
                   OneByte   0x013b0a    program     static C:\MCC18\src\traditional\stdclib\ltobcd.asm
                   OneByte   0x013954    program     static C:\MCC18\src\traditional\stdclib\itobcd.asm
                 ProcLower   0x013aa2    program     static C:\MCC18\src\traditional\stdclib\ultoa.asm
@@ -372,16 +372,16 @@ HTTPHeaderParseContentLength   0x00a9f6    program     static C:\Users\Matt\Docu
                 ProcUpper   0x0138fe    program     static C:\MCC18\src\traditional\stdclib\itoa.asm
                 ProcUpper   0x013a98    program     static C:\MCC18\src\traditional\stdclib\ultoa.asm
      ROMStringToIPAddress   0x00d5aa    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
-                 ReadI2C1   0x01531e    program     extern C:\MCC18\src\pmc_common\i2c\i2c1read.c
+                 ReadI2C1   0x015416    program     extern C:\MCC18\src\pmc_common\i2c\i2c1read.c
                ReadPHYReg   0x010b4c    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ETH97J60.c
-               RebootTask   0x014c1e    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Reboot.c
+               RebootTask   0x014d16    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Reboot.c
                SNTPClient   0x01276c    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\SNTP.c
         SNTPGetUTCSeconds   0x012be4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\SNTP.c
                   SendTCP   0x0043b0    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
      SerializedMACAddress   0x00000e    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-        StackApplications   0x0149d2    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
-                StackInit   0x014764    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
-                StackTask   0x0147a8    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
+        StackApplications   0x014aca    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
+                StackInit   0x01485c    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
+                StackTask   0x0148a0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
         StringToIPAddress   0x00d356    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
             SwapARPPacket   0x012694    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ARP.c
              SwapIPHeader   0x013e2e    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\IP.c
@@ -412,15 +412,15 @@ HTTPHeaderParseContentLength   0x00a9f6    program     static C:\Users\Matt\Docu
              TCPPutString   0x0018f0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
                TCPRAMCopy   0x0087e4    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
             TCPRAMCopyROM   0x008926    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
-     TCPSocketInitializer   0x015338    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\TCPIPConfig.h
+     TCPSocketInitializer   0x015430    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\TCPIPConfig.h
                   TCPTick   0x00323e    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
               TCPWasReset   0x000918    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\TCP.c
-TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-                  TickGet   0x014efc    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-            TickGetDiv256   0x014f12    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-            TickGetDiv64K   0x014f60    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-                 TickInit   0x014ec6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-               TickUpdate   0x014ff2    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+TickConvertToMilliseconds   0x0150a6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+                  TickGet   0x014ff4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+            TickGetDiv256   0x01500a    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+            TickGetDiv64K   0x015058    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+                 TickInit   0x014fbe    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+               TickUpdate   0x0150ea    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
                  TstLower   0x0138f2    program     static C:\MCC18\src\traditional\stdclib\itoa.asm
                  TstLower   0x013a8c    program     static C:\MCC18\src\traditional\stdclib\ultoa.asm
                  TstUpper   0x013a86    program     static C:\MCC18\src\traditional\stdclib\ultoa.asm
@@ -443,35 +443,35 @@ TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documen
            UDPSetRxBuffer   0x00e424    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\UDP.c
            UDPSetTxBuffer   0x00e3b6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\UDP.c
                   UDPTask   0x00e1b0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\UDP.c
-                WriteI2C1   0x015172    program     extern C:\MCC18\src\pmc_common\i2c\i2c1writ.c
+                WriteI2C1   0x01526a    program     extern C:\MCC18\src\pmc_common\i2c\i2c1writ.c
               WritePHYReg   0x010ba6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ETH97J60.c
                   _14jEnd   0x0137fa    program     static C:\MCC18\src\traditional\stdclib\atol.asm
-              _2jContinue   0x014adc    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-                   _2jEnd   0x014bde    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
-              _3jContinue   0x014aa8    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-              _3jContinue   0x014a0c    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                   _3jEnd   0x014ae6    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-              _4jContinue   0x014a54    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
-                   _4jEnd   0x014ab2    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                   _4jEnd   0x014a16    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                   _5jEnd   0x014a5e    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+              _2jContinue   0x014bd4    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+                   _2jEnd   0x014cd6    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
+              _3jContinue   0x014ba0    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+              _3jContinue   0x014b04    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                   _3jEnd   0x014bde    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+              _4jContinue   0x014b4c    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+                   _4jEnd   0x014baa    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                   _4jEnd   0x014b0e    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                   _5jEnd   0x014b56    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
              _DHCPReceive   0x0110a8    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\DHCP.c
                 _DHCPSend   0x01163a    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\DHCP.c
            _LoadFATRecord   0x00c858    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\MPFS2.c
                 _Validate   0x00cfcc    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\MPFS2.c
-           ___do_lbl00002   0x014ef4    program     static                          
-           ___do_lbl00003   0x014ef8    program     static                          
-           ___do_lbl00004   0x014ed6    program     static                          
+           ___do_lbl00002   0x014fec    program     static                          
+           ___do_lbl00003   0x014ff0    program     static                          
+           ___do_lbl00004   0x014fce    program     static                          
           ___for_lbl00122   0x00e0ae    program     static                          
           ___for_lbl00123   0x00e0b4    program     static                          
           ___for_lbl00124   0x00e090    program     static                          
           ___for_lbl00125   0x00e0c8    program     static                          
           ___for_lbl00126   0x00e0cc    program     static                          
           ___for_lbl00127   0x00e0b4    program     static                          
-           ___if_lbl00001   0x014c54    program     static                          
-           ___if_lbl00002   0x014c5e    program     static                          
-           ___if_lbl00003   0x014c78    program     static                          
-           ___if_lbl00004   0x014ce8    program     static                          
+           ___if_lbl00001   0x014d4c    program     static                          
+           ___if_lbl00002   0x014d56    program     static                          
+           ___if_lbl00003   0x014d70    program     static                          
+           ___if_lbl00004   0x014de0    program     static                          
            ___if_lbl00005   0x00d23e    program     static                          
            ___if_lbl00006   0x00d25c    program     static                          
            ___if_lbl00007   0x00d2f2    program     static                          
@@ -480,16 +480,16 @@ TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documen
            ___if_lbl00021   0x010188    program     static                          
            ___if_lbl00027   0x010256    program     static                          
            ___if_lbl00030   0x0102ce    program     static                          
-       ___return_lbl00000   0x015260    program     static                          
-       ___return_lbl00000   0x0152a8    program     static                          
-       ___return_lbl00000   0x014d6c    program     static                          
+       ___return_lbl00000   0x015358    program     static                          
+       ___return_lbl00000   0x0153a0    program     static                          
+       ___return_lbl00000   0x014e64    program     static                          
        ___return_lbl00000   0x00ff74    program     static                          
        ___return_lbl00000   0x000004    program     static                          
        ___return_lbl00000   0x00d342    program     static                          
-       ___return_lbl00000   0x0152d4    program     static                          
-       ___return_lbl00001   0x01531c    program     static                          
-       ___return_lbl00001   0x014efa    program     static                          
-       ___return_lbl00002   0x015170    program     static                          
+       ___return_lbl00000   0x0153cc    program     static                          
+       ___return_lbl00001   0x015414    program     static                          
+       ___return_lbl00001   0x014ff2    program     static                          
+       ___return_lbl00002   0x015268    program     static                          
        ___return_lbl00003   0x00001c    program     static                          
        ___return_lbl00004   0x00000c    program     static                          
        ___return_lbl00019   0x0102d6    program     static                          
@@ -577,7 +577,7 @@ TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documen
                __string_8   0x013274    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\CustomHTTPApp.c
                __string_9   0x013686    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\HTTP2.c
                __string_9   0x01326f    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\CustomHTTPApp.c
-               __tmplbl_0   0x014ce0    program     static                          
+               __tmplbl_0   0x014dd8    program     static                          
                __tmplbl_0   0x00d13e    program     static                          
               __tmplbl_10   0x0101f2    program     static                          
               __tmplbl_11   0x0101f0    program     static                          
@@ -644,20 +644,20 @@ TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documen
                __tmplbl_8   0x010216    program     static                          
                __tmplbl_9   0x010200    program     static                          
               __tmplbl_94   0x00400c    program     static                          
-            __zero_memory   0x0152d6    program     extern C:\MCC18\src\traditional\proc\p18F67J60.asm
-                _do_cinit   0x0150d4    program     extern C:\MCC18\src\traditional\startup\c018i.c
+            __zero_memory   0x0153ce    program     extern C:\MCC18\src\traditional\proc\p18F67J60.asm
+                _do_cinit   0x0151cc    program     extern C:\MCC18\src\traditional\startup\c018i.c
                    _entry   0x000000    program     extern C:\MCC18\src\traditional\startup\c018i.c
-                   _false   0x0152a4    program     static                          
-                 _startup   0x015302    program     extern C:\MCC18\src\traditional\startup\c018i.c
+                   _false   0x01539c    program     static                          
+                 _startup   0x0153fa    program     extern C:\MCC18\src\traditional\startup\c018i.c
                      atol   0x0136dc    program     extern C:\MCC18\src\traditional\stdclib\atol.asm
              btohexa_high   0x00dc6c    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
               btohexa_low   0x00dca2    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
-                compare_l   0x0152f8    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
-                copy_loop   0x015146    program     static                          
-            copy_one_byte   0x01514c    program     static                          
-                     done   0x015170    program     static                          
-             done_copying   0x01515a    program     static                          
-                  endloop   0x0152d0    program     static                          
+                compare_l   0x0153f0    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+                copy_loop   0x01523e    program     static                          
+            copy_one_byte   0x015244    program     static                          
+                     done   0x015268    program     static                          
+             done_copying   0x015252    program     static                          
+                  endloop   0x0153c8    program     static                          
                   hexatob   0x00dbb0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
                    itoBCD   0x013912    program     extern C:\MCC18\src\traditional\stdclib\itobcd.asm
                      itoa   0x013832    program     extern C:\MCC18\src\traditional\stdclib\itoa.asm
@@ -677,33 +677,33 @@ TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documen
                      jDo8   0x013a36    program     static C:\MCC18\src\traditional\stdclib\ultoa.asm
                      jDo9   0x013a32    program     static C:\MCC18\src\traditional\stdclib\ultoa.asm
                      jEnd   0x013b06    program     static C:\MCC18\src\traditional\stdclib\ltobcd.asm
-                     jEnd   0x014be0    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
-                     jEnd   0x014ba8    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
-                     jEnd   0x014aee    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-                     jEnd   0x014a64    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
-                     jEnd   0x014aba    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                     jEnd   0x014b5a    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
-                     jEnd   0x014b8c    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
-                     jEnd   0x014c1c    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
-                     jEnd   0x014a1e    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                     jEnd   0x014b1a    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
+                     jEnd   0x014cd8    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
+                     jEnd   0x014ca0    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
+                     jEnd   0x014be6    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+                     jEnd   0x014b5c    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+                     jEnd   0x014bb2    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                     jEnd   0x014c52    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
+                     jEnd   0x014c84    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
+                     jEnd   0x014d14    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
+                     jEnd   0x014b16    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                     jEnd   0x014c12    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
                      jEnd   0x013950    program     static C:\MCC18\src\traditional\stdclib\itobcd.asm
                      jEnd   0x0137fa    program     static C:\MCC18\src\traditional\stdclib\atol.asm
                  jEndLoop   0x0137ca    program     static C:\MCC18\src\traditional\stdclib\atol.asm
-                    jLoop   0x014b9e    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
-                    jLoop   0x014b82    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
-                    jLoop   0x014b10    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
-                    jLoop   0x014b4e    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
-                    jLoop   0x014ad0    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-                    jLoop   0x014bc8    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
-                    jLoop   0x014a9c    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                    jLoop   0x014c08    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
-                    jLoop   0x014a48    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
-                    jLoop   0x014a00    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                    jLoop   0x014c96    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
+                    jLoop   0x014c7a    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
+                    jLoop   0x014c08    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
+                    jLoop   0x014c46    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
+                    jLoop   0x014bc8    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+                    jLoop   0x014cc0    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
+                    jLoop   0x014b94    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                    jLoop   0x014d00    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
+                    jLoop   0x014b40    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+                    jLoop   0x014af8    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
                     jLoop   0x01392a    program     static C:\MCC18\src\traditional\stdclib\itobcd.asm
                     jLoop   0x01373c    program     static C:\MCC18\src\traditional\stdclib\atol.asm
                     jLoop   0x013ac8    program     static C:\MCC18\src\traditional\stdclib\ltobcd.asm
-                    jSkip   0x014c18    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
+                    jSkip   0x014d10    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
                   jSkipWS   0x013712    program     static C:\MCC18\src\traditional\stdclib\atol.asm
                  jSkipWS1   0x013724    program     static C:\MCC18\src\traditional\stdclib\atol.asm
                 jTstLowZ1   0x0138fc    program     static C:\MCC18\src\traditional\stdclib\itoa.asm
@@ -714,32 +714,32 @@ TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documen
                 jTstSign2   0x01373a    program     static C:\MCC18\src\traditional\stdclib\atol.asm
                 jTstSign3   0x01373c    program     static C:\MCC18\src\traditional\stdclib\atol.asm
           leftRotateDWORD   0x00e066    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
-                     loop   0x0152b4    program     static                          
-                     loop   0x015312    program     static                          
-                     loop   0x015270    program     static                          
-                   loop_h   0x0152f0    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
-                   loop_l   0x0152fa    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+                     loop   0x0153ac    program     static                          
+                     loop   0x01540a    program     static                          
+                     loop   0x015368    program     static                          
+                   loop_h   0x0153e8    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+                   loop_l   0x0153f2    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
                    ltoBCD   0x013aac    program     extern C:\MCC18\src\traditional\stdclib\ltobcd.asm
-                     main   0x01408e    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-            memcmppgm2ram   0x0149e2    program     extern C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                   memcpy   0x014a20    program     extern C:\MCC18\src\traditional\stdclib\memcpy.asm
-            memcpypgm2ram   0x014a76    program     extern C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                   memset   0x014abc    program     extern C:\MCC18\src\traditional\stdclib\memset.asm
+                     main   0x014446    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+            memcmppgm2ram   0x014ada    program     extern C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                   memcpy   0x014b18    program     extern C:\MCC18\src\traditional\stdclib\memcpy.asm
+            memcpypgm2ram   0x014b6e    program     extern C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                   memset   0x014bb4    program     extern C:\MCC18\src\traditional\stdclib\memset.asm
                      rand   0x013974    program     extern C:\MCC18\src\traditional\stdclib\rand.asm
                     srand   0x013966    program     extern C:\MCC18\src\traditional\stdclib\rand.asm
-                   strcmp   0x014af0    program     extern C:\MCC18\src\traditional\stdclib\strcmp.asm
-            strcmppgm2ram   0x014b30    program     extern C:\MCC18\src\traditional\stdclib\scmpp2r.asm
-            strcpypgm2ram   0x014b5c    program     extern C:\MCC18\src\traditional\stdclib\scpyp2r.asm
+                   strcmp   0x014be8    program     extern C:\MCC18\src\traditional\stdclib\strcmp.asm
+            strcmppgm2ram   0x014c28    program     extern C:\MCC18\src\traditional\stdclib\scmpp2r.asm
+            strcpypgm2ram   0x014c54    program     extern C:\MCC18\src\traditional\stdclib\scpyp2r.asm
            stricmppgm2ram   0x00dcd6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
-                   strlen   0x014b8e    program     extern C:\MCC18\src\traditional\stdclib\strlen.asm
-                strlenpgm   0x014baa    program     extern C:\MCC18\src\traditional\stdclib\slenpgm.asm
-                   strupr   0x014bf4    program     extern C:\MCC18\src\traditional\stdclib\strupr.asm
+                   strlen   0x014c86    program     extern C:\MCC18\src\traditional\stdclib\strlen.asm
+                strlenpgm   0x014ca2    program     extern C:\MCC18\src\traditional\stdclib\slenpgm.asm
+                   strupr   0x014cec    program     extern C:\MCC18\src\traditional\stdclib\strupr.asm
                     swapl   0x00de40    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
                     swaps   0x00ddec    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
-                     test   0x0150ee    program     static                          
+                     test   0x0151e6    program     static                          
                     uitoa   0x00da64    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Helpers.c
                     ultoa   0x0139a2    program     extern C:\MCC18\src\traditional\stdclib\ultoa.asm
-               zero_block   0x0152f0    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+               zero_block   0x0153e8    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
                    ADCON0   0x000fc2       data     extern C:\MCC18\src\traditional\proc\p18F67J60.asm
                ADCON0bits   0x000fc2       data     extern C:\MCC18\src\traditional\proc\p18F67J60.asm
                    ADCON1   0x000fc1       data     extern C:\MCC18\src\traditional\proc\p18F67J60.asm
@@ -1644,106 +1644,106 @@ HTTPHeaderParseContentLength   0x00a9f6    program     static C:\Users\Matt\Docu
               IPPutHeader   0x013c90    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\IP.c
             IPSetRxBuffer   0x013df4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\IP.c
              SwapIPHeader   0x013e2e    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\IP.c
-                   LowISR   0x013f16    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-                  HighISR   0x013fd0    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-                     main   0x01408e    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-          InitializeBoard   0x0140f6    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-            InitAppConfig   0x01411c    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
-               MPFS_Start   0x0141f8    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\MPFSImg2.c
-               AnnounceIP   0x0144b8    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
-            DiscoveryTask   0x0145cc    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
-                StackInit   0x014764    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
-                StackTask   0x0147a8    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
-        StackApplications   0x0149d2    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
-            memcmppgm2ram   0x0149e2    program     extern C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                    jLoop   0x014a00    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-              _3jContinue   0x014a0c    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                   _4jEnd   0x014a16    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                     jEnd   0x014a1e    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
-                   memcpy   0x014a20    program     extern C:\MCC18\src\traditional\stdclib\memcpy.asm
-                    jLoop   0x014a48    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
-              _4jContinue   0x014a54    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
-                   _5jEnd   0x014a5e    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
-                     jEnd   0x014a64    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
-            memcpypgm2ram   0x014a76    program     extern C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                    jLoop   0x014a9c    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-              _3jContinue   0x014aa8    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                   _4jEnd   0x014ab2    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                     jEnd   0x014aba    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
-                   memset   0x014abc    program     extern C:\MCC18\src\traditional\stdclib\memset.asm
-                    jLoop   0x014ad0    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-              _2jContinue   0x014adc    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-                   _3jEnd   0x014ae6    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-                     jEnd   0x014aee    program     static C:\MCC18\src\traditional\stdclib\memset.asm
-                   strcmp   0x014af0    program     extern C:\MCC18\src\traditional\stdclib\strcmp.asm
-                    jLoop   0x014b10    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
-                     jEnd   0x014b1a    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
-            strcmppgm2ram   0x014b30    program     extern C:\MCC18\src\traditional\stdclib\scmpp2r.asm
-                    jLoop   0x014b4e    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
-                     jEnd   0x014b5a    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
-            strcpypgm2ram   0x014b5c    program     extern C:\MCC18\src\traditional\stdclib\scpyp2r.asm
-                    jLoop   0x014b82    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
-                     jEnd   0x014b8c    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
-                   strlen   0x014b8e    program     extern C:\MCC18\src\traditional\stdclib\strlen.asm
-                    jLoop   0x014b9e    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
-                     jEnd   0x014ba8    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
-                strlenpgm   0x014baa    program     extern C:\MCC18\src\traditional\stdclib\slenpgm.asm
-                    jLoop   0x014bc8    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
-                   _2jEnd   0x014bde    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
-                     jEnd   0x014be0    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
-                   strupr   0x014bf4    program     extern C:\MCC18\src\traditional\stdclib\strupr.asm
-                    jLoop   0x014c08    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
-                    jSkip   0x014c18    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
-                     jEnd   0x014c1c    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
-               RebootTask   0x014c1e    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Reboot.c
-           ___if_lbl00001   0x014c54    program     static                          
-           ___if_lbl00002   0x014c5e    program     static                          
-           ___if_lbl00003   0x014c78    program     static                          
-               __tmplbl_0   0x014ce0    program     static                          
-           ___if_lbl00004   0x014ce8    program     static                          
-       ___return_lbl00000   0x014d6c    program     static                          
-              ICMPProcess   0x014d80    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ICMP.c
-                 TickInit   0x014ec6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-           ___do_lbl00004   0x014ed6    program     static                          
-              GetTickCopy   0x014ed6    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-           ___do_lbl00002   0x014ef4    program     static                          
-           ___do_lbl00003   0x014ef8    program     static                          
-       ___return_lbl00001   0x014efa    program     static                          
-                  TickGet   0x014efc    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-            TickGetDiv256   0x014f12    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-            TickGetDiv64K   0x014f60    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-TickConvertToMilliseconds   0x014fae    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-               TickUpdate   0x014ff2    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
-                 FXM1616U   0x015006    program     extern C:\MCC18\src\traditional\math\fxm1616u.asm
-                 FXM2424U   0x015042    program     extern C:\MCC18\src\traditional\math\fxm2424u.asm
-                _do_cinit   0x0150d4    program     extern C:\MCC18\src\traditional\startup\c018i.c
-                     test   0x0150ee    program     static                          
-                copy_loop   0x015146    program     static                          
-            copy_one_byte   0x01514c    program     static                          
-             done_copying   0x01515a    program     static                          
-                     done   0x015170    program     static                          
-       ___return_lbl00002   0x015170    program     static                          
-                WriteI2C1   0x015172    program     extern C:\MCC18\src\pmc_common\i2c\i2c1writ.c
-                  FXM3232   0x0151f2    program     extern C:\MCC18\src\traditional\math\fxm3232.c
-       ___return_lbl00000   0x015260    program     static                          
-                 FXD3232U   0x015262    program     extern C:\MCC18\src\traditional\math\fxd3232u.c
-                     loop   0x015270    program     static                          
-                   _false   0x0152a4    program     static                          
-       ___return_lbl00000   0x0152a8    program     static                          
-                 FXD1616U   0x0152aa    program     extern C:\MCC18\src\traditional\math\fxd1616u.c
-                     loop   0x0152b4    program     static                          
-                  endloop   0x0152d0    program     static                          
-       ___return_lbl00000   0x0152d4    program     static                          
-            __zero_memory   0x0152d6    program     extern C:\MCC18\src\traditional\proc\p18F67J60.asm
-               zero_block   0x0152f0    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
-                   loop_h   0x0152f0    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
-                compare_l   0x0152f8    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
-                   loop_l   0x0152fa    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
-                 _startup   0x015302    program     extern C:\MCC18\src\traditional\startup\c018i.c
-                     loop   0x015312    program     static                          
-       ___return_lbl00001   0x01531c    program     static                          
-                 ReadI2C1   0x01531e    program     extern C:\MCC18\src\pmc_common\i2c\i2c1read.c
-     TCPSocketInitializer   0x015338    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\TCPIPConfig.h
+               MPFS_Start   0x013f16    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\MPFSImg2.c
+                   LowISR   0x0142ce    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+                  HighISR   0x014388    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+                     main   0x014446    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+          InitializeBoard   0x0144ae    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+            InitAppConfig   0x0144d4    program     static C:\Users\Matt\Documents\Microchip\BTnicEmb\Main.c
+               AnnounceIP   0x0145b0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
+            DiscoveryTask   0x0146c4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Announce.c
+                StackInit   0x01485c    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
+                StackTask   0x0148a0    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
+        StackApplications   0x014aca    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\StackTsk.c
+            memcmppgm2ram   0x014ada    program     extern C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                    jLoop   0x014af8    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+              _3jContinue   0x014b04    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                   _4jEnd   0x014b0e    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                     jEnd   0x014b16    program     static C:\MCC18\src\traditional\stdclib\mcmpp2r.asm
+                   memcpy   0x014b18    program     extern C:\MCC18\src\traditional\stdclib\memcpy.asm
+                    jLoop   0x014b40    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+              _4jContinue   0x014b4c    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+                   _5jEnd   0x014b56    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+                     jEnd   0x014b5c    program     static C:\MCC18\src\traditional\stdclib\memcpy.asm
+            memcpypgm2ram   0x014b6e    program     extern C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                    jLoop   0x014b94    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+              _3jContinue   0x014ba0    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                   _4jEnd   0x014baa    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                     jEnd   0x014bb2    program     static C:\MCC18\src\traditional\stdclib\mcpyp2r.asm
+                   memset   0x014bb4    program     extern C:\MCC18\src\traditional\stdclib\memset.asm
+                    jLoop   0x014bc8    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+              _2jContinue   0x014bd4    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+                   _3jEnd   0x014bde    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+                     jEnd   0x014be6    program     static C:\MCC18\src\traditional\stdclib\memset.asm
+                   strcmp   0x014be8    program     extern C:\MCC18\src\traditional\stdclib\strcmp.asm
+                    jLoop   0x014c08    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
+                     jEnd   0x014c12    program     static C:\MCC18\src\traditional\stdclib\strcmp.asm
+            strcmppgm2ram   0x014c28    program     extern C:\MCC18\src\traditional\stdclib\scmpp2r.asm
+                    jLoop   0x014c46    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
+                     jEnd   0x014c52    program     static C:\MCC18\src\traditional\stdclib\scmpp2r.asm
+            strcpypgm2ram   0x014c54    program     extern C:\MCC18\src\traditional\stdclib\scpyp2r.asm
+                    jLoop   0x014c7a    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
+                     jEnd   0x014c84    program     static C:\MCC18\src\traditional\stdclib\scpyp2r.asm
+                   strlen   0x014c86    program     extern C:\MCC18\src\traditional\stdclib\strlen.asm
+                    jLoop   0x014c96    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
+                     jEnd   0x014ca0    program     static C:\MCC18\src\traditional\stdclib\strlen.asm
+                strlenpgm   0x014ca2    program     extern C:\MCC18\src\traditional\stdclib\slenpgm.asm
+                    jLoop   0x014cc0    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
+                   _2jEnd   0x014cd6    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
+                     jEnd   0x014cd8    program     static C:\MCC18\src\traditional\stdclib\slenpgm.asm
+                   strupr   0x014cec    program     extern C:\MCC18\src\traditional\stdclib\strupr.asm
+                    jLoop   0x014d00    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
+                    jSkip   0x014d10    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
+                     jEnd   0x014d14    program     static C:\MCC18\src\traditional\stdclib\strupr.asm
+               RebootTask   0x014d16    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Reboot.c
+           ___if_lbl00001   0x014d4c    program     static                          
+           ___if_lbl00002   0x014d56    program     static                          
+           ___if_lbl00003   0x014d70    program     static                          
+               __tmplbl_0   0x014dd8    program     static                          
+           ___if_lbl00004   0x014de0    program     static                          
+       ___return_lbl00000   0x014e64    program     static                          
+              ICMPProcess   0x014e78    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\ICMP.c
+                 TickInit   0x014fbe    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+           ___do_lbl00004   0x014fce    program     static                          
+              GetTickCopy   0x014fce    program     static C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+           ___do_lbl00002   0x014fec    program     static                          
+           ___do_lbl00003   0x014ff0    program     static                          
+       ___return_lbl00001   0x014ff2    program     static                          
+                  TickGet   0x014ff4    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+            TickGetDiv256   0x01500a    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+            TickGetDiv64K   0x015058    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+TickConvertToMilliseconds   0x0150a6    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+               TickUpdate   0x0150ea    program     extern C:\Users\Matt\Documents\Microchip\TcpStack-500-Olimex\Microchip\TCPIP Stack\Tick.c
+                 FXM1616U   0x0150fe    program     extern C:\MCC18\src\traditional\math\fxm1616u.asm
+                 FXM2424U   0x01513a    program     extern C:\MCC18\src\traditional\math\fxm2424u.asm
+                _do_cinit   0x0151cc    program     extern C:\MCC18\src\traditional\startup\c018i.c
+                     test   0x0151e6    program     static                          
+                copy_loop   0x01523e    program     static                          
+            copy_one_byte   0x015244    program     static                          
+             done_copying   0x015252    program     static                          
+                     done   0x015268    program     static                          
+       ___return_lbl00002   0x015268    program     static                          
+                WriteI2C1   0x01526a    program     extern C:\MCC18\src\pmc_common\i2c\i2c1writ.c
+                  FXM3232   0x0152ea    program     extern C:\MCC18\src\traditional\math\fxm3232.c
+       ___return_lbl00000   0x015358    program     static                          
+                 FXD3232U   0x01535a    program     extern C:\MCC18\src\traditional\math\fxd3232u.c
+                     loop   0x015368    program     static                          
+                   _false   0x01539c    program     static                          
+       ___return_lbl00000   0x0153a0    program     static                          
+                 FXD1616U   0x0153a2    program     extern C:\MCC18\src\traditional\math\fxd1616u.c
+                     loop   0x0153ac    program     static                          
+                  endloop   0x0153c8    program     static                          
+       ___return_lbl00000   0x0153cc    program     static                          
+            __zero_memory   0x0153ce    program     extern C:\MCC18\src\traditional\proc\p18F67J60.asm
+               zero_block   0x0153e8    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+                   loop_h   0x0153e8    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+                compare_l   0x0153f0    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+                   loop_l   0x0153f2    program     static C:\MCC18\src\traditional\proc\p18F67J60.asm
+                 _startup   0x0153fa    program     extern C:\MCC18\src\traditional\startup\c018i.c
+                     loop   0x01540a    program     static                          
+       ___return_lbl00001   0x015414    program     static                          
+                 ReadI2C1   0x015416    program     extern C:\MCC18\src\pmc_common\i2c\i2c1read.c
+     TCPSocketInitializer   0x015430    program     extern C:\Users\Matt\Documents\Microchip\BTnicEmb\TCPIPConfig.h
                      SIGN   0x000000       data     extern C:\MCC18\src\traditional\math\cmath18.asm
                 __FPFLAGS   0x000001       data     extern C:\MCC18\src\traditional\math\cmath18.asm
             __FPFLAGSbits   0x000001       data     extern C:\MCC18\src\traditional\math\cmath18.asm
