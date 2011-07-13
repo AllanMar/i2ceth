@@ -442,7 +442,7 @@
 	// Define which HTTP modules to use
 	// If not using a specific module, comment it to save resources
 	#define HTTP_USE_POST					// Enable POST support
-	#define HTTP_USE_COOKIES				// Enable cookie support
+	//#define HTTP_USE_COOKIES				// Enable cookie support
 	#define HTTP_USE_AUTHENTICATION			// Enable basic authentication support
 
 	//#define HTTP_NO_AUTH_WITHOUT_SSL		// Uncomment to require SSL before requesting a password
