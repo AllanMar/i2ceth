@@ -1,3 +1,4 @@
+#pragma config WDT = OFF, STVR = ON, XINST = OFF, CP0 = OFF, FOSC = HSPLL, FOSC2 = ON, FCMEN = ON, IESO = ON, WDTPS = 32768, ETHLED = ON
 
 /*
  * This macro uniquely defines this file as the main entry point.
