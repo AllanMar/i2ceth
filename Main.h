@@ -1,11 +1,7 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
-#if !defined(THIS_IS_STACK_APPLICATION)
-	extern BYTE AN0String[8];
-#endif
-
-#define SaveAppConfig(a)
+void SaveAppConfig(const APP_CONFIG*);
 
 // Define a header structure for validating the AppConfig data structure in EEPROM/Flash
 typedef struct

@@ -450,7 +450,7 @@
 											// Set to 0x00 to require for all files
 											// Set to 0xff to require for no files
 
-	//#define STACK_USE_HTTP_APP_RECONFIG		// Use the AppConfig web page in the Demo App (~2.5kb ROM, ~0b RAM)
+	#define STACK_USE_HTTP_APP_RECONFIG		// Use the AppConfig web page in the Demo App (~2.5kb ROM, ~0b RAM)
 	//#define STACK_USE_HTTP_MD5_DEMO			// Use the MD5 Demo web page (~5kb ROM, ~160b RAM)
 	//#define STACK_USE_HTTP_EMAIL_DEMO		// Use the e-mail demo web page
 

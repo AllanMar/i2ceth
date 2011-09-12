@@ -89,8 +89,8 @@
 #define LED_GET()			(LED1_IO)
 #define LED_PUT(a)			(LED1_IO = (a))
 
-#define BUTTON0_TRIS		(PRODL)
-#define	BUTTON0_IO			(PRODL)
+#define BUTTON0_TRIS		(TRISFbits.TRISF1)
+#define	BUTTON0_IO			(PORTFbits.RF1)
 #define BUTTON1_TRIS		(PRODL)
 #define	BUTTON1_IO			(PRODL)
 #define BUTTON2_TRIS		(PRODL)
@@ -108,6 +108,20 @@
 #define I2C_SPICON1			(SSP1CON1)
 #define I2C_SPICON1bits		(SSP1CON1bits)
 #define I2C_SPICON2			(SSP1CON2)
+
+//SPI I/O Pins
+#define SW_CS_PIN			(LATEbits.LATE0) //EEPROM
+#define TRIS_SW_CS_PIN		(TRISEbits.TRISE0) //EEPROM
+#define SW_CS2_PIN			(LATDbits.LATD0) //SDCARD
+#define TRIS_SW_CS2_PIN		(TRISDbits.TRISD0) //SDCARD
+#define SW_CS3_PIN			(LATEbits.LATE1) //SRAM
+#define TRIS_SW_CS3_PIN		(TRISEbits.TRISE1) //SRAM
+#define SW_DIN_PIN			(PORTEbits.RE3)
+#define TRIS_SW_DIN_PIN		(TRISEbits.TRISE3)
+#define SW_DOUT_PIN			(LATEbits.LATE5)
+#define TRIS_SW_DOUT_PIN	(TRISEbits.TRISE5)
+#define SW_SCK_PIN			(LATEbits.LATE4)
+#define TRIS_SW_SCK_PIN		(TRISEbits.TRISE4)
 
 
 // ENC28J60 I/O pins

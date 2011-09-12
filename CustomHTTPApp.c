@@ -55,11 +55,14 @@
 
 #include "TCPIPConfig.h"
 #include "BTnic_Comm.h"
+#include "eeprom.h"
 
 #if defined(STACK_USE_HTTP2_SERVER)
 
 #include "TCPIP Stack/TCPIP.h"
 #include "Main.h"		// Needed for SaveAppConfig() prototype
+
+static HTTP_IO_RESULT HTTPPostConfig(void);
 
 // RAM allocated for DDNS parameters
 #if defined(STACK_USE_DYNAMICDNS_CLIENT)
@@ -219,12 +222,203 @@ HTTP_IO_RESULT HTTPExecutePost(void)
 	// Make sure BYTE filename[] above is large enough for your longest name
 	MPFSGetFilename(curHTTP.file, filename, sizeof(filename));
 	
-	if(!memcmppgm2ram(filename, "postfile.ext", 12))
-	{
+#if defined(STACK_USE_HTTP_APP_RECONFIG)
+	if(!memcmppgm2ram(filename, "protect/config.htm", 18))
+		return HTTPPostConfig();
+#endif
 
-	}
 	return HTTP_IO_DONE;
 }
+
+/*****************************************************************************
+  Function:
+	static HTTP_IO_RESULT HTTPPostConfig(void)
+
+  Summary:
+	Processes the configuration form on config/index.htm
+
+  Description:
+	Accepts configuration parameters from the form, saves them to a
+	temporary location in RAM, then eventually saves the data to EEPROM or
+	external Flash.
+	
+	When complete, this function redirects to config/reboot.htm, which will
+	display information on reconnecting to the board.
+
+	This function creates a shadow copy of the AppConfig structure in 
+	RAM and then overwrites incoming data there as it arrives.  For each 
+	name/value pair, the name is first read to curHTTP.data[0:5].  Next, the 
+	value is read to newAppConfig.  Once all data has been read, the new
+	AppConfig is saved back to EEPROM and the browser is redirected to 
+	reboot.htm.  That file includes an AJAX call to reboot.cgi, which 
+	performs the actual reboot of the machine.
+	
+	If an IP address cannot be parsed, too much data is POSTed, or any other 
+	parsing error occurs, the browser reloads config.htm and displays an error 
+	message at the top.
+
+  Precondition:
+	None
+
+  Parameters:
+	None
+
+  Return Values:
+  	HTTP_IO_DONE - all parameters have been processed
+  	HTTP_IO_NEED_DATA - data needed by this function has not yet arrived
+  ***************************************************************************/
+#if defined(STACK_USE_HTTP_APP_RECONFIG)
+static HTTP_IO_RESULT HTTPPostConfig(void)
+{
+	APP_CONFIG newAppConfig;
+	BYTE *ptr;
+	BYTE i;
+
+	// Check to see if the browser is attempting to submit more data than we 
+	// can parse at once.  This function needs to receive all updated 
+	// parameters and validate them all before committing them to memory so that
+	// orphaned configuration parameters do not get written (for example, if a 
+	// static IP address is given, but the subnet mask fails parsing, we 
+	// should not use the static IP address).  Everything needs to be processed 
+	// in a single transaction.  If this is impossible, fail and notify the user.
+	// As a web devloper, if you add parameters to AppConfig and run into this 
+	// problem, you could fix this by to splitting your update web page into two 
+	// seperate web pages (causing two transactional writes).  Alternatively, 
+	// you could fix it by storing a static shadow copy of AppConfig someplace 
+	// in memory and using it instead of newAppConfig.  Lastly, you could 
+	// increase the TCP RX FIFO size for the HTTP server.  This will allow more 
+	// data to be POSTed by the web browser before hitting this limit.
+	if(curHTTP.byteCount > TCPIsGetReady(sktHTTP) + TCPGetRxFIFOFree(sktHTTP))
+		goto ConfigFailure;
+	
+	// Ensure that all data is waiting to be parsed.  If not, keep waiting for 
+	// all of it to arrive.
+	if(TCPIsGetReady(sktHTTP) < curHTTP.byteCount)
+		return HTTP_IO_NEED_DATA;
+	
+	
+	eepromReadBytes((BYTE*)&newAppConfig, EEPROM_MAP_APPCONFIG, sizeof(newAppConfig));
+	
+	// Start out assuming that DHCP is disabled.  This is necessary since the 
+	// browser doesn't submit this field if it is unchecked (meaning zero).  
+	// However, if it is checked, this will be overridden since it will be 
+	// submitted.
+	newAppConfig.Flags.bIsDHCPEnabled = 0;
+
+
+	// Read all browser POST data
+	while(curHTTP.byteCount)
+	{
+		// Read a form field name
+		if(HTTPReadPostName(curHTTP.data, 6) != HTTP_READ_OK)
+			goto ConfigFailure;
+			
+		// Read a form field value
+		if(HTTPReadPostValue(curHTTP.data + 6, sizeof(curHTTP.data)-6-2) != HTTP_READ_OK)
+			goto ConfigFailure;
+			
+		// Parse the value that was read
+		if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"ip"))
+		{// Read new static IP Address
+			if(!StringToIPAddress(curHTTP.data+6, &newAppConfig.MyIPAddr))
+				goto ConfigFailure;
+				
+			newAppConfig.DefaultIPAddr.Val = newAppConfig.MyIPAddr.Val;
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"gw"))
+		{// Read new gateway address
+			if(!StringToIPAddress(curHTTP.data+6, &newAppConfig.MyGateway))
+				goto ConfigFailure;
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"sub"))
+		{// Read new static subnet
+			if(!StringToIPAddress(curHTTP.data+6, &newAppConfig.MyMask))
+				goto ConfigFailure;
+
+			newAppConfig.DefaultMask.Val = newAppConfig.MyMask.Val;
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"dns1"))
+		{// Read new primary DNS server
+			if(!StringToIPAddress(curHTTP.data+6, &newAppConfig.PrimaryDNSServer))
+				goto ConfigFailure;
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"dns2"))
+		{// Read new secondary DNS server
+			if(!StringToIPAddress(curHTTP.data+6, &newAppConfig.SecondaryDNSServer))
+				goto ConfigFailure;
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"mac"))
+		{
+			// Read new MAC address
+			WORD w;
+			BYTE i;
+
+			ptr = curHTTP.data+6;
+
+			for(i = 0; i < 12u; i++)
+			{// Read the MAC address
+				
+				// Skip non-hex bytes
+				while( *ptr != 0x00u && !(*ptr >= '0' && *ptr <= '9') && !(*ptr >= 'A' && *ptr <= 'F') && !(*ptr >= 'a' && *ptr <= 'f') )
+					ptr++;
+
+				// MAC string is over, so zeroize the rest
+				if(*ptr == 0x00u)
+				{
+					for(; i < 12u; i++)
+						curHTTP.data[i] = '0';
+					break;
+				}
+				
+				// Save the MAC byte
+				curHTTP.data[i] = *ptr++;
+			}
+			
+			// Read MAC Address, one byte at a time
+			for(i = 0; i < 6u; i++)
+			{
+				((BYTE*)&w)[1] = curHTTP.data[i*2];
+				((BYTE*)&w)[0] = curHTTP.data[i*2+1];
+				newAppConfig.MyMACAddr.v[i] = hexatob(*((WORD_VAL*)&w));
+			}
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"host"))
+		{// Read new hostname
+			FormatNetBIOSName(&curHTTP.data[6]);
+			memcpy((void*)newAppConfig.NetBIOSName, (void*)curHTTP.data+6, 16);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"dhcp"))
+		{// Read new DHCP Enabled flag
+			if(curHTTP.data[6] == '1')
+				newAppConfig.Flags.bIsDHCPEnabled = 1;
+		}
+	}
+
+
+	// All parsing complete!  Save new settings and force a reboot
+	SaveAppConfig(&newAppConfig);
+	
+	// Set the board to reboot and display reconnecting information
+	strcpypgm2ram((char*)curHTTP.data, "/protect/reboot.htm?");
+	memcpy((void*)(curHTTP.data+20), (void*)newAppConfig.NetBIOSName, 16);
+	curHTTP.data[20+16] = 0x00;	// Force null termination
+	for(i = 20; i < 20u+16u; i++)
+	{
+		if(curHTTP.data[i] == ' ')
+			curHTTP.data[i] = 0x00;
+	}		
+	curHTTP.httpStatus = HTTP_REDIRECT;	
+	
+	return HTTP_IO_DONE;
+
+ConfigFailure:
+	lastFailure = TRUE;
+	strcpypgm2ram((char*)curHTTP.data, "/protect/config.htm");
+	curHTTP.httpStatus = HTTP_REDIRECT;		
+
+	return HTTP_IO_DONE;
+}
+
 
 #endif //(use_post)
 
@@ -327,6 +521,146 @@ void HTTPPrint_BTBuffer(void)
 	while(len && curHTTP.callbackPos)
 	{
 		len -= TCPPut(sktHTTP, BTCommGetBuffer(msgLen - curHTTP.callbackPos));
+		curHTTP.callbackPos--;
+	}
+	return;
+}
+
+extern APP_CONFIG AppConfig;
+
+void HTTPPrintIP(IP_ADDR ip)
+{
+	BYTE digits[4];
+	BYTE i;
+	
+	for(i = 0; i < 4u; i++)
+	{
+		if(i)
+			TCPPut(sktHTTP, '.');
+		uitoa(ip.v[i], digits);
+		TCPPutString(sktHTTP, digits);
+	}
+}
+
+void HTTPPrint_config_hostname(void)
+{
+	TCPPutString(sktHTTP, AppConfig.NetBIOSName);
+	return;
+}
+
+void HTTPPrint_config_dhcpchecked(void)
+{
+	if(AppConfig.Flags.bIsDHCPEnabled)
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"checked");
+	return;
+}
+
+void HTTPPrint_config_ip(void)
+{
+	HTTPPrintIP(AppConfig.MyIPAddr);
+	return;
+}
+
+void HTTPPrint_config_gw(void)
+{
+	HTTPPrintIP(AppConfig.MyGateway);
+	return;
+}
+
+void HTTPPrint_config_subnet(void)
+{
+	HTTPPrintIP(AppConfig.MyMask);
+	return;
+}
+
+void HTTPPrint_config_dns1(void)
+{
+	HTTPPrintIP(AppConfig.PrimaryDNSServer);
+	return;
+}
+
+void HTTPPrint_config_dns2(void)
+{
+	HTTPPrintIP(AppConfig.SecondaryDNSServer);
+	return;
+}
+
+void HTTPPrint_config_mac(void)
+{
+	BYTE i;
+	
+	if(TCPIsPutReady(sktHTTP) < 18u)
+	{//need 17 bytes to write a MAC
+		curHTTP.callbackPos = 0x01;
+		return;
+	}	
+	
+	// Write each byte
+	for(i = 0; i < 6u; i++)
+	{
+		if(i)
+			TCPPut(sktHTTP, ':');
+		TCPPut(sktHTTP, btohexa_high(AppConfig.MyMACAddr.v[i]));
+		TCPPut(sktHTTP, btohexa_low(AppConfig.MyMACAddr.v[i]));
+	}
+	
+	// Indicate that we're done
+	curHTTP.callbackPos = 0x00;
+	return;
+}
+
+void HTTPPrint_reboot(void)
+{
+	// This is not so much a print function, but causes the board to reboot
+	// when the configuration is changed.  If called via an AJAX call, this
+	// will gracefully reset the board and bring it back online immediately
+	Reset();
+}
+
+void HTTPPrint_rebootaddr(void)
+{// This is the expected address of the board upon rebooting
+	TCPPutString(sktHTTP, curHTTP.data);	
+}
+
+void HTTPPrint_status_ok(void)
+{
+	if(lastSuccess)
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"block");
+	else
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"none");
+	lastSuccess = FALSE;
+}
+
+void HTTPPrint_status_fail(void)
+{
+	if(lastFailure)
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"block");
+	else
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"none");
+	lastFailure = FALSE;
+}
+
+void HTTPPrint_EEPCFG(void)
+{
+	WORD len;
+	len = TCPIsPutReady(sktHTTP);
+
+	if(curHTTP.callbackPos == 0u) curHTTP.callbackPos = 256;
+
+	while(len > 5 && curHTTP.callbackPos)
+	{
+		char data;
+		data = eepromReadByte(256 - curHTTP.callbackPos);
+		len -= TCPPut(sktHTTP, btohexa_high(data));
+		len -= TCPPut(sktHTTP, btohexa_low(data));
+
+		if ((curHTTP.callbackPos & 15) == 1) {
+			TCPPutROMString(sktHTTP, (ROM BYTE*)"<br>");
+			len -= 4;
+		} else {
+			TCPPutROMString(sktHTTP, (ROM BYTE*)" ");
+			len--;
+		}
 		curHTTP.callbackPos--;
 	}
 	return;

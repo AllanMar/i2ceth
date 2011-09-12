@@ -27,6 +27,17 @@ void HTTPPrint_BTCommTimer(void);
 void HTTPPrint_TickGet(void);
 void HTTPPrint_BTState(void);
 void HTTPPrint_BTBuffer(void);
+void HTTPPrint_status_fail(void);
+void HTTPPrint_config_mac(void);
+void HTTPPrint_config_hostname(void);
+void HTTPPrint_config_dhcpchecked(void);
+void HTTPPrint_config_ip(void);
+void HTTPPrint_config_gw(void);
+void HTTPPrint_config_subnet(void);
+void HTTPPrint_config_dns1(void);
+void HTTPPrint_config_dns2(void);
+void HTTPPrint_reboot(void);
+void HTTPPrint_EEPCFG(void);
 
 void HTTPPrint(DWORD callbackID)
 {
@@ -58,6 +69,39 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x0000000a:
 			HTTPPrint_BTBuffer();
+			break;
+        case 0x0000000c:
+			HTTPPrint_status_fail();
+			break;
+        case 0x0000000d:
+			HTTPPrint_config_mac();
+			break;
+        case 0x0000000e:
+			HTTPPrint_config_hostname();
+			break;
+        case 0x0000000f:
+			HTTPPrint_config_dhcpchecked();
+			break;
+        case 0x00000010:
+			HTTPPrint_config_ip();
+			break;
+        case 0x00000011:
+			HTTPPrint_config_gw();
+			break;
+        case 0x00000012:
+			HTTPPrint_config_subnet();
+			break;
+        case 0x00000013:
+			HTTPPrint_config_dns1();
+			break;
+        case 0x00000014:
+			HTTPPrint_config_dns2();
+			break;
+        case 0x00000015:
+			HTTPPrint_reboot();
+			break;
+        case 0x00000017:
+			HTTPPrint_EEPCFG();
 			break;
 		default:
 			// Output notification for undefined values

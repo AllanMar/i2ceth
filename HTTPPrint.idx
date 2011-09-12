@@ -9,3 +9,17 @@ BTStatus
 +TickGet
 +BTState
 +BTBuffer
+EEPROMStatus
++status_fail
++config_mac
++config_hostname
++config_dhcpchecked
++config_ip
++config_gw
++config_subnet
++config_dns1
++config_dns2
++reboot
+rebootaddr
++EEPCFG
+TFTP_INFO
