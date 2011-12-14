@@ -21,7 +21,7 @@ EEPROMStatus
 +config_dns2
 +reboot
 rebootaddr
-+EEPCFG
+EEPCFG
 TFTP_INFO
 +Data_CGI
 +config_httpPort
@@ -31,3 +31,9 @@ TFTP_INFO
 +config_pass
 +config_reqauth
 Flash_CGI
+FLASHDUMP
+SRAMDUMP
++MEMDUMP(1)
+MEMDMP(0)
++MEMDUMP(2)
++MEMDUMP(0)

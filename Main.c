@@ -16,6 +16,7 @@
 #include "sw_spi.h"
 #include "eeprom.h"
 #include "dataflash.h"
+#include "sram.h"
 #include <delays.h>
 
 // Declare AppConfig structure and some other supporting stack variables

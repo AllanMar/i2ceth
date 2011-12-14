@@ -57,6 +57,7 @@
 #include "BTnic_Comm.h"
 #include "eeprom.h"
 #include "dataflash.h"
+#include "sram.h"
 
 #if defined(STACK_USE_HTTP2_SERVER)
 
@@ -153,12 +154,12 @@ BYTE HTTPCheckAuth(BYTE* cUser, BYTE* cPass)
 HTTP_IO_RESULT HTTPExecuteGet(void)
 {
 	BYTE *ptr;
-	BYTE filename[20];
+	BYTE filename[21]; //Single folder (8 char) deep, + 1 x "/" + 8 x filename + 1 x "." + 3 x ext
 	int retValue;
 
 	// Load the file name
 	// Make sure BYTE filename[] above is large enough for your longest name
-	MPFSGetFilename(curHTTP.file, filename, 20);
+	MPFSGetFilename(curHTTP.file, filename, 21);
 	
 
 	if(!memcmppgm2ram(filename, "btnic.cgi", 9) || !memcmppgm2ram(filename, "data.cgi", 8))
@@ -196,7 +197,6 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 				return HTTP_IO_WAITING;
 		}
 	} 
-
 	return HTTP_IO_DONE;
 }
 
@@ -653,17 +653,26 @@ void HTTPPrint_status_fail(void)
 	lastFailure = FALSE;
 }
 
-void HTTPPrint_EEPCFG(void)
+void HTTPPrint_MEMDUMP(WORD memType)
 {
 	WORD len;
+	unsigned short long size;
 	len = TCPIsPutReady(sktHTTP);
 
-	if(curHTTP.callbackPos == 0u) curHTTP.callbackPos = 256;
+	if (memType == 0u) size = 256u; //EEPROM 256 Bytes
+	else if (memType == 1u) size = 4194303u; //Flash xxx bytes
+	else if (memType == 2u) size = 32768u; //SRAM xxx bytes
+	else return;
+
+	if(curHTTP.callbackPos == 0u) curHTTP.callbackPos = size;
 
 	while(len > 5 && curHTTP.callbackPos)
 	{
 		char data;
-		data = eepromReadByte(256 - curHTTP.callbackPos);
+		if (memType == 0) data = eepromReadByte(size - curHTTP.callbackPos);
+		else if (memType == 1) data = dataflashReadByte(size - curHTTP.callbackPos);
+		else if (memType == 2) data = sramReadByte(size - curHTTP.callbackPos);
+		
 		len -= TCPPut(sktHTTP, btohexa_high(data));
 		len -= TCPPut(sktHTTP, btohexa_low(data));
 

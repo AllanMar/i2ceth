@@ -37,7 +37,6 @@ void HTTPPrint_config_subnet(void);
 void HTTPPrint_config_dns1(void);
 void HTTPPrint_config_dns2(void);
 void HTTPPrint_reboot(void);
-void HTTPPrint_EEPCFG(void);
 void HTTPPrint_Data_CGI(void);
 void HTTPPrint_config_httpPort(void);
 void HTTPPrint_config_httpsPort(void);
@@ -45,6 +44,7 @@ void HTTPPrint_config_reqhttps(void);
 void HTTPPrint_config_user(void);
 void HTTPPrint_config_pass(void);
 void HTTPPrint_config_reqauth(void);
+void HTTPPrint_MEMDUMP(WORD);
 
 void HTTPPrint(DWORD callbackID)
 {
@@ -107,9 +107,6 @@ void HTTPPrint(DWORD callbackID)
         case 0x00000015:
 			HTTPPrint_reboot();
 			break;
-        case 0x00000017:
-			HTTPPrint_EEPCFG();
-			break;
         case 0x00000019:
 			HTTPPrint_Data_CGI();
 			break;
@@ -130,6 +127,15 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x0000001f:
 			HTTPPrint_config_reqauth();
+			break;
+        case 0x00000023:
+			HTTPPrint_MEMDUMP(1);
+			break;
+        case 0x00000025:
+			HTTPPrint_MEMDUMP(2);
+			break;
+        case 0x00000026:
+			HTTPPrint_MEMDUMP(0);
 			break;
 		default:
 			// Output notification for undefined values
