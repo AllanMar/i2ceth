@@ -56,6 +56,7 @@
 #include "TCPIPConfig.h"
 #include "BTnic_Comm.h"
 #include "eeprom.h"
+#include "dataflash.h"
 
 #if defined(STACK_USE_HTTP2_SERVER)
 
@@ -160,7 +161,7 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 	MPFSGetFilename(curHTTP.file, filename, 20);
 	
 
-	if(!memcmppgm2ram(filename, "btnic.cgi", 9))
+	if(!memcmppgm2ram(filename, "btnic.cgi", 9) || !memcmppgm2ram(filename, "data.cgi", 8))
 	{
 		switch(curHTTP.smPost)
 		{
@@ -465,13 +466,25 @@ void HTTPPrint_BTNic_CGI(void)
 	WORD len;
 	len = TCPIsPutReady(sktHTTP);
 
-	if(curHTTP.callbackPos == 0u) curHTTP.callbackPos = BTCommGetRspLen();
-
-	while(len && curHTTP.callbackPos)
+	if(curHTTP.callbackPos == 0u) 
 	{
-		len -= TCPPut(sktHTTP, BTCommGetRsp());
+		curHTTP.callbackPos = BTCommGetRspLen();
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"[\"");
+		len -= 2;
+	}
+
+	while(len > 5 && curHTTP.callbackPos)
+	{
+		char byteOut = BTCommGetRsp();
+		if (byteOut == '\t') 
+		{
+			TCPPutROMString(sktHTTP, (ROM BYTE*)"\",\"");
+			len -= 3;
+		}
+		else  len -= TCPPut(sktHTTP, byteOut);
 		curHTTP.callbackPos--;
 	}
+	if(curHTTP.callbackPos == 0u) TCPPutROMString(sktHTTP, (ROM BYTE*)"\"]");
 	return;
 }
 
@@ -664,4 +677,73 @@ void HTTPPrint_EEPCFG(void)
 		curHTTP.callbackPos--;
 	}
 	return;
+}
+
+void HTTPPrint_Data_CGI(void){
+	WORD len;
+	len = TCPIsPutReady(sktHTTP);
+	if(curHTTP.callbackPos == 0u) curHTTP.callbackPos = BTCommGetRspCount() * 5 + 2;
+
+	while(curHTTP.callbackPos) {
+		switch (curHTTP.callbackPos - BTCommGetRspLen())
+		{
+			case 5:
+				if (len < 22) return;
+				TCPPutROMString(sktHTTP, (ROM BYTE*)"{\"rsps\":{\"rsp\":{\"ms\":\"");
+				len -= 22;
+				break;
+
+			case 3:
+				if (len < 10) return;
+				TCPPutROMString(sktHTTP, (ROM BYTE*)"rspCode\":\"");
+				len -= 10;
+				break;
+
+			case 1:
+				if (len < 10) return;
+				TCPPutROMString(sktHTTP, (ROM BYTE*)"params\":[\"");
+				len -= 10;
+				break;
+
+			default:
+				if (curHTTP.callbackPos == 0u) 
+				{
+					TCPPutROMString(sktHTTP, (ROM BYTE*)"\"]}}}");
+					return;
+				}
+				else 
+				{
+					if (len < 8) return; //Account for msg terminating bytes
+					{
+						char byteOut;
+						byteOut = BTCommGetRsp();
+						if (byteOut == '\t') {
+							TCPPutROMString(sktHTTP, (ROM BYTE*)"\",\"");
+							len -= 3;
+							if (curHTTP.callbackPos > BTCommGetRspLen() + 1) curHTTP.callbackPos--; //Drop extra count
+						}
+						else  len -= TCPPut(sktHTTP, byteOut);
+					}
+				}
+		}
+		curHTTP.callbackPos--;
+	}
+}
+
+void HTTPPrint_config_httpPort(void){
+}
+
+void HTTPPrint_config_httpsPort(void){
+}
+
+void HTTPPrint_config_reqhttps(void){
+}
+
+void HTTPPrint_config_user(void){
+}
+
+void HTTPPrint_config_pass(void){
+}
+
+void HTTPPrint_config_reqauth(void){
 }

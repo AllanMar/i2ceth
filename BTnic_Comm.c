@@ -125,31 +125,19 @@ void BTCommRX(void)
 				if (BTCommState == BT_COMMSTATE_WAIT)
 				{
 					BTCommSetState(BT_COMMSTATE_RX);
-					BTCommBuffer[BTCommLen++] = '[';
-					BTCommBuffer[BTCommLen++] = '"';
 				}
 				else if (BTCommState == BT_COMMSTATE_IDLE || BTCommState == BT_COMMSTATE_TX)
 				{
 					BTCommSetState(BT_COMMSTATE_ASYNCRX);
-					BTCommBuffer[BTCommLen++] = '[';
-					BTCommBuffer[BTCommLen++] = '"';
 				}
 				if (BTCommState == BT_COMMSTATE_RX || BTCommState == BT_COMMSTATE_ASYNCRX) {
 					unsigned char byteIn = ReadI2C1();
 					switch (byteIn) {
-						case '\t':
-							//End Field/Start New
-							BTCommBuffer[BTCommLen++] = '"';
-							BTCommBuffer[BTCommLen++] = ',';
-							BTCommBuffer[BTCommLen++] = '"';
-							break;
 						case '\n':
 							//Ignore New Line (Workaround: Not getting this on I2C TX so processing on Carriage Return for now)
 							break;
 						case '\r':
 							//End Field & Message
-							BTCommBuffer[BTCommLen++] = '"';
-							BTCommBuffer[BTCommLen++] = ']';
 							if (BTCommState == BT_COMMSTATE_RX) BTCommSetState(BT_COMMSTATE_MSG);
 							else BTCommSetState(BT_COMMSTATE_ASYNCMSG);
 							break;
@@ -200,7 +188,13 @@ void BTCommSetState(char state)
 	if (state == BT_COMMSTATE_IDLE) BTCommLen = BTCommCur = 0;
 }
 
-unsigned int BTCommGetRspLen() { return BTCommLen; }
+unsigned int BTCommGetRspLen() { return BTCommLen - BTCommCur; }
+
+unsigned int BTCommGetRspCount() 
+{ 
+	//Temporary hack. RspCount is 1 or 0 until multi-cmd/rsp support implemented
+	return (BTCommLen > 0 && (BTCommState == BT_COMMSTATE_MSG || BTCommState == BT_COMMSTATE_ASYNCMSG) ? 1 : 0);
+}
 
 char BTCommGetRsp()
 {

@@ -45,6 +45,7 @@ void BTCommRX(void);
 char BTCommGetState(void);
 void BTCommSetState(char);
 unsigned int BTCommGetRspLen(void);
+unsigned int BTCommGetRspCount(void);
 char BTCommGetRsp(void);
 char BTCommGetBuffer(unsigned int);
 unsigned long BTCommGetTimer(void);

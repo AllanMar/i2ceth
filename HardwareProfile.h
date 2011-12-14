@@ -112,8 +112,8 @@
 //SPI I/O Pins
 #define SW_CS_PIN			(LATEbits.LATE0) //EEPROM
 #define TRIS_SW_CS_PIN		(TRISEbits.TRISE0) //EEPROM
-#define SW_CS2_PIN			(LATDbits.LATD0) //SDCARD
-#define TRIS_SW_CS2_PIN		(TRISDbits.TRISD0) //SDCARD
+#define SW_CS2_PIN			(LATBbits.LATB0) //DATAFLASH
+#define TRIS_SW_CS2_PIN		(TRISBbits.TRISB0) //DATAFLASH
 #define SW_CS3_PIN			(LATEbits.LATE1) //SRAM
 #define TRIS_SW_CS3_PIN		(TRISEbits.TRISE1) //SRAM
 #define SW_DIN_PIN			(PORTEbits.RE3)

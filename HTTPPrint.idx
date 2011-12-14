@@ -23,3 +23,11 @@ EEPROMStatus
 rebootaddr
 +EEPCFG
 TFTP_INFO
++Data_CGI
++config_httpPort
++config_httpsPort
++config_reqhttps
++config_user
++config_pass
++config_reqauth
+Flash_CGI
