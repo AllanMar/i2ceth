@@ -157,10 +157,10 @@ static void InitializeBoard(void)
 
 	// configure software SPI
 	TRIS_SW_CS_PIN = 0;		// Make the EEPROM CS pin an output
-	TRIS_SW_CS2_PIN = 0;	// Make the EEPROM CS pin an output
+	TRIS_SW_CS2_PIN = 0;	// Make the DATAFLASH CS pin an output
 	TRIS_SW_CS3_PIN = 0;	// Make the SRAM CS pin an output
 	SW_CS_PIN = 1;			// Pull EEPROM CS HIGH
-	SW_CS2_PIN = 2;			// Pull EEPROM CS HIGH
+	SW_CS2_PIN = 1;			// Pull DATAFLASH CS HIGH
 	SW_CS3_PIN = 1;			// Pull SRAM CS HIGH
 	OpenSWSPI();
 }
