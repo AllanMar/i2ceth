@@ -65,6 +65,7 @@
 #include "Main.h"		// Needed for SaveAppConfig() prototype
 
 static HTTP_IO_RESULT HTTPPostConfig(void);
+static HTTP_IO_RESULT HTTPPostWebConf(void);
 
 // RAM allocated for DDNS parameters
 #if defined(STACK_USE_DYNAMICDNS_CLIENT)
@@ -226,6 +227,8 @@ HTTP_IO_RESULT HTTPExecutePost(void)
 #if defined(STACK_USE_HTTP_APP_RECONFIG)
 	if(!memcmppgm2ram(filename, "protect/config.htm", 18))
 		return HTTPPostConfig();
+	if(!memcmppgm2ram(filename, "protect/webconf.htm", 18))
+		return HTTPPostWebConf();
 #endif
 
 	return HTTP_IO_DONE;
@@ -420,6 +423,12 @@ ConfigFailure:
 	return HTTP_IO_DONE;
 }
 
+static HTTP_IO_RESULT HTTPPostWebConf(void)
+{
+
+	return HTTP_IO_DONE;
+}
+
 
 #endif //(use_post)
 
@@ -427,7 +436,7 @@ ConfigFailure:
 
 void HTTPPrint_BTVer(void)
 {
-	TCPPutROMString(sktHTTP, (ROM void*)"1.0");
+	TCPPutROMString(sktHTTP, (ROM void*)"1.1 Build 944");
 }
 
 void HTTPPrint_BTState(void)

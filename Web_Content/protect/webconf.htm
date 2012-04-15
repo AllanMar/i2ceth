@@ -1,0 +1,34 @@
+<html>
+<head><title>I2C Ethernet Web Configuration</title>
+<body>
+<div id="content">
+
+<h1>I2C Ethernet Web Configuration</h1>
+<p>This page allows the configuration of the OpenTroller I2C Ethernet Adapter web server settings.</p>
+<div class="result fail" style="display:~status_fail~">
+ERROR: A field was unparsable or too much data was POSTed.  Try again.
+</div>
+<p class="error">
+<b>CAUTION:</b> Incorrect settings may cause the board to lose network 
+connectivity.  Recovery options will be provided on the next page.</p>
+<p>Enter the new settings for the board below:</p>
+
+<form method="post" action="/protect/webconf.htm" name="webconf">
+<fieldset>
+<div><label>HTTP Port:</label>
+<input type="text" name="httpPort" value="~config_httpPort~" /></div>
+<div><label>HTTPS Port:</label>
+<input type="text" name="httpsPort" value="~config_httpsPort~" /></div>
+<div><input type="checkbox" name="reqHttps" value="1" ~config_reqhttps~ /> Require HTTPS for Data Requests</div>
+<div>&nbsp;</div>
+
+<div><label>User Name:</label>
+<input type="text" name="user" value="~config_user~" /></div>
+<div><label>Password:</label>
+<input type="text" name="pass" value="~config_pass~" /></div>
+<div><input type="checkbox" name="reqAuth" value="1" ~config_reqauth~ /> Require Authentication for Data Requests</div>
+<div><input type="submit" class="sm" value="Save Config" /></div>
+</fieldset>
+</form>
+</div>
+</body></html>
