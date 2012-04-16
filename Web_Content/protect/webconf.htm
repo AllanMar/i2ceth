@@ -16,18 +16,19 @@ connectivity.  Recovery options will be provided on the next page.</p>
 <form method="post" action="/protect/webconf.htm" name="webconf">
 <fieldset>
 <div><label>HTTP Port:</label>
-<input type="text" name="httpPort" value="~config_httpPort~" /></div>
+<input type="text" name="http" value="~config_httpPort~" /></div>
 <div><label>HTTPS Port:</label>
-<input type="text" name="httpsPort" value="~config_httpsPort~" /></div>
-<div><input type="checkbox" name="reqHttps" value="1" ~config_reqhttps~ /> Require HTTPS for Data Requests</div>
+<input type="text" name="ssl" value="~config_httpsPort~" DISABLED/></div>
 <div>&nbsp;</div>
 
 <div><label>User Name:</label>
 <input type="text" name="user" value="~config_user~" /></div>
 <div><label>Password:</label>
 <input type="text" name="pass" value="~config_pass~" /></div>
-<div><input type="checkbox" name="reqAuth" value="1" ~config_reqauth~ /> Require Authentication for Data Requests</div>
+<div><input type="checkbox" name="reqA" value="1" ~config_reqauth~ /> Require Authentication for Data Requests</div>
+<div><input type="checkbox" name="reqS" value="1" ~config_reqhttps~ DISABLED/> Require HTTPS for Data Requests</div>
 <div><input type="submit" class="sm" value="Save Config" /></div>
+<div><i>Note: HTTPS is not currently available but is expected to be in the next release.</i></div>
 </fieldset>
 </form>
 </div>

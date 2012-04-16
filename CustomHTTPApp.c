@@ -101,6 +101,9 @@ BYTE HTTPNeedsAuth(BYTE* cFile)
 	if(memcmppgm2ram(cFile, (ROM void*)"protect", 7) == 0)
 		return 0x00;		// Authentication will be needed later
 
+	if(WebSrvConfig.Flags.DataRequireAuth && (!memcmppgm2ram(cFile, "btnic.cgi", 9) || !memcmppgm2ram(cFile, "data.cgi", 8)))
+		return 0x00;		// Authentication will be needed later
+
 	#if defined(HTTP_MPFS_UPLOAD_REQUIRES_AUTH)
 	if(memcmppgm2ram(cFile, (ROM void*)"mpfsupload", 10) == 0)
 		return 0x00;
@@ -125,8 +128,8 @@ BYTE HTTPNeedsAuth(BYTE* cFile)
 #if defined(HTTP_USE_AUTHENTICATION)
 BYTE HTTPCheckAuth(BYTE* cUser, BYTE* cPass)
 {
-	if(strcmppgm2ram((char *)cUser,(ROM char *)"btnic") == 0
-		&& strcmppgm2ram((char *)cPass, (ROM char *)"btnic") == 0)
+	if(strcmp((char *)cUser,WebSrvConfig.AuthUser) == 0
+		&& strcmp((char *)cPass, WebSrvConfig.AuthPwd) == 0)
 		return 0x80;		// We accept this combination
 	
 	// You can add additional user/pass combos here.
@@ -425,6 +428,84 @@ ConfigFailure:
 
 static HTTP_IO_RESULT HTTPPostWebConf(void)
 {
+
+	WEBSRV_CONFIG newWebSrvConfig;
+	BYTE *ptr;
+	BYTE i;
+
+	if(curHTTP.byteCount > TCPIsGetReady(sktHTTP) + TCPGetRxFIFOFree(sktHTTP))
+		goto WebConfigFailure;
+	
+	// Ensure that all data is waiting to be parsed.  If not, keep waiting for 
+	// all of it to arrive.
+	if(TCPIsGetReady(sktHTTP) < curHTTP.byteCount)
+		return HTTP_IO_NEED_DATA;
+	
+	eepromReadBytes((BYTE*)&newWebSrvConfig, EEPROM_MAP_WEBSRVCONFIG, sizeof(newWebSrvConfig));
+	
+	// Start out assuming flags are disabled.  This is necessary since the 
+	// browser doesn't submit this field if it is unchecked (meaning zero).  
+	// However, if it is checked, this will be overridden since it will be 
+	// submitted.
+	newWebSrvConfig.Flags.DataRequireHTTPS = 0;
+	newWebSrvConfig.Flags.DataRequireAuth = 0;
+
+	// Read all browser POST data
+	while(curHTTP.byteCount)
+	{
+		// Read a form field name
+		if(HTTPReadPostName(curHTTP.data, 6) != HTTP_READ_OK)
+			goto WebConfigFailure;
+			
+		// Read a form field value
+		if(HTTPReadPostValue(curHTTP.data + 6, sizeof(curHTTP.data)-6-2) != HTTP_READ_OK)
+			goto WebConfigFailure;
+			
+		// Parse the value that was read
+		if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"http"))
+		{
+			newWebSrvConfig.HTTPPort = atol(curHTTP.data + 6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"ssl"))
+		{
+			newWebSrvConfig.HTTPSPort = atol(curHTTP.data + 6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"user"))
+		{
+			strcpy((void*)newWebSrvConfig.AuthUser, (void*)curHTTP.data+6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"pass"))
+		{
+			strcpy((void*)newWebSrvConfig.AuthPwd, (void*)curHTTP.data+6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"reqS"))
+		{
+			if(curHTTP.data[6] == '1')
+				newWebSrvConfig.Flags.DataRequireHTTPS = 1;
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"reqA"))
+		{
+			if(curHTTP.data[6] == '1')
+				newWebSrvConfig.Flags.DataRequireAuth = 1;
+		}
+	}
+
+
+	// All parsing complete!  Save new settings and force a reboot
+	SaveWebSrvConfig(&newWebSrvConfig);
+	
+	// Set the board to reboot and display reconnecting information
+	strcpypgm2ram((char*)curHTTP.data, "/protect/reboot.htm?");
+	curHTTP.data[20] = 0x00;	// Force null termination
+	for(i = 20; i < 20u+16u; i++)
+	curHTTP.httpStatus = HTTP_REDIRECT;	
+	
+	return HTTP_IO_DONE;
+
+WebConfigFailure:
+	lastFailure = TRUE;
+	strcpypgm2ram((char*)curHTTP.data, "/protect/webconf.htm");
+	curHTTP.httpStatus = HTTP_REDIRECT;		
 
 	return HTTP_IO_DONE;
 }
@@ -749,19 +830,35 @@ void HTTPPrint_Data_CGI(void){
 }
 
 void HTTPPrint_config_httpPort(void){
+	BYTE digits[6];
+	uitoa(WebSrvConfig.HTTPPort, digits);
+	TCPPutString(sktHTTP, digits);
 }
 
 void HTTPPrint_config_httpsPort(void){
+	BYTE digits[6];
+	uitoa(WebSrvConfig.HTTPSPort, digits);
+	TCPPutString(sktHTTP, digits);
 }
 
 void HTTPPrint_config_reqhttps(void){
+	if(WebSrvConfig.Flags.DataRequireHTTPS)
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"checked");
+	return;
 }
 
 void HTTPPrint_config_user(void){
+	TCPPutString(sktHTTP, WebSrvConfig.AuthUser);
+	return;
 }
 
 void HTTPPrint_config_pass(void){
+	TCPPutString(sktHTTP, WebSrvConfig.AuthPwd);
+	return;
 }
 
 void HTTPPrint_config_reqauth(void){
+	if(WebSrvConfig.Flags.DataRequireAuth)
+		TCPPutROMString(sktHTTP, (ROM BYTE*)"checked");
+	return;
 }
