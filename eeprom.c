@@ -54,7 +54,7 @@ void eepromWriteByte(char data, unsigned char addr)
 void eepromClear()
 {
 	unsigned char pCount, bCount;
-	for (pCount = 0u; pCount < 12u; pCount++) {
+	for (pCount = 0u; pCount < EEPROM_MAP_END; pCount++) {
 		eepromWREN();
 		eepromEnable();
 		WriteSWSPI( EEPROM_CMD_WRITE );

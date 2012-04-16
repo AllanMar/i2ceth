@@ -517,7 +517,7 @@ WebConfigFailure:
 
 void HTTPPrint_BTVer(void)
 {
-	TCPPutROMString(sktHTTP, (ROM void*)"1.1 Build 946");
+	TCPPutROMString(sktHTTP, (ROM void*)"1.1 Build 947");
 }
 
 void HTTPPrint_BTState(void)
