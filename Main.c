@@ -21,11 +21,14 @@
 
 // Declare AppConfig structure and some other supporting stack variables
 APP_CONFIG AppConfig;
+WEBSRV_CONFIG WebSrvConfig;
 static unsigned short wOriginalAppConfigChecksum;	// Checksum of the ROM defaults for AppConfig
+static unsigned short wOriginalWebSrvConfigChecksum;	// Checksum of the ROM defaults for WebSrvConfig
 
 // Private helper functions.
 // These may or may not be present in all applications.
 static void InitAppConfig(void);
+static void InitWebSrvConfig(void);
 static void InitializeBoard(void);
 
 //
@@ -94,6 +97,7 @@ void main(void)
 
 	// Initialize Stack and application related NV variables into AppConfig.
 	InitAppConfig();
+	InitWebSrvConfig();
 
 	// Initialize core stack layers (MAC, ARP, TCP, UDP) and
 	// application modules (HTTP, SNMP, etc.)
@@ -172,10 +176,10 @@ static void InitAppConfig(void)
 	{
 		NVM_VALIDATION_STRUCT NVMValidationStruct;
 		memset((void*)&AppConfig, 0x00, sizeof(AppConfig));
-		
+
 		AppConfig.Flags.bIsDHCPEnabled = TRUE;
 		AppConfig.Flags.bInConfigMode = TRUE;
-	
+
 		eepromReadBytes((void*)&AppConfig.MyMACAddr, EEPROM_MAP_MACADDR, sizeof(AppConfig.MyMACAddr));
 	
 		AppConfig.MyIPAddr.Val = MY_DEFAULT_IP_ADDR_BYTE1 | MY_DEFAULT_IP_ADDR_BYTE2<<8ul | MY_DEFAULT_IP_ADDR_BYTE3<<16ul | MY_DEFAULT_IP_ADDR_BYTE4<<24ul;
@@ -232,6 +236,62 @@ static void InitAppConfig(void)
 	}
 }
 
+static void InitWebSrvConfig(void)
+{
+	unsigned char vNeedToSaveDefaults = 0;
+	while (1)
+	{
+		NVM_VALIDATION_STRUCT NVMValidationStruct;
+		memset((void*)&WebSrvConfig, 0x00, sizeof(WebSrvConfig));
+		WebSrvConfig.Flags.DataRequireHTTPS = TRUE;
+		WebSrvConfig.Flags.DataRequireAuth = TRUE;
+
+		memcpypgm2ram(WebSrvConfig.AuthUser, (ROM void*)WEBSRV_DEFAULTUSER, 16);
+		memcpypgm2ram(WebSrvConfig.AuthPwd, (ROM void*)WEBSRV_DEFAULTPWD, 16);
+		WebSrvConfig.HTTPPort = WEBSRV_DEFAULTHTTP;
+		WebSrvConfig.HTTPSPort = WEBSRV_DEFAULTHTTPS;
+
+		// Compute the checksum of the AppConfig defaults as loaded from ROM
+		wOriginalWebSrvConfigChecksum = CalcIPChecksum((BYTE*)&WebSrvConfig, sizeof(WebSrvConfig));
+
+		// Check to see if we have a flag set indicating that we need to 
+		// save the ROM default AppConfig values.
+		if(vNeedToSaveDefaults) SaveWebSrvConfig(&WebSrvConfig);
+
+
+		// Read the NVMValidation record and AppConfig struct out of EEPROM/Flash
+		eepromReadBytes((void*)&NVMValidationStruct, EEPROM_MAP_WEBSRVVALID, sizeof(NVMValidationStruct));
+		eepromReadBytes((void*)&WebSrvConfig, EEPROM_MAP_WEBSRVCONFIG, sizeof(WebSrvConfig));
+
+		// Check EEPROM/Flash validitity.  If it isn't valid, set a flag so 
+		// that we will save the ROM default values on the next loop 
+		// iteration.
+		if((NVMValidationStruct.wConfigurationLength != sizeof(WebSrvConfig)) ||
+		   (NVMValidationStruct.wOriginalChecksum != wOriginalWebSrvConfigChecksum) ||
+		   (NVMValidationStruct.wCurrentChecksum != CalcIPChecksum((BYTE*)&WebSrvConfig, sizeof(WebSrvConfig))))
+		{
+			// Check to ensure that the vNeedToSaveDefaults flag is zero, 
+			// indicating that this is the first iteration through the do 
+			// loop.  If we have already saved the defaults once and the 
+			// EEPROM/Flash still doesn't pass the validity check, then it 
+			// means we aren't successfully reading or writing to the 
+			// EEPROM/Flash.  This means you have a hardware error and/or 
+			// SPI configuration error.
+			if(vNeedToSaveDefaults) while(1);
+			
+			// Set flag and restart loop to load ROM defaults and save them
+			vNeedToSaveDefaults = 1;
+			continue;
+		}
+		
+		// If we get down here, it means the EEPROM/Flash has valid contents 
+		// and either matches the ROM defaults or previously matched and 
+		// was run-time reconfigured by the user.  In this case, we shall 
+		// use the contents loaded from EEPROM/Flash.
+		break;
+
+	}
+}
 
 void SaveAppConfig(const APP_CONFIG *ptrAppConfig)
 {
@@ -247,4 +307,20 @@ void SaveAppConfig(const APP_CONFIG *ptrAppConfig)
 	// Write the validation struct and current AppConfig contents to EEPROM/Flash
 	eepromWriteBytes((void*)&NVMValidationStruct, EEPROM_MAP_NVMVALID, sizeof(NVMValidationStruct));
 	eepromWriteBytes((void*)ptrAppConfig, EEPROM_MAP_APPCONFIG, sizeof(APP_CONFIG));
+}
+
+void SaveWebSrvConfig(const WEBSRV_CONFIG *ptrWebSrvConfig)
+{
+	char count;
+	NVM_VALIDATION_STRUCT NVMValidationStruct;
+
+	// Get proper values for the validation structure indicating that we can use 
+	// these EEPROM/Flash contents on future boot ups
+	NVMValidationStruct.wOriginalChecksum = wOriginalWebSrvConfigChecksum;
+	NVMValidationStruct.wCurrentChecksum = CalcIPChecksum((BYTE*)ptrWebSrvConfig, sizeof(WEBSRV_CONFIG));
+	NVMValidationStruct.wConfigurationLength = sizeof(WEBSRV_CONFIG);
+
+	// Write the validation struct and current WebSrvConfig contents to EEPROM/Flash
+	eepromWriteBytes((void*)&NVMValidationStruct, EEPROM_MAP_WEBSRVVALID, sizeof(NVMValidationStruct));
+	eepromWriteBytes((void*)ptrWebSrvConfig, EEPROM_MAP_WEBSRVCONFIG, sizeof(WEBSRV_CONFIG));
 }
