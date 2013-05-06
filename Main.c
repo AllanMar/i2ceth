@@ -1,4 +1,4 @@
-#pragma config WDT = OFF, STVR = ON, XINST = OFF, CP0 = OFF, FOSC = HSPLL, FOSC2 = ON, FCMEN = ON, IESO = ON, WDTPS = 32768, ETHLED = ON
+#pragma config WDT = OFF, STVR = ON, XINST = OFF, CP0 = OFF, FOSC = HSPLL, FOSC2 = ON, FCMEN = ON, IESO = ON, WDTPS = 512, ETHLED = ON
 
 /*
  * This macro uniquely defines this file as the main entry point.
@@ -103,8 +103,9 @@ void main(void)
 	// application modules (HTTP, SNMP, etc.)
     StackInit();
 	BTCommInit();
-
-    while(1)
+	WDTCONbits.SWDTEN = 1; //enable watchdog timer
+    
+	while(1)
     {
         if(TickGet() - t >= TICK_SECOND/4ul)
         {
@@ -127,6 +128,7 @@ void main(void)
 
         // This tasks invokes each of the core stack application tasks
         StackApplications();
+		ClrWdt();
 	}
 }
 
