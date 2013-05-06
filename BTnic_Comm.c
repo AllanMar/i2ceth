@@ -173,7 +173,7 @@ char BTCommGetState()
 	else if (BTCommState == BT_COMMSTATE_RX) timeout = BT_TIMEOUT_RX;
 	else if (BTCommState == BT_COMMSTATE_MSG) timeout = BT_TIMEOUT_MSG;
 
-	if (timeout && TickGet() - BTCommTimer > (timeout * (TICK_SECOND / 1000))) BTCommSetState(BT_COMMSTATE_IDLE);
+	if (timeout && TickGet() - BTCommTimer > (timeout * (TICK_SECOND / 1000))) BTCommInit(); //Reset state and I2C Bus
 
 	//TO DO: ASYNCMSG Processing
 	if (BTCommState == BT_COMMSTATE_ASYNCMSG) BTCommSetState(BT_COMMSTATE_IDLE);

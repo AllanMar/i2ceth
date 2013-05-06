@@ -34,10 +34,10 @@
 #define SM_BTNIC_TX_RETRY		1
 #define SM_BTNIC_WAIT_FOR_RESP	2
 
-#define BT_TIMEOUT_TX 	5000 //ms
-#define BT_TIMEOUT_WAIT 20000 //ms
-#define BT_TIMEOUT_RX 	20000 //ms
-#define BT_TIMEOUT_MSG	5000 //ms
+#define BT_TIMEOUT_TX 	500 //ms
+#define BT_TIMEOUT_WAIT 500 //ms
+#define BT_TIMEOUT_RX 	500 //ms
+#define BT_TIMEOUT_MSG	500 //ms
 
 void BTCommInit(void);
 int BTCommTX(char*);
