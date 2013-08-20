@@ -172,17 +172,7 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 		{
 			case SM_BTNIC_START:
 				if (BTCommGetState() != BT_COMMSTATE_IDLE) return HTTP_IO_WAITING;
-				curHTTP.smPost = SM_BTNIC_TX_RETRY;
-
-			case SM_BTNIC_TX_RETRY:
-				retValue = BTCommTX(curHTTP.data);
-				//If idle here then TX timeout occurred
-				if (BTCommGetState() == BT_COMMSTATE_IDLE) 
-				{
-					BTCommSetRsp("TX TIMEOUT");
-					return HTTP_IO_DONE;
-				}
-				if (retValue != 0) return HTTP_IO_WAITING;
+				retValue = BTCommRequest(curHTTP.data);
 				curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
 				
 			case SM_BTNIC_WAIT_FOR_RESP:
@@ -517,7 +507,7 @@ WebConfigFailure:
 
 void HTTPPrint_BTVer(void)
 {
-	TCPPutROMString(sktHTTP, (ROM void*)"1.2 Build 0");
+	TCPPutROMString(sktHTTP, (ROM void*)"2.0 Build 0");
 }
 
 void HTTPPrint_BTState(void)
@@ -526,6 +516,9 @@ void HTTPPrint_BTState(void)
 	{
 		case BT_COMMSTATE_IDLE:
 			TCPPutROMString(sktHTTP, (ROM void*)"IDLE");
+			break;
+		case BT_COMMSTATE_TXREADY:
+			TCPPutROMString(sktHTTP, (ROM void*)"TXREADY");
 			break;
 		case BT_COMMSTATE_TX:
 			TCPPutROMString(sktHTTP, (ROM void*)"TX");
