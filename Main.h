@@ -21,7 +21,8 @@ typedef struct
 	BYTE	AuthPwd[16];
 	struct
 	{
-		unsigned char : 6;
+		unsigned char : 5;
+		unsigned char DebugMode : 1;		
 		unsigned char DataRequireHTTPS : 1;
 		unsigned char DataRequireAuth : 1;
 	} Flags;

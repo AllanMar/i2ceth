@@ -48,7 +48,10 @@ void LowISR(void)
 #pragma interruptlow HighISR
 void HighISR(void)
 {
-	if (PIR1bits.SSP1IF) BTCommRX();
+	if (PIR1bits.SSP1IF) {
+		BTCommRX();
+		PIR1bits.SSP1IF = 0; //Clear SSPIF Interrupt Flag
+	}
 }
 
 #pragma code lowVector=0x18
@@ -102,7 +105,7 @@ void main(void)
 	// Initialize core stack layers (MAC, ARP, TCP, UDP) and
 	// application modules (HTTP, SNMP, etc.)
     StackInit();
-	BTCommInit();
+	BTCommInit(WebSrvConfig.Flags.DebugMode);
 	WDTCONbits.SWDTEN = 1; //enable watchdog timer
     
 	while(1)
@@ -245,6 +248,7 @@ static void InitWebSrvConfig(void)
 	{
 		NVM_VALIDATION_STRUCT NVMValidationStruct;
 		memset((void*)&WebSrvConfig, 0x00, sizeof(WebSrvConfig));
+		WebSrvConfig.Flags.DebugMode = FALSE;
 		WebSrvConfig.Flags.DataRequireHTTPS = TRUE;
 		WebSrvConfig.Flags.DataRequireAuth = TRUE;
 

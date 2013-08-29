@@ -26,7 +26,6 @@ void HTTPPrint_SSP1STAT(void);
 void HTTPPrint_BTCommTimer(void);
 void HTTPPrint_TickGet(void);
 void HTTPPrint_BTState(void);
-void HTTPPrint_BTBuffer(void);
 void HTTPPrint_status_fail(void);
 void HTTPPrint_config_mac(void);
 void HTTPPrint_config_hostname(void);
@@ -37,14 +36,17 @@ void HTTPPrint_config_subnet(void);
 void HTTPPrint_config_dns1(void);
 void HTTPPrint_config_dns2(void);
 void HTTPPrint_reboot(void);
-void HTTPPrint_Data_CGI(void);
 void HTTPPrint_config_httpPort(void);
 void HTTPPrint_config_httpsPort(void);
-void HTTPPrint_config_reqhttps(void);
 void HTTPPrint_config_user(void);
 void HTTPPrint_config_pass(void);
 void HTTPPrint_config_reqauth(void);
 void HTTPPrint_MEMDUMP(WORD);
+void HTTPPrint_BTRequestBuffer(void);
+void HTTPPrint_BTResponseBuffer(void);
+void HTTPPrint_BTRequestLen(void);
+void HTTPPrint_BTResponseLen(void);
+void HTTPPrint_config_debugMode(void);
 
 void HTTPPrint(DWORD callbackID)
 {
@@ -73,9 +75,6 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x00000009:
 			HTTPPrint_BTState();
-			break;
-        case 0x0000000a:
-			HTTPPrint_BTBuffer();
 			break;
         case 0x0000000c:
 			HTTPPrint_status_fail();
@@ -107,17 +106,11 @@ void HTTPPrint(DWORD callbackID)
         case 0x00000015:
 			HTTPPrint_reboot();
 			break;
-        case 0x00000019:
-			HTTPPrint_Data_CGI();
-			break;
         case 0x0000001a:
 			HTTPPrint_config_httpPort();
 			break;
         case 0x0000001b:
 			HTTPPrint_config_httpsPort();
-			break;
-        case 0x0000001c:
-			HTTPPrint_config_reqhttps();
 			break;
         case 0x0000001d:
 			HTTPPrint_config_user();
@@ -136,6 +129,21 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x00000026:
 			HTTPPrint_MEMDUMP(0);
+			break;
+        case 0x00000027:
+			HTTPPrint_BTRequestBuffer();
+			break;
+        case 0x00000028:
+			HTTPPrint_BTResponseBuffer();
+			break;
+        case 0x00000029:
+			HTTPPrint_BTRequestLen();
+			break;
+        case 0x0000002a:
+			HTTPPrint_BTResponseLen();
+			break;
+        case 0x0000002b:
+			HTTPPrint_config_debugMode();
 			break;
 		default:
 			// Output notification for undefined values

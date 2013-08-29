@@ -2,11 +2,15 @@
 <head><title>BrewTroller Communication Diagnostics</title><body>
 <h1>BrewTroller Communication Diagnostics</h1>
 <h2>BTComm Status</h2>
+<form method="post" action="/protect/btcom.htm" name="btcom">
+<div><input type="submit" class="sm" name = "rst" value="Reset" /><input type="submit" class="sm" value="Refresh" /></div>
+</form>
 <ul>
 <li>State: ~BTState~</li>
 <li>BTCommTimer(ms): ~BTCommTimer~</li>
 <li>Tick(ms): ~TickGet~</li>
-<li>Buffer: ~BTBuffer~</li>
+<li>Request Buffer (~BTRequestLen~ Chars): ~BTRequestBuffer~</li>
+<li>Response Buffer (~BTResponseLen~ Chars): ~BTResponseBuffer~</li>
 </ul>
 
 <h2>I2C Status</h2>

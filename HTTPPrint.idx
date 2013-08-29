@@ -8,7 +8,7 @@ BTStatus
 +BTCommTimer
 +TickGet
 +BTState
-+BTBuffer
+BTBuffer
 EEPROMStatus
 +status_fail
 +config_mac
@@ -23,10 +23,10 @@ EEPROMStatus
 rebootaddr
 EEPCFG
 TFTP_INFO
-+Data_CGI
+Data_CGI
 +config_httpPort
 +config_httpsPort
-+config_reqhttps
+config_reqhttps
 +config_user
 +config_pass
 +config_reqauth
@@ -37,3 +37,8 @@ SRAMDUMP
 MEMDMP(0)
 +MEMDUMP(2)
 +MEMDUMP(0)
++BTRequestBuffer
++BTResponseBuffer
++BTRequestLen
++BTResponseLen
++config_debugMode
