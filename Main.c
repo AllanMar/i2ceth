@@ -12,7 +12,6 @@
 
 // Include functions specific to this stack application
 #include "Main.h"
-#include "BTnic_Comm.h"
 #include "sw_spi.h"
 #include "eeprom.h"
 #include "dataflash.h"
@@ -105,7 +104,7 @@ void main(void)
 	// Initialize core stack layers (MAC, ARP, TCP, UDP) and
 	// application modules (HTTP, SNMP, etc.)
     StackInit();
-	BTCommInit(WebSrvConfig.Flags.DebugMode);
+	BTCommInit();
 	WDTCONbits.SWDTEN = 1; //enable watchdog timer
     
 	while(1)
@@ -248,7 +247,6 @@ static void InitWebSrvConfig(void)
 	{
 		NVM_VALIDATION_STRUCT NVMValidationStruct;
 		memset((void*)&WebSrvConfig, 0x00, sizeof(WebSrvConfig));
-		WebSrvConfig.Flags.DebugMode = FALSE;
 		WebSrvConfig.Flags.DataRequireHTTPS = TRUE;
 		WebSrvConfig.Flags.DataRequireAuth = TRUE;
 
@@ -256,6 +254,14 @@ static void InitWebSrvConfig(void)
 		memcpypgm2ram(WebSrvConfig.AuthPwd, (ROM void*)WEBSRV_DEFAULTPWD, 16);
 		WebSrvConfig.HTTPPort = WEBSRV_DEFAULTHTTP;
 		WebSrvConfig.HTTPSPort = WEBSRV_DEFAULTHTTPS;
+
+		WebSrvConfig.StateTimeout[COMMSTATE_IDLE] = 0;
+		WebSrvConfig.StateTimeout[COMMSTATE_BUFFERING] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_TXREADY] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_TX] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_WAIT] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_RX] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_MSG] = 500;
 
 		// Compute the checksum of the AppConfig defaults as loaded from ROM
 		wOriginalWebSrvConfigChecksum = CalcIPChecksum((BYTE*)&WebSrvConfig, sizeof(WebSrvConfig));

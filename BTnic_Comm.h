@@ -32,35 +32,28 @@
 #define BT_BUFFER_RESPONSE	0
 #define BT_BUFFER_REQUEST 	1
 
-#define BT_COMMSTATE_IDLE		0 //Connection available
-#define BT_COMMSTATE_BUFFERING	1 //Lock buffer for use
-#define BT_COMMSTATE_TXREADY	2 //Request in buffer
-#define BT_COMMSTATE_TX			3 //Sending request
-#define BT_COMMSTATE_WAIT		4 //Waiting for response
-#define BT_COMMSTATE_RX			5 //Receiving response
-#define BT_COMMSTATE_MSG		6 //Response in buffer
-#define BT_COMMSTATE_ASYNCRX	7 //Receiving unsolicited message
-#define BT_COMMSTATE_ASYNCMSG	8 //Unsolicited message in buffer
+enum CommunicationState {
+	COMMSTATE_IDLE,			//Ready for connection
+	COMMSTATE_BUFFERING,	//Lock buffer for use
+	COMMSTATE_TXREADY,		//Request in buffer
+	COMMSTATE_TX,			//Sending request
+	COMMSTATE_WAIT,			//Waiting for response
+	COMMSTATE_RX,			//Receiving response
+	COMMSTATE_MSG,			//Response in buffer
+	NUM_COMMSTATES
+};
 
 #define SM_BTNIC_START			0
 #define SM_BTNIC_TX_RETRY		1
 #define SM_BTNIC_WAIT_FOR_RESP	2
 
-#define BT_TIMEOUT_BUFFERING	500 //ms
-#define BT_TIMEOUT_TXREADY 		1500 //ms
-#define BT_TIMEOUT_TX 			500 //ms
-#define BT_TIMEOUT_WAIT 		1500 //ms
-#define BT_TIMEOUT_RX 			500 //ms
-#define BT_TIMEOUT_MSG			500 //ms
-
-void BTCommInit(unsigned char);
+void BTCommInit(void);
 int BTCommRequest(char*);
 void BTCommRX(void);
 char BTCommGetState(void);
 void BTCommSetState(char);
 unsigned int BTCommGetRspLen(void);
 unsigned int BTCommGetReqLen(void);
-unsigned int BTCommGetRspCount(void);
 char BTCommGetRsp(void);
 char BTCommGetRspBuffer(unsigned int);
 char BTCommGetReqBuffer(unsigned int);

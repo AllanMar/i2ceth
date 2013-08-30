@@ -174,16 +174,16 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 			default: 
 				curHTTP.smPost = SM_BTNIC_START;
 			case SM_BTNIC_START:
-				if (BTCommGetState() != BT_COMMSTATE_IDLE) return HTTP_IO_WAITING;
+				if (BTCommGetState() != COMMSTATE_IDLE) return HTTP_IO_WAITING;
 				if (BTCommRequest(curHTTP.data)) return HTTP_IO_WAITING;
 				curHTTP.smPost = SM_BTNIC_WAIT_FOR_RESP;
 				
 			case SM_BTNIC_WAIT_FOR_RESP:
 				switch (BTCommGetState())
 				{
-					case BT_COMMSTATE_MSG:
+					case COMMSTATE_MSG:
 						return HTTP_IO_DONE;
-					case BT_COMMSTATE_IDLE:
+					case COMMSTATE_IDLE:
 						//BTCommSetRsp("WAIT TIMEOUT");
 						return HTTP_IO_DONE;
 					default:
@@ -438,7 +438,6 @@ static HTTP_IO_RESULT HTTPPostWebConf(void)
 	// browser doesn't submit this field if it is unchecked (meaning zero).  
 	// However, if it is checked, this will be overridden since it will be 
 	// submitted.
-	newWebSrvConfig.Flags.DebugMode = 0;
 	newWebSrvConfig.Flags.DataRequireHTTPS = 0;
 	newWebSrvConfig.Flags.DataRequireAuth = 0;
 
@@ -470,11 +469,6 @@ static HTTP_IO_RESULT HTTPPostWebConf(void)
 		{
 			strcpy((void*)newWebSrvConfig.AuthPwd, (void*)curHTTP.data+6);
 		}
-		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"dbg"))
-		{
-			if(curHTTP.data[6] == '1')
-				newWebSrvConfig.Flags.DebugMode = 1;
-		}
 		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"reqS"))
 		{
 			if(curHTTP.data[6] == '1')
@@ -484,6 +478,35 @@ static HTTP_IO_RESULT HTTPPostWebConf(void)
 		{
 			if(curHTTP.data[6] == '1')
 				newWebSrvConfig.Flags.DataRequireAuth = 1;
+		}
+//Timeout on Idle is not supported
+/*		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"idle"))
+		{
+			newWebSrvConfig.StateTimeout[COMMSTATE_IDLE] = atol(curHTTP.data + 6);
+		} */
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"buff"))
+		{
+			newWebSrvConfig.StateTimeout[COMMSTATE_BUFFERING] = atol(curHTTP.data + 6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"txr"))
+		{
+			newWebSrvConfig.StateTimeout[COMMSTATE_TXREADY] = atol(curHTTP.data + 6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"tx"))
+		{
+			newWebSrvConfig.StateTimeout[COMMSTATE_TX] = atol(curHTTP.data + 6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"wait"))
+		{
+			newWebSrvConfig.StateTimeout[COMMSTATE_WAIT] = atol(curHTTP.data + 6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"rx"))
+		{
+			newWebSrvConfig.StateTimeout[COMMSTATE_RX] = atol(curHTTP.data + 6);
+		}
+		else if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"msg"))
+		{
+			newWebSrvConfig.StateTimeout[COMMSTATE_MSG] = atol(curHTTP.data + 6);
 		}
 	}
 
@@ -528,7 +551,7 @@ static HTTP_IO_RESULT HTTPPostBTCom(void)
 		// Parse the value that was read
 		if(!strcmppgm2ram((char*)curHTTP.data, (ROM char*)"rst"))
 		{
-			BTCommInit(WebSrvConfig.Flags.DebugMode);
+			BTCommInit();
 		}
 	}
 	return HTTP_IO_DONE;
@@ -548,32 +571,26 @@ void HTTPPrint_BTState(void)
 {
 	switch (BTCommGetState())
 	{
-		case BT_COMMSTATE_IDLE:
+		case COMMSTATE_IDLE:
 			TCPPutROMString(sktHTTP, (ROM void*)"IDLE");
 			break;
-		case BT_COMMSTATE_BUFFERING:
+		case COMMSTATE_BUFFERING:
 			TCPPutROMString(sktHTTP, (ROM void*)"BUFFERING");
 			break;
-		case BT_COMMSTATE_TXREADY:
+		case COMMSTATE_TXREADY:
 			TCPPutROMString(sktHTTP, (ROM void*)"TXREADY");
 			break;
-		case BT_COMMSTATE_TX:
+		case COMMSTATE_TX:
 			TCPPutROMString(sktHTTP, (ROM void*)"TX");
 			break;
-		case BT_COMMSTATE_WAIT:
+		case COMMSTATE_WAIT:
 			TCPPutROMString(sktHTTP, (ROM void*)"WAIT");
 			break;
-		case BT_COMMSTATE_RX:
+		case COMMSTATE_RX:
 			TCPPutROMString(sktHTTP, (ROM void*)"RX");
 			break;
-		case BT_COMMSTATE_MSG:
+		case COMMSTATE_MSG:
 			TCPPutROMString(sktHTTP, (ROM void*)"MSG");
-			break;
-		case BT_COMMSTATE_ASYNCRX:
-			TCPPutROMString(sktHTTP, (ROM void*)"ASYNCRX");
-			break;
-		case BT_COMMSTATE_ASYNCMSG:
-			TCPPutROMString(sktHTTP, (ROM void*)"ASYNCMSG");
 			break;
 		default:
 			TCPPutROMString(sktHTTP, (ROM void*)"UNDEFINED");
@@ -608,25 +625,124 @@ void HTTPPrint_BTNic_CGI(void)
 	return;
 }
 
-void HTTPPrint_SSP1CON1(void)
+void HTTPPrint_SSP1CON1_WCOL(void)
 {
-	unsigned char string[9];
-	itoa(SSP1CON1, string);
-	TCPPutString(sktHTTP, string);
+	TCPPut(sktHTTP, SSP1CON1bits.WCOL ? '1' : '0');
 }
 
-void HTTPPrint_SSP1CON2(void)
+void HTTPPrint_SSP1CON1_SSPOV(void)
 {
-	unsigned char string[9];
-	itoa(SSP1CON2, string);
-	TCPPutString(sktHTTP, string);
+	TCPPut(sktHTTP, SSP1CON1bits.SSPOV ? '1' : '0');
 }
 
-void HTTPPrint_SSP1STAT(void)
+void HTTPPrint_SSP1CON1_SSPEN(void)
 {
-	unsigned char string[9];
-	itoa(SSP1STAT, string);
-	TCPPutString(sktHTTP, string);
+	TCPPut(sktHTTP, SSP1CON1bits.SSPEN ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON1_CKP(void)
+{
+	TCPPut(sktHTTP, SSP1CON1bits.CKP ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON1_SSPM3(void)
+{
+	TCPPut(sktHTTP, SSP1CON1bits.SSPM3 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON1_SSPM2(void)
+{
+	TCPPut(sktHTTP, SSP1CON1bits.SSPM2 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON1_SSPM1(void)
+{
+	TCPPut(sktHTTP, SSP1CON1bits.SSPM1 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON1_SSPM0(void)
+{
+	TCPPut(sktHTTP, SSP1CON1bits.SSPM0 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_GCEN(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.GCEN ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_ACKSTAT(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.ACKSTAT ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_ADMSK5(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.ADMSK5 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_ADMSK4(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.ADMSK4 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_ADMSK3(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.ADMSK3 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_ADMSK2(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.ADMSK2 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_ADMSK1(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.ADMSK1 ? '1' : '0');
+}
+
+void HTTPPrint_SSP1CON2_SEN(void)
+{
+	TCPPut(sktHTTP, SSP1CON2bits.SEN ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_SMP(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.SMP ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_CKE(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.CKE ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_P(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.P ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_S(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.S ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_UA(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.UA ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_BF(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.BF ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_DA(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.D_A ? '1' : '0');
+}
+
+void HTTPPrint_SSP1STAT_RW(void)
+{
+	TCPPut(sktHTTP, SSP1STATbits.R_W ? '1' : '0');
 }
 
 void HTTPPrint_BTCommTimer(void)
@@ -770,6 +886,56 @@ void HTTPPrint_config_mac(void)
 	return;
 }
 
+void HTTPPrint_config_stateTimeIdle(void)
+{
+	unsigned char string[20];
+	ultoa(WebSrvConfig.StateTimeout[COMMSTATE_IDLE], string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_config_stateTimeBuffering(void)
+{
+	unsigned char string[20];
+	ultoa(WebSrvConfig.StateTimeout[COMMSTATE_BUFFERING], string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_config_stateTimeTXReady(void)
+{
+	unsigned char string[20];
+	ultoa(WebSrvConfig.StateTimeout[COMMSTATE_TXREADY], string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_config_stateTimeTX(void)
+{
+	unsigned char string[20];
+	ultoa(WebSrvConfig.StateTimeout[COMMSTATE_TX], string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_config_stateTimeWait(void)
+{
+	unsigned char string[20];
+	ultoa(WebSrvConfig.StateTimeout[COMMSTATE_WAIT], string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_config_stateTimeRX(void)
+{
+	unsigned char string[20];
+	ultoa(WebSrvConfig.StateTimeout[COMMSTATE_RX], string);
+	TCPPutString(sktHTTP, string);
+}
+
+void HTTPPrint_config_stateTimeMsg(void)
+{
+	unsigned char string[20];
+	ultoa(WebSrvConfig.StateTimeout[COMMSTATE_MSG], string);
+	TCPPutString(sktHTTP, string);
+}
+
+
 void HTTPPrint_reboot(void)
 {
 	// This is not so much a print function, but causes the board to reboot
@@ -870,8 +1036,3 @@ void HTTPPrint_config_reqauth(void){
 	return;
 }
 
-void HTTPPrint_config_debugMode(void){
-	if(WebSrvConfig.Flags.DebugMode)
-		TCPPutROMString(sktHTTP, (ROM BYTE*)"checked");
-	return;
-}

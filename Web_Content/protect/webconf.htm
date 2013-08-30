@@ -26,7 +26,23 @@ connectivity.  Recovery options will be provided on the next page.</p>
 <div><label>Password:</label>
 <input type="text" name="pass" value="~config_pass~" /></div>
 <div><input type="checkbox" name="reqA" value="1" ~config_reqauth~ /> Require Authentication for Data Requests</div>
-<div><input type="checkbox" name="dbg" value="1" ~config_debugMode~ /> Debug Mode</div>
+<h3>State Timeouts</h3>
+<p>Maximum time allowed in state before forcing reset to IDLE state. A value of zero disables timeout for that state and require reset via Communications Diagnostics page.</p>
+<div><label>IDLE:</label>
+<input type="text" name="idle" value="~config_stateTimeIdle~" disabled/></div>
+<div><label>BUFFERING:</label>
+<input type="text" name="buff" value="~config_stateTimeBuffering~" /></div>
+<div><label>TXREADY:</label>
+<input type="text" name="txr" value="~config_stateTimeTXReady~" /></div>
+<div><label>TX:</label>
+<input type="text" name="tx" value="~config_stateTimeTX~" /></div>
+<div><label>WAIT:</label>
+<input type="text" name="wait" value="~config_stateTimeWait~" /></div>
+<div><label>RX:</label>
+<input type="text" name="rx" value="~config_stateTimeRX~" /></div>
+<div><label>MSG:</label>
+<input type="text" name="msg" value="~config_stateTimeMsg~" /></div>
+
 <div><input type="submit" class="sm" value="Save Config" /></div>
 </fieldset>
 </form>
