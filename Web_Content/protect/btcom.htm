@@ -2,17 +2,34 @@
 <head><title>BrewTroller Communication Diagnostics</title><body>
 <h1>BrewTroller Communication Diagnostics</h1>
 <h2>BTComm Status</h2>
+<form method="post" action="/protect/btcom.htm" name="btcom">
+<div><input type="submit" class="sm" name = "rst" value="Reset" /><input type="submit" class="sm" value="Refresh" /></div>
+</form>
 <ul>
 <li>State: ~BTState~</li>
 <li>BTCommTimer(ms): ~BTCommTimer~</li>
 <li>Tick(ms): ~TickGet~</li>
-<li>Buffer: ~BTBuffer~</li>
+<li>Request Buffer (~BTRequestLen~ Chars): ~BTRequestBuffer~</li>
+<li>Response Buffer (~BTResponseLen~ Chars): ~BTResponseBuffer~</li>
 </ul>
 
 <h2>I2C Status</h2>
-<ul>
-<li>SSP1CON1: ~SSP1CON1~</li>
-<li>SSP1CON2: ~SSP1CON2~</li>
-<li>SSP1STAT: ~SSP1STAT~</li>
-</ul>
+<table border=1>
+<tr><th colspan=8>SSP1CON1</th></tr>
+<tr><td>WCOL</td><td>SSPOV</td><td>SSPEN</td><td>CKP</td><td>SSPM3</td><td>SSPM2</td><td>SSPM1</td><td>SSPM0</td></tr>
+<tr><td>~SSP1CON1_WCOL~</td><td>~SSP1CON1_SSPOV~</td><td>~SSP1CON1_SSPEN~</td><td>~SSP1CON1_CKP~</td><td>~SSP1CON1_SSPM3~</td><td>~SSP1CON1_SSPM2~</td><td>~SSP1CON1_SSPM1~</td><td>~SSP1CON1_SSPM0~</td></tr>
+</table>
+
+
+<table border=1>
+<tr><th colspan=8>SSP1CON2</th></tr>
+<tr><td>GCEN</td><td>ACKSTAT</td><td>ADMSK5</td><td>ADMSK4</td><td>ADMSK3</td><td>ADMSK2</td><td>ADMSK1</td><td>SEN</td></tr>
+<tr><td>~SSP1CON2_GCEN~</td><td>~SSP1CON2_ACKSTAT~</td><td>~SSP1CON2_ADMSK5~</td><td>~SSP1CON2_ADMSK4~</td><td>~SSP1CON2_ADMSK3~</td><td>~SSP1CON2_ADMSK2~</td><td>~SSP1CON2_ADMSK1~</td><td>~SSP1CON2_SEN~</td></tr>
+</table>
+
+<table border=1>
+<tr><th colspan=8>SSP1STAT</th></tr>
+<tr><td>SMP</td><td>CKE</td><td>DA</td><td>P</td><td>S</td><td>RW</td><td>UA</td><td>BF</td></tr>
+<tr><td>~SSP1STAT_SMP~</td><td>~SSP1STAT_CKE~</td><td>~SSP1STAT_DA~</td><td>~SSP1STAT_P~</td><td>~SSP1STAT_S~</td><td>~SSP1STAT_RW~</td><td>~SSP1STAT_UA~</td><td>~SSP1STAT_BF~</td></tr>
+</table>
 </body></html>

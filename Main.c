@@ -12,7 +12,6 @@
 
 // Include functions specific to this stack application
 #include "Main.h"
-#include "BTnic_Comm.h"
 #include "sw_spi.h"
 #include "eeprom.h"
 #include "dataflash.h"
@@ -48,7 +47,10 @@ void LowISR(void)
 #pragma interruptlow HighISR
 void HighISR(void)
 {
-	if (PIR1bits.SSP1IF) BTCommRX();
+	if (PIR1bits.SSP1IF) {
+		BTCommRX();
+		PIR1bits.SSP1IF = 0; //Clear SSPIF Interrupt Flag
+	}
 }
 
 #pragma code lowVector=0x18
@@ -252,6 +254,14 @@ static void InitWebSrvConfig(void)
 		memcpypgm2ram(WebSrvConfig.AuthPwd, (ROM void*)WEBSRV_DEFAULTPWD, 16);
 		WebSrvConfig.HTTPPort = WEBSRV_DEFAULTHTTP;
 		WebSrvConfig.HTTPSPort = WEBSRV_DEFAULTHTTPS;
+
+		WebSrvConfig.StateTimeout[COMMSTATE_IDLE] = 0;
+		WebSrvConfig.StateTimeout[COMMSTATE_BUFFERING] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_TXREADY] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_TX] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_WAIT] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_RX] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_MSG] = 500;
 
 		// Compute the checksum of the AppConfig defaults as loaded from ROM
 		wOriginalWebSrvConfigChecksum = CalcIPChecksum((BYTE*)&WebSrvConfig, sizeof(WebSrvConfig));

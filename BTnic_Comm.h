@@ -19,35 +19,33 @@
 //#define I2C_SLAVESTATE_READ_DATA	0b00101101 //D_A = 1, S = 1, R_W = 1, BF = 1
 //#define I2C_SLAVESTATE_NACK			0b00101000 //D_A = 1, S = 1, R_W = 0, BF = 0
 
-#define I2C_SLAVESTATE_BITMASK  0b00101100 // Mask for I2C status bits
-
-#define I2C_SLAVESTATE_WRITE_ADDR	0b00001000 //D_A = 0, S = 1, R_W = 0
-#define I2C_SLAVESTATE_WRITE_DATA	0b00101000 //D_A = 1, S = 1, R_W = 0
-#define I2C_SLAVESTATE_READ_ADDR	0b00001100 //D_A = 0, S = 1, R_W = 1
-#define I2C_SLAVESTATE_READ_DATA	0b00101100 //D_A = 1, S = 1, R_W = 1
-//#define I2C_SLAVESTATE_NACK			0b00101000 //D_A = 1, S = 1, R_W = 0, BF = 0
+#define I2C_SLAVESTATE_BITMASK  0b00101101 // Mask for I2C status bits
+#define I2C_SLAVESTATE_WRITE_ADDR	0b00001001 //D_A = 0, S = 1, R_W = 0, BF = 1
+#define I2C_SLAVESTATE_WRITE_DATA	0b00101001 //D_A = 1, S = 1, R_W = 0, BF = 1
+#define I2C_SLAVESTATE_READ_ADDR	0b00001101 //D_A = 0, S = 1, R_W = 1, BF = 1
+#define I2C_SLAVESTATE_READ_DATA	0b00101100 //D_A = 1, S = 1, R_W = 1, BF = 0
+#define I2C_SLAVESTATE_NACK			0b00101000 //D_A = 1, S = 1, R_W = 0, BF = 0
 
 #define BTCOMM_RXBUFFER_SIZE 1024
 #define BTCOMM_TXBUFFER_SIZE 1024
 
-#define BT_COMMSTATE_IDLE		0 //Connection available
-#define BT_COMMSTATE_TXREADY	1 //Request in buffer
-#define BT_COMMSTATE_TX			2 //Sending request
-#define BT_COMMSTATE_WAIT		3 //Waiting for response
-#define BT_COMMSTATE_RX			4 //Receiving response
-#define BT_COMMSTATE_MSG		5 //Response in buffer
-#define BT_COMMSTATE_ASYNCRX	6 //Receiving unsolicited message
-#define BT_COMMSTATE_ASYNCMSG	7 //Unsolicited message in buffer
+#define BT_BUFFER_RESPONSE	0
+#define BT_BUFFER_REQUEST 	1
+
+enum CommunicationState {
+	COMMSTATE_IDLE,			//Ready for connection
+	COMMSTATE_BUFFERING,	//Lock buffer for use
+	COMMSTATE_TXREADY,		//Request in buffer
+	COMMSTATE_TX,			//Sending request
+	COMMSTATE_WAIT,			//Waiting for response
+	COMMSTATE_RX,			//Receiving response
+	COMMSTATE_MSG,			//Response in buffer
+	NUM_COMMSTATES
+};
 
 #define SM_BTNIC_START			0
 #define SM_BTNIC_TX_RETRY		1
 #define SM_BTNIC_WAIT_FOR_RESP	2
-
-#define BT_TIMEOUT_TXREADY 	2000 //ms
-#define BT_TIMEOUT_TX 	500 //ms
-#define BT_TIMEOUT_WAIT 500 //ms
-#define BT_TIMEOUT_RX 	500 //ms
-#define BT_TIMEOUT_MSG	500 //ms
 
 void BTCommInit(void);
 int BTCommRequest(char*);
@@ -55,9 +53,10 @@ void BTCommRX(void);
 char BTCommGetState(void);
 void BTCommSetState(char);
 unsigned int BTCommGetRspLen(void);
-unsigned int BTCommGetRspCount(void);
+unsigned int BTCommGetReqLen(void);
 char BTCommGetRsp(void);
-char BTCommGetBuffer(unsigned int);
+char BTCommGetRspBuffer(unsigned int);
+char BTCommGetReqBuffer(unsigned int);
 unsigned long BTCommGetTimer(void);
 void BTCommSetRsp(far rom char*);
 	
