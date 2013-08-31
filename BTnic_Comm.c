@@ -9,7 +9,8 @@ volatile char BTCommTXBuffer[BTCOMM_TXBUFFER_SIZE];
 #pragma udata // return to default section
 volatile unsigned int BTCommRXLen, BTCommRXCursor, BTCommTXLen, BTCommTXCursor;
 volatile BYTE BTCommState;
-volatile unsigned long BTCommTimer;
+volatile DWORD BTCommTimer;
+DWORD msTicks = TICKS_PER_SECOND/1000ul;
 
 void BTCommInit(void)
 {
@@ -128,13 +129,12 @@ void BTCommRX(void)
 
 char BTCommGetState() 
 { 
-	if (WebSrvConfig.StateTimeout[BTCommState]) {
-		if ((TickGet() - BTCommTimer) > (WebSrvConfig.StateTimeout[BTCommState] * (TICK_SECOND / 1000)))
-			BTCommInit(); //Reset state and I2C Bus
-	}
-
-	//TO DO: ASYNCMSG Processing
-	//if (BTCommState == COMMSTATE_ASYNCMSG) BTCommSetState(COMMSTATE_IDLE);
+	BYTE state = BTCommState;
+	DWORD timeout = WebSrvConfig.StateTimeout[BTCommState] * msTicks;
+	DWORD elapsed = TickGet() - BTCommTimer;
+	if (state != BTCommState) timeout = 0;
+	if (timeout && elapsed > timeout)
+		BTCommInit(); //Reset state and I2C Bus
 	return BTCommState; 
 }
 
