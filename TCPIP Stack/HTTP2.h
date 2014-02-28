@@ -98,7 +98,8 @@
 		HTTP_MPFS_ERROR,				// An MPFS Upload was not a valid image
 		#endif
 		HTTP_REDIRECT,					// 302 Redirect will be returned
-		HTTP_SSL_REQUIRED				// 403 Forbidden is returned, indicating SSL is required
+		HTTP_SSL_REQUIRED,				// 403 Forbidden is returned, indicating SSL is required
+		HTTP_OPTIONS					// Dummy process of OPTIONS command to support CORS
 	} HTTP_STATUS;
 	
 /****************************************************************************
