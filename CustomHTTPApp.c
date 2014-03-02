@@ -984,7 +984,7 @@ void HTTPPrint_MEMDUMP(WORD memType)
 	{
 		char data;
 		if (memType == 0) data = eepromReadByte(size - curHTTP.callbackPos);
-		else if (memType == 1) data = dataflashReadByte(size - curHTTP.callbackPos);
+		else if (memType == 1) data = SPIFlashReadByte(size - curHTTP.callbackPos);
 		else if (memType == 2) data = sramReadByte(size - curHTTP.callbackPos);
 		
 		len -= TCPPut(sktHTTP, btohexa_high(data));

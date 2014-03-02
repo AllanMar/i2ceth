@@ -24,17 +24,17 @@
 #define DATAFLASH_CMD_EBSY				0x70
 #define DATAFLASH_CMD_DBSY				0x80
 
-void dataflashReadBytes(char *dest, unsigned short long addr, unsigned char len);
-char dataflashReadByte(unsigned short long addr);
-void dataflashWriteBytes(char *dest, unsigned short long addr, unsigned char len);
-void dataflashWriteByte(char data, unsigned short long addr);
-void dataflashSectorErase(unsigned short long addr);
-char dataflashRDSR(void);
-void dataflashWRSR(char data);
-char dataflashBusy(void);
-void dataflashAddr(unsigned short long addr);
-void dataflashWREN(void);
-void dataflashDisable(void);
-void dataflashEnable(void);
+void SPIFlashReadBytes(unsigned short long addr, char *dest, unsigned char len);
+char SPIFlashReadByte(unsigned short long addr);
+void SPIFlashWriteByte(char data);
+void SPIFlashWriteBytes(char *dest, unsigned char len);
+void SPIFlashEraseSector(unsigned short long addr);
+char SPIFlashRDSR(void);
+void SPIFlashWRSR(char data);
+char SPIFlashBusy(void);
+void SPIFlashAddr(unsigned short long addr);
+void SPIFlashWREN(void);
+void SPIFlashDisable(void);
+void SPIFlashEnable(void);
 
 #endif
