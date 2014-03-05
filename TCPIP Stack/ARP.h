@@ -61,10 +61,46 @@
 	#define ARPInit()
 #endif
 
+#define ARP_OPERATION_REQ       0x0001u		// Operation code indicating an ARP Request
+#define ARP_OPERATION_RESP      0x0002u		// Operation code indicating an ARP Response
+
+#define HW_ETHERNET             (0x0001u)	// ARP Hardware type as defined by IEEE 802.3
+#define ARP_IP                  (0x0800u)	// ARP IP packet type as defined by IEEE 802.3
+
+
+// ARP packet structure
+typedef struct __attribute__((aligned(2), packed))
+{
+    WORD        HardwareType;   // Link-layer protocol type (Ethernet is 1).
+    WORD        Protocol;       // The upper-layer protocol issuing an ARP request (0x0800 for IPv4)..
+    BYTE        MACAddrLen;     // MAC address length (6).
+    BYTE        ProtocolLen;    // Length of addresses used in the upper-layer protocol (4).
+    WORD        Operation;      // The operation the sender is performing (ARP_REQ or ARP_RESP).
+    MAC_ADDR    SenderMACAddr;  // The sender's hardware (MAC) address.
+    IP_ADDR     SenderIPAddr;   // The sender's IP address.
+    MAC_ADDR    TargetMACAddr;  // The target node's hardware (MAC) address.
+    IP_ADDR     TargetIPAddr;   // The target node's IP address.
+} ARP_PACKET;
+
 BOOL ARPProcess(void);
 void ARPResolve(IP_ADDR* IPAddr);
 BOOL ARPIsResolved(IP_ADDR* IPAddr, MAC_ADDR* MACAddr);
+void SwapARPPacket(ARP_PACKET* p);
 
+#ifdef STACK_USE_ZEROCONF_LINK_LOCAL
+	/* API specific Definitions */
+	#define ARP_REQ       0x0001u		// Operation code indicating an ARP Request
+	#define ARP_RESP      0x0002u		// Operation code indicating an ARP Response
+
+	struct arp_app_callbacks {
+    	BOOL used;
+    	void (*ARPPkt_notify)(DWORD SenderIPAddr, DWORD TargetIPAddr, 
+                          	MAC_ADDR* SenderMACAddr, MAC_ADDR* TargetMACAddr, BYTE op_req);
+	};
+	CHAR ARPRegisterCallbacks(struct arp_app_callbacks *app);
+	BOOL ARPDeRegisterCallbacks(CHAR id);
+#endif
+	BOOL ARPSendPkt(DWORD SrcIPAddr, DWORD DestIPAddr, BYTE op_req );
 #endif
 
 

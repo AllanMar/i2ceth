@@ -86,6 +86,9 @@
 // pool server closest to your geography, but it will still work
 // if you use the global pool.ntp.org address or choose the wrong 
 // one or ship your embedded device to another geography.
+#ifdef WIFI_NET_TEST
+#define NTP_SERVER  "ntp" WIFI_NET_TEST_DOMAIN
+#else
 #define NTP_SERVER	"pool.ntp.org"
 //#define NTP_SERVER	"europe.pool.ntp.org"
 //#define NTP_SERVER	"asia.pool.ntp.org"
@@ -93,9 +96,10 @@
 //#define NTP_SERVER	"north-america.pool.ntp.org"
 //#define NTP_SERVER	"south-america.pool.ntp.org"
 //#define NTP_SERVER	"africa.pool.ntp.org"
+#endif
 
 // Defines the structure of an NTP packet
-typedef struct _NTP_PACKET
+typedef struct
 {
 	struct
 	{
@@ -126,7 +130,6 @@ static DWORD dwSNTPSeconds = 0;
 // Tick count of last update
 static DWORD dwLastUpdateTick = 0;
 
-
 /*****************************************************************************
   Function:
 	void SNTPClient(void)
@@ -155,29 +158,52 @@ void SNTPClient(void)
 {
 	NTP_PACKET			pkt;
 	WORD		 		w;
-	static NODE_INFO	Server;
+//	static NODE_INFO	Server;
 	static DWORD		dwTimer;
-	static UDP_SOCKET	MySocket;
+	static UDP_SOCKET	MySocket = INVALID_UDP_SOCKET;
 	static enum
 	{
 		SM_HOME = 0,
-		SM_NAME_RESOLVE,
-		SM_ARP_START_RESOLVE,
-		SM_ARP_RESOLVE,
-		SM_ARP_START_RESOLVE2,
-		SM_ARP_RESOLVE2,
-		SM_ARP_START_RESOLVE3,
-		SM_ARP_RESOLVE3,
-		SM_ARP_RESOLVE_FAIL,
+		SM_UDP_IS_OPENED,
+		//SM_NAME_RESOLVE,
+		//SM_ARP_START_RESOLVE,
+		//SM_ARP_RESOLVE,
+		//SM_ARP_START_RESOLVE2,
+		//SM_ARP_RESOLVE2,
+		//SM_ARP_START_RESOLVE3,
+		//SM_ARP_RESOLVE3,
+		//SM_ARP_RESOLVE_FAIL,
 		SM_UDP_SEND,
 		SM_UDP_RECV,
 		SM_SHORT_WAIT,
 		SM_WAIT
 	} SNTPState = SM_HOME;
 
+
 	switch(SNTPState)
 	{
 		case SM_HOME:
+			if(MySocket == INVALID_UDP_SOCKET)
+				MySocket = UDPOpenEx((DWORD)(PTR_BASE)NTP_SERVER,UDP_OPEN_ROM_HOST,0,NTP_SERVER_PORT);
+			
+			SNTPState++;
+			break;
+			
+		case SM_UDP_IS_OPENED:
+			if(UDPIsOpened(MySocket) == TRUE)
+			{
+				SNTPState = SM_UDP_SEND;
+			}
+		/*	else
+			{
+				UDPClose(MySocket);
+				SNTPState = SM_HOME;
+				MySocket = INVALID_UDP_SOCKET;
+			}
+		*/		
+			break;
+
+#if 0			
 			// Obtain ownership of the DNS resolution module
 			if(!DNSBeginUsage())
 				break;
@@ -244,17 +270,24 @@ void SNTPClient(void)
 			dwTimer = TickGetDiv64K();
 			SNTPState = SM_SHORT_WAIT;
 			break;
-
+#endif
+// case SM_UDP_IS_OPENED:
 		case SM_UDP_SEND:
 			// Open up the sending UDP socket
-			MySocket = UDPOpen(0, &Server, NTP_SERVER_PORT);
+			//MySocket = UDPOpen(0, &Server, NTP_SERVER_PORT);
+#if 0
+
+			MySocket = UDPOpenEx(NTP_SERVER,UDP_OPEN_ROM_HOST,0,NTP_SERVER_PORT);
 			if(MySocket == INVALID_UDP_SOCKET)
 				break;
+#endif			
 
 			// Make certain the socket can be written to
 			if(!UDPIsPutReady(MySocket))
 			{
 				UDPClose(MySocket);
+				SNTPState = SM_HOME;
+				MySocket = INVALID_UDP_SOCKET;
 				break;
 			}
 
@@ -278,8 +311,10 @@ void SNTPClient(void)
 				{
 					// Abort the request and wait until the next timeout period
 					UDPClose(MySocket);
-					dwTimer = TickGetDiv64K();
-					SNTPState = SM_SHORT_WAIT;
+					//dwTimer = TickGetDiv64K();
+					//SNTPState = SM_SHORT_WAIT;
+					SNTPState = SM_HOME;
+					MySocket = INVALID_UDP_SOCKET;
 					break;
 				}
 				break;
@@ -290,7 +325,8 @@ void SNTPClient(void)
 			UDPClose(MySocket);
 			dwTimer = TickGetDiv64K();
 			SNTPState = SM_WAIT;
-
+			MySocket = INVALID_UDP_SOCKET;
+			
 			// Validate packet size
 			if(w != sizeof(pkt)) 
 			{
@@ -304,18 +340,27 @@ void SNTPClient(void)
 			if(((BYTE*)&pkt.tx_ts_fraq)[0] & 0x80)
 				dwSNTPSeconds++;
 
+			#ifdef WIFI_NET_TEST
+				wifi_net_test_print("SNTP: current time", dwSNTPSeconds);
+			#endif
 			break;
 
 		case SM_SHORT_WAIT:
 			// Attempt to requery the NTP server after a specified NTP_FAST_QUERY_INTERVAL time (ex: 8 seconds) has elapsed.
 			if(TickGetDiv64K() - dwTimer > (NTP_FAST_QUERY_INTERVAL/65536ull))
-				SNTPState = SM_HOME;	
+			{
+				SNTPState = SM_HOME;
+				MySocket = INVALID_UDP_SOCKET;
+			}
 			break;
 
 		case SM_WAIT:
 			// Requery the NTP server after a specified NTP_QUERY_INTERVAL time (ex: 10 minutes) has elapsed.
 			if(TickGetDiv64K() - dwTimer > (NTP_QUERY_INTERVAL/65536ull))
-				SNTPState = SM_HOME;	
+			{
+				SNTPState = SM_HOME;
+				MySocket = INVALID_UDP_SOCKET;
+			}
 
 			break;
 	}

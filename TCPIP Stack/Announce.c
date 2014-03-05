@@ -64,46 +64,48 @@
 
 #include "TCPIP Stack/TCPIP.h"
 
-
+// The announce port
 #define ANNOUNCE_PORT	30303
 
 
 
 extern NODE_INFO remoteNode;
 
-/*********************************************************************
- * Function:        void AnnounceIP(void)
- *
- * PreCondition:    Stack is initialized()
- *
- * Input:           None
- *
- * Output:          None
- *
- * Side Effects:    None
- *
- * Overview:        AnnounceIP opens a UDP socket and transmits a 
- *					broadcast packet to port 30303.  If a computer is
- *					on the same subnet and a utility is looking for 
- *					packets on the UDP port, it will receive the 
- *					broadcast.  For this application, it is used to 
- *					announce the change of this board's IP address.
- *					The messages can be viewed with the MCHPDetect.exe
- *					program.
- *
- * Note:            A UDP socket must be available before this 
- *					function is called.  It is freed at the end of 
- *					the function.  MAX_UDP_SOCKETS may need to be 
- *					increased if other modules use UDP sockets.
- ********************************************************************/
+/****************************************************************************************************
+  Function:
+            void AnnounceIP(void)
+    
+  Summary:
+    Transmits an Announce packet.
+  Conditions:
+    Stack is initialized()
+  Return:
+    None
+  Side Effects:
+    None
+  Description:
+    AnnounceIP opens a UDP socket and transmits a broadcast packet to port
+    \30303. If a computer is on the same subnet and a utility is looking
+    for packets on the UDP port, it will receive the broadcast. For this
+    application, it is used to announce the change of this board's IP
+    address. The messages can be viewed with the TCP/IP Discoverer
+    software tool.
+  Remarks:
+    A UDP socket must be available before this function is called. It is
+    freed at the end of the function. MAX_UDP_SOCKETS may need to be
+    increased if other modules use UDP sockets.                                                      
+  ****************************************************************************************************/
 void AnnounceIP(void)
 {
 	UDP_SOCKET	MySocket;
 	BYTE 		i;
-	
+
+	if(!MACIsLinked())  // Check for link before blindly opening and transmitting (similar to DHCP case)
+		return;
+
 	// Open a UDP socket for outbound broadcast transmission
-	MySocket = UDPOpen(2860, NULL, ANNOUNCE_PORT);
-	
+	//MySocket = UDPOpen(2860, NULL, ANNOUNCE_PORT);
+	MySocket = UDPOpenEx(0,UDP_OPEN_SERVER,2860, ANNOUNCE_PORT);
 	// Abort operation if no UDP sockets are available
 	// If this ever happens, incrementing MAX_UDP_SOCKETS in 
 	// StackTsk.h may help (at the expense of more global memory 
@@ -147,6 +149,30 @@ void AnnounceIP(void)
 	UDPClose(MySocket);
 }
 
+/*********************************************************************
+ * Function:        void DiscoveryTask(void)
+ *
+ * Summary:         Announce callback task.
+ *
+ * PreCondition:    Stack is initialized()
+ *
+ * Input:           None
+ *
+ * Output:          None
+ *
+ * Side Effects:    None
+ *
+ * Overview:        Recurring task used to listen for Discovery
+ *                  messages on the specified ANNOUNCE_PORT.  These
+ *                  messages can be sent using the Microchip Device
+ *                  Discoverer tool. If one is received, this
+ *                  function will transmit a reply.
+ *
+ * Note:            A UDP socket must be available before this 
+ *					function is called.  It is freed at the end of 
+ *					the function.  MAX_UDP_SOCKETS may need to be 
+ *					increased if other modules use UDP sockets.
+ ********************************************************************/
 void DiscoveryTask(void)
 {
 	static enum {
@@ -166,7 +192,8 @@ void DiscoveryTask(void)
 			// Since we expect to only receive broadcast packets and 
 			// only send unicast packets directly to the node we last 
 			// received from, the remote NodeInfo parameter can be anything
-			MySocket = UDPOpen(ANNOUNCE_PORT, NULL, ANNOUNCE_PORT);
+			//MySocket = UDPOpen(ANNOUNCE_PORT, NULL, ANNOUNCE_PORT);
+			MySocket = UDPOpenEx(0,UDP_OPEN_SERVER,ANNOUNCE_PORT, ANNOUNCE_PORT);
 
 			if(MySocket == INVALID_UDP_SOCKET)
 				return;
@@ -189,7 +216,7 @@ void DiscoveryTask(void)
 			DiscoverySM++;
 
 			// Change the destination to the unicast address of the last received packet
-        	memcpy((void*)&UDPSocketInfo[MySocket].remoteNode, (const void*)&remoteNode, sizeof(remoteNode));
+        	memcpy((void*)&UDPSocketInfo[MySocket].remote.remoteNode, (const void*)&remoteNode, sizeof(remoteNode));
 			
 			// No break needed.  If we get down here, we are now ready for the DISCOVERY_REQUEST_RECEIVED state
 

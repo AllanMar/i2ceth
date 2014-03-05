@@ -83,6 +83,8 @@
 #define DHCP_PARAM_REQUEST_LIST_LEN     (4u)	// DHCP_PARAM_REQUEST_LIST_LEN Type
 #define DHCP_PARAM_REQUEST_IP_ADDRESS       (50u)	// DHCP_PARAM_REQUEST_IP_ADDRESS Type
 #define DHCP_PARAM_REQUEST_IP_ADDRESS_LEN   (4u)	// DHCP_PARAM_REQUEST_IP_ADDRESS_LEN Type
+#define DHCP_PARAM_REQUEST_CLIENT_ID       (61u)	// DHCP_PARAM_REQUEST_IP_ADDRESS Type
+
 #define DHCP_SUBNET_MASK                (1u)	// DHCP_SUBNET_MASK Type
 #define DHCP_ROUTER                     (3u)	// DHCP_ROUTER Type
 #define DHCP_DNS						(6u)	// DHCP_DNS Type
@@ -108,7 +110,7 @@ typedef struct __attribute__((aligned(2), packed))
 } BOOTP_HEADER;
 
 // DHCP State Machine
-typedef enum _SM_DHCP
+typedef enum
 {
 	SM_DHCP_DISABLED = 0,		// DHCP is not currently enabled
 	SM_DHCP_GET_SOCKET,			// DHCP is trying to obtain a socket
@@ -125,45 +127,21 @@ typedef enum _SM_DHCP
 	SM_DHCP_GET_RENEW_ACK3		// DHCP is waiting for a renew ACK
 } SM_DHCP;
 
-// Flags for the DHCP client
-typedef union _DHCP_CLIENT_FLAGS
-{
-    struct
-    {
-        unsigned char bIsBound : 1;				// Whether or not DHCP is currently bound
-        unsigned char bOfferReceived : 1;		// Whether or not an offer has been received
-		unsigned char bDHCPServerDetected : 1;	// Indicates if a DCHP server has been detected
-    } bits;
-    BYTE Val;
-} DHCP_CLIENT_FLAGS;
 
-#if !defined(__DHCP_C)
-    extern DHCP_CLIENT_FLAGS DHCPFlags;
-    extern SM_DHCP smDHCPState;
-	extern BYTE DHCPBindCount;
-#endif
-
-void DHCPReset(void);
+void DHCPInit(BYTE vInterface);
 void DHCPTask(void);
 void DHCPServerTask(void);
-void DHCPDisable(void);
-void DHCPEnable(void);
+void DHCPDisable(BYTE vInterface);
+void DHCPEnable(BYTE vInterface);
 
+void DHCPServer_Disable(void);
+void DHCPServer_Enable(void);
+BOOL DHCPIsEnabled(BYTE vInterface);
+BOOL DHCPIsBound(BYTE vInterface);
+BOOL DHCPStateChanged(BYTE vInterface);
+BOOL DHCPIsServerDetected(BYTE vInterface);
+void DHCPTempIPAddr(void);                      // SOFTAP_ZEROCONF_SUPPORT
 
-/*****************************************************************************
-  Function:
-	DHCPIsBound()
-
-  Description:
-	Determines if the DHCP server is currently bound.
-
-  Return Values:
-  	TRUE - DHCP is bound to given configuration
-  	FALSE - DHCP has not yet been bound
-
-  Remarks:
-	This function is a MACRO to DHCPFlags.bits.bIsBound.
-  ***************************************************************************/
-#define DHCPIsBound()       (DHCPFlags.bits.bIsBound)
+extern BOOL bDHCPServerEnabled;
 
 #endif

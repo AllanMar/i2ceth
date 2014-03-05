@@ -73,7 +73,7 @@
 	#define BIGINT_DATA_TYPE_2	QWORD
 #endif
 
-typedef struct _BIGINT
+typedef struct
 {
 	BIGINT_DATA_TYPE *ptrLSB;		// Pointer to the least significant byte/word (lowest memory address)
 	BIGINT_DATA_TYPE *ptrMSB;		// Pointer to the first non-zero most significant byte/word (higher memory address) if bMSBValid set

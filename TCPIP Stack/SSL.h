@@ -53,15 +53,17 @@
 #ifndef __SSL_H
 #define __SSL_H
 
+#include "TCPIP Stack/SSLClientSize.h"
+
 /****************************************************************************
   Section:
 	Configuration Settings
   ***************************************************************************/
-	#define SSL_VERSION				(0x0300)	// SSL version number
-	#define SSL_VERSION_HI			(0x03)		// SSL version number (high byte)
-	#define SSL_VERSION_LO			(0x00)		// SSL version number (low byte)
+	#define SSL_VERSION				(0x0300u)	// SSL version number
+	#define SSL_VERSION_HI			(0x03u)		// SSL version number (high byte)
+	#define SSL_VERSION_LO			(0x00u)		// SSL version number (low byte)
 	
-	#define SSL_INVALID_ID			(0xff)		// Identifier for invalid SSL allocations
+	#define SSL_INVALID_ID			(0xFFu)		// Identifier for invalid SSL allocations
 	
 	// Minimum lifetime for SSL Sessions
 	// Sessions cannot be reallocated until this much time has elapsed
@@ -180,7 +182,26 @@
 		} Flags;
 		
 		BYTE requestedMessage;				// Currently requested message to send, or 0xff
+        void * supplementaryBuffer;
+        BYTE supplementaryDataType;
 	} SSL_STUB;
+
+    typedef enum
+    {
+        SSL_SUPPLEMENTARY_DATA_NONE = 0,
+        SSL_SUPPLEMENTARY_DATA_CERT_PUBLIC_KEY
+    } SSL_SUPPLEMENTARY_DATA_TYPES;
+
+    // To hash the public key information, we need to actually get
+    // the public key information...
+    // 1024 bit key at 8 bits/byte = 128 bytes needed for the public key.
+    typedef struct
+    {
+      WORD pub_size_bytes;
+      BYTE pub_key[SSL_RSA_CLIENT_SIZE/8];
+      BYTE pub_e[3];
+      BYTE pub_guid;    // This is used as a TCP_SOCKET which is a BYTE
+    } SSL_PKEY_INFO;
 
 	// Memory definition for SSL keys.  This area is split into Local and
 	// Remote areas.  During the handshake, Local.random and Remote.random
@@ -197,7 +218,7 @@
 				BYTE MACSecret[16];			// Server's MAC write secret
 				DWORD sequence;				// Server's write sequence number
 				ARCFOUR_CTX cryptCtx;		// Server's write encryption context
-				BYTE reserved[8];			// Future expansion
+				BYTE reserved[6];			// Future expansion
 			}app;
 			BYTE random[32];				// Server.random value
 		} Local;
@@ -209,7 +230,7 @@
 				BYTE MACSecret[16];			// Client's MAC write secret
 				DWORD sequence;				// Client's write sequence number
 				ARCFOUR_CTX cryptCtx;		// Client's write encryption context
-				BYTE reserved[8];			// Future expansion
+				BYTE reserved[6];			// Future expansion
 			}app;
 			BYTE random[32];				// Client.random value
 		} Remote;		
@@ -225,9 +246,17 @@
 			HASH_SUM hash;
 			BYTE md5_hash[16];
 			BYTE sha_hash[20];
-			BYTE temp[256-sizeof(HASH_SUM)-16-20];
+			#if SSL_RSA_CLIENT_SIZE > 1024
+			    BYTE temp[(SSL_RSA_CLIENT_SIZE/4)-sizeof(HASH_SUM)-16-20];
+			#else
+			    BYTE temp[256-sizeof(HASH_SUM)-16-20];
+			#endif
 		} hashRounds;
-		BYTE full[256];
+		#if SSL_RSA_CLIENT_SIZE > 1024
+    		BYTE full[(SSL_RSA_CLIENT_SIZE/4)];
+    	#else
+    		BYTE full[256];
+    	#endif
 	} SSL_BUFFER;
 	
 	// Storage space for SSL Session identifiers.  (The SessionID and MasterSecret)
@@ -275,10 +304,10 @@
 
 void SSLInit(void);
 
-BYTE SSLStartSession(TCP_SOCKET hTCP);
+BYTE SSLStartSession(TCP_SOCKET hTCP, void * buffer, BYTE supDataType);
 void SSLTerminate(BYTE sslStubId);
 void SSLPeriodic(TCP_SOCKET hTCP, BYTE sslStubID);
-void SSLRxRecord(TCP_SOCKET hTCP, BYTE sslStubID);
+WORD SSLRxRecord(TCP_SOCKET hTCP, BYTE sslStubID);
 void SSLRxHandshake(TCP_SOCKET hTCP);
 void SSLTxRecord(TCP_SOCKET hTCP, BYTE sslStubID, BYTE txProtocol);
 void SSLTxMessage(TCP_SOCKET hTCP, BYTE sslStubID, BYTE msg);

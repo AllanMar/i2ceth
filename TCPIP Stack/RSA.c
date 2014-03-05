@@ -73,7 +73,7 @@
 
 static SM_RSA smRSA;					// State machine variable
 static RSA_DATA_FORMAT outputFormat;	// Final output format for calculated data
-static BYTE keyLength;					// Length of the input key
+static WORD keyLength;					// Length of the input key
 static BIGINT X;						// BigInt to hold X
 static BIGINT tmp;						// BigInt to hold temporary values
 extern SSL_BUFFER sslBuffer;			// Access to sslBuffer data space
@@ -83,15 +83,11 @@ extern SSL_BUFFER sslBuffer;			// Access to sslBuffer data space
 	BIGINT N;			// BigInt to hold the modulus value N
 	BIGINT Y;			// BigInt to hold the result of Y = X^E % N
 	
-	#if defined(__18CXX) && !defined(HI_TECH_C)	
-		#pragma udata RSA_TEMP_SPACE
-	#endif
-	BYTE rsaTemp[256];	// Temporary data storage space for encryption
 
 	#if defined(__18CXX) && !defined(HI_TECH_C)	
 		#pragma udata RSA_TEMP_2
 	#endif
-	BYTE rsaData[128];	// Temporary space to store PKCS formatted data for encryption
+	BYTE rsaData[SSL_RSA_CLIENT_SIZE/8];	// Temporary space to store PKCS formatted data for encryption
 	#if defined(__18CXX) && !defined(HI_TECH_C)	
 		#pragma udata
 	#endif
@@ -121,6 +117,18 @@ extern SSL_BUFFER sslBuffer;			// Access to sslBuffer data space
 	
 #endif
 
+
+#if defined(__18CXX) && (SSL_RSA_CLIENT_SIZE > 1024)
+    #error "SSL_RSA_CLIENT_SIZE greater than 1024 bits not supported on the PIC18"
+#endif
+
+#if defined(__18CXX) && !defined(HI_TECH_C)	
+	#pragma udata RSA_TEMP_SPACE
+#endif
+BYTE rsaTemp[SSL_RSA_CLIENT_SIZE/4];	// Temporary data storage space for encryption
+#if defined(__18CXX) && !defined(HI_TECH_C)	
+	#pragma udata
+#endif
 
 /****************************************************************************
   Section:
@@ -162,17 +170,16 @@ void RSAInit(void)
 	
 	#if defined(STACK_USE_RSA_ENCRYPT)
 		BigInt(&E, (BIGINT_DATA_TYPE*)eData, sizeof(eData)/sizeof(BIGINT_DATA_TYPE));
-		BigInt(&tmp, (BIGINT_DATA_TYPE*)rsaTemp, sizeof(rsaTemp)/sizeof(BIGINT_DATA_TYPE));
-	#else
-		BigInt(&tmp, (BIGINT_DATA_TYPE*)&sslBuffer.full[128], 128/sizeof(BIGINT_DATA_TYPE));
 	#endif
+
+    BigInt(&tmp, (BIGINT_DATA_TYPE*)rsaTemp, sizeof(rsaTemp)/sizeof(BIGINT_DATA_TYPE));
 	
 	smRSA = SM_RSA_IDLE;
 }
 
 /*****************************************************************************
   Function:
-	BOOL RSABeginUsage(RSA_OP op, BYTE vKeyByteLen)
+	BOOL RSABeginUsage(RSA_OP op, WORD vKeyByteLen)
 
   Summary:
 	Requests control of the RSA engine.
@@ -201,7 +208,7 @@ void RSAInit(void)
   	FALSE - The RSA module is currently being used, so the calling 
   			application must wait.
   ***************************************************************************/
-BOOL RSABeginUsage(RSA_OP op, BYTE vKeyByteLen)
+BOOL RSABeginUsage(RSA_OP op, WORD vKeyByteLen)
 {
 	if(smRSA != SM_RSA_IDLE)
 		return FALSE;
@@ -251,7 +258,7 @@ void RSAEndUsage(void)
 
 /*****************************************************************************
   Function:
-	void RSASetData(BYTE* data, BYTE len, RSA_DATA_FORMAT format)
+	void RSASetData(BYTE* data, WORD len, RSA_DATA_FORMAT format)
 
   Summary:
 	Indicates the data to be encrypted or decrypted.
@@ -280,7 +287,7 @@ void RSAEndUsage(void)
   	Encryption operations may expand the input, so separate memory is 
   	allocated for the operation in that case.
   ***************************************************************************/
-void RSASetData(BYTE* data, BYTE len, RSA_DATA_FORMAT format)
+void RSASetData(BYTE* data, WORD len, RSA_DATA_FORMAT format)
 {
 	#if defined(STACK_USE_RSA_ENCRYPT)
 	if(smRSA == SM_RSA_ENCRYPT_START)
@@ -511,8 +518,8 @@ RSA_STATUS RSAStep(void)
 		#if defined(STACK_USE_RSA_DECRYPT)
 		case SM_RSA_DECRYPT_START:
 			// Set up the RSA Decryption memories
-			BigInt(&m1, (BIGINT_DATA_TYPE*)((BYTE*)&sslBuffer+64), RSA_PRIME_WORDS);
-			BigInt(&m2, (BIGINT_DATA_TYPE*)((BYTE*)&sslBuffer+96), RSA_PRIME_WORDS);
+			BigInt(&m1, (BIGINT_DATA_TYPE*)((BYTE*)&sslBuffer+(SSL_RSA_KEY_SIZE/8)), RSA_PRIME_WORDS);
+			BigInt(&m2, (BIGINT_DATA_TYPE*)((BYTE*)&sslBuffer+3*(SSL_RSA_KEY_SIZE/16)), RSA_PRIME_WORDS);
 			
 			smRSA = SM_RSA_DECRYPT_FIND_M1;
 			break;

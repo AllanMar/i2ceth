@@ -61,7 +61,6 @@
 #if defined(STACK_USE_HTTP2_SERVER)
 
 #include "HTTPPrint.h"
-#include "Main.h"
 
 /****************************************************************************
   Section:
@@ -75,7 +74,7 @@
 	File and Content Type Settings
   ***************************************************************************/
 	// File type extensions corresponding to HTTP_FILE_TYPE
-	static ROM char *httpFileExtensions[HTTP_UNKNOWN+1] =
+	static ROM char * ROM httpFileExtensions[HTTP_UNKNOWN+1] =
 	{
 	    "txt",          // HTTP_TXT
 	    "htm",          // HTTP_HTM
@@ -88,12 +87,11 @@
 	    "jpg",          // HTTP_JPG
 	    "cla",          // HTTP_JAVA
 	    "wav",          // HTTP_WAV
-		"js"			// HTTP_JS
 		"\0\0\0"		// HTTP_UNKNOWN
 	};
 	
 	// Content-type strings corresponding to HTTP_FILE_TYPE
-	static ROM char *httpContentTypes[HTTP_UNKNOWN+1] =
+	static ROM char * ROM httpContentTypes[HTTP_UNKNOWN+1] =
 	{
 	    "text/plain",            // HTTP_TXT
 	    "text/html",             // HTTP_HTM
@@ -106,7 +104,6 @@
 	    "image/jpeg",            // HTTP_JPG
 	    "application/java-vm",   // HTTP_JAVA
 	    "audio/x-wave",          // HTTP_WAV
-		"application/javascript",// HTTP_JS
 		""						 // HTTP_UNKNOWN
 	};
 		
@@ -116,38 +113,37 @@
   ***************************************************************************/
 
 	// Initial response strings (Corresponding to HTTP_STATUS)
-	static ROM char *HTTPResponseHeaders[] =
+	static ROM char * ROM HTTPResponseHeaders[] =
 	{
-		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n",
-		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n",
-		"HTTP/1.1 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nWWW-Authenticate: Basic realm=\"Protected\"\r\nConnection: close\r\n\r\n401 Unauthorized: Password required\r\n",
-		//#if defined(HTTP_MPFS_UPLOAD)
-		//"HTTP/1.1 404 Not found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n404: File not found<br>Use <a href=\"/" HTTP_MPFS_UPLOAD "\">MPFS Upload</a> to program web pages\r\n",
-		//#else		
-		"HTTP/1.1 404 Not found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n404: File not found\r\n",
-		//#endif
-		"HTTP/1.1 414 Request-URI Too Long\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n414 Request-URI Too Long: Buffer overflow detected\r\n",
-		"HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n500 Internal Server Error: Expected data not present\r\n",
-		"HTTP/1.1 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n501 Not Implemented: Only GET and POST supported\r\n",
+		"HTTP/1.1 200 OK\r\nConnection: close\r\n",
+		"HTTP/1.1 200 OK\r\nConnection: close\r\n",
+		"HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n400 Bad Request: can't handle Content-Length\r\n",
+		"HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Protected\"\r\nConnection: close\r\n\r\n401 Unauthorized: Password required\r\n",
 		#if defined(HTTP_MPFS_UPLOAD)
-		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><form method=post action=\"/" HTTP_MPFS_UPLOAD "\" enctype=\"multipart/form-data\"><b>MPFS Image Upload</b><p><input type=file name=i size=40> &nbsp; <input type=submit value=\"Upload\"></form></body></html>",
-		"",
-		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Update Successful</b><p><a href=\"/\">Site main page</a></body></html>",
-		"HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Image Corrupt or Wrong Version</b><p><a href=\"/" HTTP_MPFS_UPLOAD "\">Try again?</a></body></html>",
+		"HTTP/1.1 404 Not found\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n404: File not found<br>Use <a href=\"/" HTTP_MPFS_UPLOAD "\">MPFS Upload</a> to program web pages\r\n",
+		#else		
+		"HTTP/1.1 404 Not found\r\nConnection: close\r\n\r\n404: File not found\r\n",
 		#endif
-		"HTTP/1.1 302 Found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nLocation: ",
-		"HTTP/1.1 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n403 Forbidden: SSL Required - use HTTPS\r\n",
-		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: POST, GET, OPTIONS\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Headers: Authorization\r\nConnection: close\r\n"
+		"HTTP/1.1 414 Request-URI Too Long\r\nConnection: close\r\n\r\n414 Request-URI Too Long: Buffer overflow detected\r\n",
+		"HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n500 Internal Server Error: Expected data not present\r\n",
+		"HTTP/1.1 501 Not Implemented\r\nConnection: close\r\n\r\n501 Not Implemented: Only GET and POST supported\r\n",
+		#if defined(HTTP_MPFS_UPLOAD)
+		"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><form method=post action=\"/" HTTP_MPFS_UPLOAD "\" enctype=\"multipart/form-data\"><b>MPFS Image Upload</b><p><input type=file name=i size=40> &nbsp; <input type=submit value=\"Upload\"></form></body></html>",
+		"",
+		"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Update Successful</b><p><a href=\"/\">Site main page</a></body></html>",
+		"HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Image Corrupt or Wrong Version</b><p><a href=\"/" HTTP_MPFS_UPLOAD "\">Try again?</a></body></html>",
+		#endif
+		"HTTP/1.1 302 Found\r\nConnection: close\r\nLocation: ",
+		"HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n403 Forbidden: SSL Required - use HTTPS\r\n"
 	};
 	
 /****************************************************************************
   Section:
 	Header Parsing Configuration
   ***************************************************************************/
-	#define HTTP_NUM_HEADERS		3
 	
 	// Header strings for which we'd like to parse
-	static ROM char *HTTPRequestHeaders[HTTP_NUM_HEADERS] =
+	static ROM char * ROM HTTPRequestHeaders[] =
 	{
 		"Cookie:",
 		"Authorization:",
@@ -164,7 +160,13 @@
 	#if defined(__18CXX) && !defined(HI_TECH_C)	
 		#pragma udata HTTP_CONNECTION_STATES
 	#endif
-	HTTP_CONN curHTTP;							// Current HTTP connection state
+	#if defined(HTTP_SAVE_CONTEXT_IN_PIC_RAM)
+		HTTP_CONN					HTTPControlBlocks[MAX_HTTP_CONNECTIONS];
+		#define HTTPLoadConn(a)		do{curHTTPID = (a);}while(0)
+	#else
+		HTTP_CONN curHTTP;							// Current HTTP connection state
+		static void HTTPLoadConn(BYTE hHTTP);
+	#endif
 	HTTP_STUB httpStubs[MAX_HTTP_CONNECTIONS];	// HTTP stubs with state machine and socket
 	BYTE curHTTPID;								// ID of the currently loaded HTTP_CONN
 	#if defined(__18CXX) && !defined(HI_TECH_C)	
@@ -189,13 +191,13 @@
 	
 	static void HTTPProcess(void);
 	static BOOL HTTPSendFile(void);
-	static void HTTPLoadConn(BYTE hHTTP);
 
 	#if defined(HTTP_MPFS_UPLOAD)
 	static HTTP_IO_RESULT HTTPMPFSUpload(void);
 	#endif
 
 	#define mMIN(a, b)	((a<b)?a:b)
+	#define smHTTP		httpStubs[curHTTPID].sm			// Access the current state machine
 
 /*****************************************************************************
   Function:
@@ -223,25 +225,31 @@
   ***************************************************************************/
 void HTTPInit(void)
 {
-	WORD oldPtr;
-
-	// Make sure the file handles are invalidated
-	curHTTP.file = MPFS_INVALID_HANDLE;
-	curHTTP.offsets = MPFS_INVALID_HANDLE;
-		
     for(curHTTPID = 0; curHTTPID < MAX_HTTP_CONNECTIONS; curHTTPID++)
     {
 		smHTTP = SM_HTTP_IDLE;
-		sktHTTP = TCPOpen(0, TCP_OPEN_SERVER, WebSrvConfig.HTTPPort, TCP_PURPOSE_HTTP_SERVER);
+		sktHTTP = TCPOpen(0, TCP_OPEN_SERVER, HTTP_PORT, TCP_PURPOSE_HTTP_SERVER);
 		#if defined(STACK_USE_SSL_SERVER)
-		TCPAddSSLListener(sktHTTP, WebSrvConfig.HTTPSPort);
+		TCPAddSSLListener(sktHTTP, HTTPS_PORT);
 		#endif
 		
 	    // Save the default record (just invalid file handles)
-    	oldPtr = MACSetWritePtr(BASE_HTTPB_ADDR + curHTTPID*sizeof(HTTP_CONN));
-		MACPutArray((BYTE*)&curHTTP, sizeof(HTTP_CONN));
-		MACSetWritePtr(oldPtr);
+		curHTTP.file = MPFS_INVALID_HANDLE;
+		curHTTP.offsets = MPFS_INVALID_HANDLE;
+		#if !defined(HTTP_SAVE_CONTEXT_IN_PIC_RAM)
+		{
+			PTR_BASE oldPtr;
+
+			oldPtr = MACSetWritePtr(BASE_HTTPB_ADDR + curHTTPID*sizeof(HTTP_CONN));
+			MACPutArray((BYTE*)&curHTTP, sizeof(HTTP_CONN));
+			MACSetWritePtr(oldPtr);
+		}
+		#endif
     }
+
+	// Set curHTTPID to zero so that first call to HTTPLoadConn() doesn't write 
+	// dummy data outside reserved HTTP memory.
+    curHTTPID = 0;	
 }
 
 
@@ -336,6 +344,7 @@ void HTTPServer(void)
   Returns:
   	None
   ***************************************************************************/
+#if !defined(HTTP_SAVE_CONTEXT_IN_PIC_RAM)
 static void HTTPLoadConn(BYTE hHTTP)
 {
     WORD oldPtr;
@@ -358,6 +367,7 @@ static void HTTPLoadConn(BYTE hHTTP)
 	curHTTPID = hHTTP;
 			
 }
+#endif
 
 /*****************************************************************************
   Function:
@@ -423,7 +433,7 @@ static void HTTPProcess(void)
 			// Verify the entire first line is in the FIFO
 			if(TCPFind(sktHTTP, '\n', 0, FALSE) == 0xffff)
 			{// First line isn't here yet
-				if(TCPGetRxFIFOFree(sktHTTP) == 0)
+				if(TCPGetRxFIFOFree(sktHTTP) == 0u)
 				{// If the FIFO is full, we overflowed
 					curHTTP.httpStatus = HTTP_OVERFLOW;
 					smHTTP = SM_HTTP_SERVE_HEADERS;
@@ -443,8 +453,8 @@ static void HTTPProcess(void)
 
 			// Determine the request method
 			lenA = TCPFind(sktHTTP, ' ', 0, FALSE);
-			if(lenA > 8)
-				lenA = 8;
+			if(lenA > 5u)
+				lenA = 5;
 			TCPGetArray(sktHTTP, curHTTP.data, lenA+1);
 
 		    if ( memcmppgm2ram(curHTTP.data, (ROM void*)"GET", 3) == 0)
@@ -453,13 +463,6 @@ static void HTTPProcess(void)
 		    else if ( memcmppgm2ram(curHTTP.data, (ROM void*)"POST", 4) == 0)
 			    curHTTP.httpStatus = HTTP_POST;
 			#endif
-		    else if ( memcmppgm2ram(curHTTP.data, (ROM void*)"OPTIONS", 7) == 0)
-			{
-			    curHTTP.httpStatus = HTTP_OPTIONS;
-				smHTTP = SM_HTTP_SERVE_HEADERS;
-				isDone = FALSE;
-				break;
-			}
 		    else
 			{// Unrecognized method, so return not implemented
 		        curHTTP.httpStatus = HTTP_NOT_IMPLEMENTED;
@@ -486,10 +489,13 @@ static void HTTPProcess(void)
 			lenB = TCPGetArray(sktHTTP, curHTTP.data, lenA);
 			curHTTP.data[lenB] = '\0';
 			HTTPURLDecode(curHTTP.data);
-			
+
+			// Decode may have changed the string length - update it here
+			lenB = strlen((char*)curHTTP.data);
+
 			// Check if this is an MPFS Upload
 			#if defined(HTTP_MPFS_UPLOAD)
-			if(memcmppgm2ram(&curHTTP.data[1], HTTP_MPFS_UPLOAD, strlenpgm(HTTP_MPFS_UPLOAD)) == 0)
+			if(memcmppgm2ram(&curHTTP.data[1], HTTP_MPFS_UPLOAD, sizeof(HTTP_MPFS_UPLOAD)) == 0)
 			{// Read remainder of line, and bypass all file opening, etc.
 				#if defined(HTTP_USE_AUTHENTICATION)
 				curHTTP.isAuthorized = HTTPNeedsAuth(&curHTTP.data[1]);
@@ -560,7 +566,7 @@ static void HTTPProcess(void)
 
 			// Read GET args, up to buffer size - 1
 			lenA = TCPFind(sktHTTP, ' ', 0, FALSE);
-			if(lenA != 0)
+			if(lenA != 0u)
 			{
 				curHTTP.hasArgs = TRUE;
 				
@@ -601,7 +607,7 @@ static void HTTPProcess(void)
 				lenA = TCPFind(sktHTTP, '\n', 0, FALSE);
 				if(lenA == 0xffff)
 				{// If not, make sure we can receive more data
-					if(TCPGetRxFIFOFree(sktHTTP) == 0)
+					if(TCPGetRxFIFOFree(sktHTTP) == 0u)
 					{// Overflow
 						curHTTP.httpStatus = HTTP_OVERFLOW;
 						smHTTP = SM_HTTP_SERVE_HEADERS;
@@ -620,7 +626,7 @@ static void HTTPProcess(void)
 				curHTTP.callbackID = TickGet() + HTTP_TIMEOUT*TICK_SECOND;
 				
 				// If a CRLF is immediate, then headers are done
-				if(lenA == 1)
+				if(lenA == 1u)
 				{// Remove the CRLF and move to next state
 					TCPGetArray(sktHTTP, NULL, 2);
 					smHTTP = SM_HTTP_AUTHENTICATE;
@@ -645,7 +651,7 @@ static void HTTPProcess(void)
 				lenA -= lenB;
 		
 				// Compare header read to ones we're interested in
-				for(i = 0; i < HTTP_NUM_HEADERS; i++)
+				for(i = 0; i < sizeof(HTTPRequestHeaders)/sizeof(HTTPRequestHeaders[0]); i++)
 				{
 					if(strcmppgm2ram((char*)buffer, (ROM char *)HTTPRequestHeaders[i]) == 0)
 					{// Parse the header and stop the loop
@@ -744,7 +750,7 @@ static void HTTPProcess(void)
 				if(curHTTP.httpStatus >= HTTP_MPFS_UP && curHTTP.httpStatus <= HTTP_MPFS_ERROR)
 				{
 					c = HTTPMPFSUpload();
-					if(c == HTTP_IO_DONE)
+					if(c == (BYTE)HTTP_IO_DONE)
 					{
 						smHTTP = SM_HTTP_SERVE_HEADERS;
 						isDone = FALSE;
@@ -756,18 +762,18 @@ static void HTTPProcess(void)
 				c = HTTPExecutePost();
 				
 				// If waiting for asynchronous process, return to main app
-				if(c == HTTP_IO_WAITING)
+				if(c == (BYTE)HTTP_IO_WAITING)
 				{// return to main app and make sure we don't get stuck by the watchdog
 					curHTTP.callbackPos = TCPIsGetReady(sktHTTP) - 1;
 					break;
 				}
-				else if(c == HTTP_IO_NEED_DATA)
+				else if(c == (BYTE)HTTP_IO_NEED_DATA)
 				{// If waiting for more data
 					curHTTP.callbackPos = TCPIsGetReady(sktHTTP);
 					curHTTP.callbackID = TickGet() + HTTP_TIMEOUT*TICK_SECOND;
 					
 					// If more is expected and space is available, return to main app
-					if(curHTTP.byteCount > curHTTP.callbackPos && TCPGetRxFIFOFree(sktHTTP) != 0)
+					if(curHTTP.byteCount > curHTTP.callbackPos && TCPGetRxFIFOFree(sktHTTP) != 0u)
 						break;
 					
 					// Handle cases where application ran out of data or buffer space
@@ -834,9 +840,6 @@ static void HTTPProcess(void)
 				break;
 			}
 
-			//TCPPutROMString(sktHTTP, (ROM BYTE*)"Access-Control-Allow-Origin: *");
-			//TCPPutROMString(sktHTTP, HTTP_CRLF);
-
 			// Output the content type, if known
 			if(curHTTP.fileType != HTTP_UNKNOWN)
 			{
@@ -863,7 +866,7 @@ static void HTTPProcess(void)
 				TCPPutROMString(sktHTTP, (ROM BYTE*)HTTP_CACHE_LEN);
 			}
 			TCPPutROMString(sktHTTP, HTTP_CRLF);
-
+			
 			// Check if we should output cookies
 			if(curHTTP.hasArgs)
 				smHTTP = SM_HTTP_SERVE_COOKIES;
@@ -884,7 +887,7 @@ static void HTTPProcess(void)
 			// Avoid writing huge cookies - keep it under a hundred bytes max
 
 			// Write cookies one at a time as space permits
-			for(curHTTP.ptrRead = curHTTP.data; curHTTP.hasArgs != 0; curHTTP.hasArgs--)
+			for(curHTTP.ptrRead = curHTTP.data; curHTTP.hasArgs != 0u; curHTTP.hasArgs--)
 			{
 				// Write the header
 				TCPPutROMString(sktHTTP, (ROM BYTE*)"Set-Cookie: ");
@@ -945,7 +948,7 @@ static void HTTPProcess(void)
 			}
 			
 			// If the TX FIFO is full, then return to main app loop
-			if(TCPIsPutReady(sktHTTP) == 0)
+			if(TCPIsPutReady(sktHTTP) == 0u)
 				isDone = TRUE;
             break;
 
@@ -960,7 +963,7 @@ static void HTTPProcess(void)
 			// Fill TX FIFO from callback
 			HTTPPrint(curHTTP.callbackID);
 			
-			if(curHTTP.callbackPos == 0)
+			if(curHTTP.callbackPos == 0u)
 			{// Callback finished its output, so move on
 				isDone = FALSE;
 				smHTTP = SM_HTTP_SERVE_BODY;
@@ -1019,10 +1022,10 @@ static BOOL HTTPSendFile(void)
 	
 	// Get/put as many bytes as possible
 	curHTTP.byteCount += numBytes;
-	while(numBytes > 0)
+	while(numBytes > 0u)
 	{
-		len = MPFSGetArray(curHTTP.file, data, mMIN(numBytes, 64));
-		if(len == 0)
+		len = MPFSGetArray(curHTTP.file, data, mMIN(numBytes, sizeof(data)));
+		if(len == 0u)
 			return TRUE;
 		else
 			TCPPutArray(sktHTTP, data, len);
@@ -1157,7 +1160,7 @@ static void HTTPHeaderParseAuthorization(void)
 	len = mMIN(len, sizeof(buf)-4);
 	
 	// Read in 4 bytes at a time and decode (slower, but saves RAM)
-	for(ptrBuf = buf; len > 0; len-=4, ptrBuf+=3)
+	for(ptrBuf = buf; len > 0u; len-=4, ptrBuf+=3)
 	{
 		TCPGetArray(sktHTTP, ptrBuf, 4);
 		Base64Decode(ptrBuf, 4, ptrBuf, 3);
@@ -1213,7 +1216,7 @@ static void HTTPHeaderParseCookie(void)
 
 	// Verify there's enough space
 	lenB = TCPFindROMArray(sktHTTP, HTTP_CRLF, HTTP_CRLF_LEN, 0, FALSE);
-	if(lenB >= curHTTP.data + HTTP_MAX_DATA_LEN - curHTTP.ptrData - 2)
+	if(lenB >= (WORD)(curHTTP.data + HTTP_MAX_DATA_LEN - curHTTP.ptrData - 2))
 	{// If not, overflow
 		curHTTP.httpStatus = HTTP_OVERFLOW;
 		smHTTP = SM_HTTP_SERVE_HEADERS;
@@ -1221,7 +1224,7 @@ static void HTTPHeaderParseCookie(void)
 	}
 
 	// While a CRLF is not immediate, grab a cookie value
-	while(lenB != 0)
+	while(lenB != 0u)
 	{
 		// Look for a ';' and use the shorter of that or a CRLF
 		lenA = TCPFind(sktHTTP, ';', 0, FALSE);
@@ -1236,7 +1239,7 @@ static void HTTPHeaderParseCookie(void)
 		if(lenA < lenB)
 		{
 			TCPGet(sktHTTP, NULL);
-			while(TCPFind(sktHTTP, ' ', 0, FALSE) == 0)
+			while(TCPFind(sktHTTP, ' ', 0, FALSE) == 0u)
 				TCPGet(sktHTTP, NULL);
 		}
 		
@@ -1281,13 +1284,16 @@ static void HTTPHeaderParseContentLength(void)
 
 	// Read up to the CRLF (max 9 bytes or ~1GB)
 	len = TCPFindROMArray(sktHTTP, HTTP_CRLF, HTTP_CRLF_LEN, 0, FALSE);
+	if(len >= sizeof(buf))
+	{
+		curHTTP.httpStatus = HTTP_BAD_REQUEST;
+		curHTTP.byteCount = 0;
+		return;
+	}	
 	len = TCPGetArray(sktHTTP, buf, len);
 	buf[len] = '\0';
 	
 	curHTTP.byteCount = atol((char*)buf);
-	
-	return;
-
 }
 #endif
 
@@ -1328,13 +1334,13 @@ BYTE* HTTPURLDecode(BYTE* cData)
 	BYTE *pRead, *pWrite;
 	WORD wLen;
 	BYTE c;
-	WORD_VAL hex;
+	WORD hex;
 	 
 	// Determine length of input
 	wLen = strlen((char*)cData);
 	 
 	// Read all characters in the string
-	for(pRead = pWrite = cData; wLen != 0; )
+	for(pRead = pWrite = cData; wLen != 0u; )
 	{
 		c = *pRead++;
 		wLen--;
@@ -1345,15 +1351,15 @@ BYTE* HTTPURLDecode(BYTE* cData)
 			*pWrite++ = ' ';
 		else if(c == '%')
 		{
-			if(wLen < 2)
+			if(wLen < 2u)
 				wLen = 0;
 			else
 			{
-				hex.v[1] = *pRead++;
-				hex.v[0] = *pRead++;
+				((BYTE*)&hex)[1] = *pRead++;
+				((BYTE*)&hex)[0] = *pRead++;
 				wLen--;
 				wLen--;
-				*pWrite++ = hexatob(hex);
+				*pWrite++ = hexatob(*((WORD_VAL*)&hex));
 			}
 		}
 		else
@@ -1511,7 +1517,7 @@ HTTP_READ_STATUS HTTPReadPostName(BYTE* cData, WORD wLen)
 	status = HTTPReadTo('=', cData, wLen);
 
 	// Decode the data (if not reading to null or blank) and return
-	if(cData && !*cData)
+	if(cData && *cData)
 		HTTPURLDecode(cData);
 	return status;
 }	
@@ -1634,7 +1640,7 @@ static HTTP_READ_STATUS HTTPReadTo(BYTE cDelim, BYTE* cData, WORD wLen)
 		return HTTP_READ_INCOMPLETE;
 	
 	// Read the value
-	if(wLen < 2 && cData != NULL)
+	if(wLen < 2u && cData != NULL)
 	{// Buffer is too small, so read to NULL instead
 		curHTTP.byteCount -= TCPGetArray(sktHTTP, NULL, wPos);
 		status = HTTP_READ_TRUNCATED;
@@ -1717,7 +1723,7 @@ static HTTP_IO_RESULT HTTPMPFSUpload(void)
 				curHTTP.byteCount -= lenA;
 				
 				// Make sure first 6 bytes are also in
-				if(TCPIsGetReady(sktHTTP) < (4 + 6) )
+				if(TCPIsGetReady(sktHTTP) < (4u + 6u) )
 				{
 					lenA++;
 					return HTTP_IO_NEED_DATA;
@@ -1753,7 +1759,7 @@ static HTTP_IO_RESULT HTTPMPFSUpload(void)
 		case HTTP_MPFS_ERROR:
 			curHTTP.byteCount -= TCPIsGetReady(sktHTTP);
 			TCPDiscard(sktHTTP);
-			if(curHTTP.byteCount < 100 || curHTTP.byteCount > 0x80000000)
+			if(curHTTP.byteCount < 100u || curHTTP.byteCount > 0x80000000u)
 			{// If almost all data was read, or if we overflowed, then return
 				smHTTP = SM_HTTP_SERVE_HEADERS;
 				return HTTP_IO_DONE;
@@ -1767,16 +1773,16 @@ static HTTP_IO_RESULT HTTPMPFSUpload(void)
 			if(lenA > curHTTP.byteCount)
 				lenA = curHTTP.byteCount;
 				
-			while(lenA > 0)
+			while(lenA > 0u)
 			{
-				lenB = TCPGetArray(sktHTTP, c, mMIN(lenA,16));
+				lenB = TCPGetArray(sktHTTP, c, mMIN(lenA,16u));
 				curHTTP.byteCount -= lenB;
 				lenA -= lenB;
 				MPFSPutArray(curHTTP.file, c, lenB);
 			}
 				
 			// If we've read all the data
-			if(curHTTP.byteCount == 0)
+			if(curHTTP.byteCount == 0u)
 			{
 				MPFSPutEnd(TRUE);
 				smHTTP = SM_HTTP_SERVE_HEADERS;
@@ -1835,7 +1841,7 @@ void HTTPIncFile(ROM BYTE* cFile)
 	MPFS_HANDLE fp;
 	
 	// Check if this is a first round call
-	if(curHTTP.callbackPos == 0x00)
+	if(curHTTP.callbackPos == 0x00u)
 	{// On initial call, open the file and save its ID
 		fp = MPFSOpenROM(cFile);
 		if(fp == MPFS_INVALID_HANDLE)
@@ -1856,10 +1862,10 @@ void HTTPIncFile(ROM BYTE* cFile)
 	
 	// Get/put as many bytes as possible
 	wCount = TCPIsPutReady(sktHTTP);
-	while(wCount > 0)
+	while(wCount > 0u)
 	{
-		wLen = MPFSGetArray(fp, data, mMIN(wCount, 64));
-		if(wLen == 0)
+		wLen = MPFSGetArray(fp, data, mMIN(wCount, sizeof(data)));
+		if(wLen == 0u)
 		{// If no bytes were read, an EOF was reached
 			MPFSClose(fp);
 			curHTTP.callbackPos = 0x00;

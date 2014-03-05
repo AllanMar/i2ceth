@@ -52,6 +52,7 @@
  * Howard Schlunder     7/31/06		Original
  * Howard Schlunder		10/09/06	Added DNSBeginUsage(), DNSEndUsage() 
  *									module ownership semaphore
+ * Howard Schlunder		08/28/09	Fixed name compression parsing bug
  ********************************************************************/
 #define __DNS_C
 
@@ -109,9 +110,9 @@ typedef struct
 	WORD_VAL AdditionalRecords;
 } DNS_HEADER;
 
-typedef struct __attribute__((aligned(2), packed))
+typedef struct
 {
-	WORD_VAL	ResponseName;
+	// Response name is first, but it is variable length and must be retrieved using the DNSDiscardName() function
 	WORD_VAL	ResponseType;
 	WORD_VAL	ResponseClass;
 	DWORD_VAL	ResponseTTL;
@@ -125,7 +126,7 @@ typedef struct __attribute__((aligned(2), packed))
   ***************************************************************************/
 
 static void DNSPutString(BYTE* String);
-static void DNSGetString(BYTE* String);
+static void DNSDiscardName(void);
 
 #if defined(__18CXX)
 	static void DNSPutROMString(ROM BYTE* String);
@@ -338,12 +339,14 @@ void DNSResolveROM(ROM BYTE* Hostname, BYTE Type)
 
   Return Values:
   	TRUE - The DNS client has obtained an IP, or the DNS process
-  		has timed out.  HostIP will be 0.0.0.0 on timeout.
+  		has encountered an error.  HostIP will be 0.0.0.0 on error.  Possible 
+  		errors include server timeout (i.e. DNS server not available), hostname 
+  		not in the DNS, or DNS server errors.
   	FALSE - The resolution process is still in progress.
   ***************************************************************************/
 BOOL DNSIsResolved(IP_ADDR* HostIP)
 {
-	static TICK			StartTime;
+	static DWORD		StartTime;
 	static WORD_VAL		SentTransactionID __attribute__((persistent));
 	static BYTE			vARPAttemptCount;
 	static BYTE			vDNSAttemptCount;
@@ -378,7 +381,9 @@ BOOL DNSIsResolved(IP_ADDR* HostIP)
 			// No break: DNS_OPEN_SOCKET is the correct next state
 		
 		case DNS_OPEN_SOCKET:
-			MySocket = UDPOpen(0, &ResolvedInfo, DNS_PORT);
+			//MySocket = UDPOpen(0, &ResolvedInfo, DNS_PORT);
+			
+			MySocket = UDPOpenEx((DWORD)(PTR_BASE)&ResolvedInfo,UDP_OPEN_NODE_INFO,0, DNS_PORT);
 			if(MySocket == INVALID_UDP_SOCKET)
 				break;
 
@@ -450,10 +455,10 @@ BOOL DNSIsResolved(IP_ADDR* HostIP)
 			UDPGet(&DNSHeader.AdditionalRecords.v[1]);
 			UDPGet(&DNSHeader.AdditionalRecords.v[0]);
 
-			// Remove all questions
+			// Remove all questions (queries)
 			while(DNSHeader.Questions.Val--)
 			{
-				DNSGetString(NULL);
+				DNSDiscardName();
 				UDPGet(&w.v[1]);		// Question type
 				UDPGet(&w.v[0]);
 				UDPGet(&w.v[1]);		// Question class
@@ -462,9 +467,8 @@ BOOL DNSIsResolved(IP_ADDR* HostIP)
 			
 			// Scan through answers
 			while(DNSHeader.Answers.Val--)
-			{
-				UDPGet(&DNSAnswerHeader.ResponseName.v[1]);		// Response name
-				UDPGet(&DNSAnswerHeader.ResponseName.v[0]);
+			{				
+				DNSDiscardName();					// Throw away response name
 				UDPGet(&DNSAnswerHeader.ResponseType.v[1]);		// Response type
 				UDPGet(&DNSAnswerHeader.ResponseType.v[0]);
 				UDPGet(&DNSAnswerHeader.ResponseClass.v[1]);	// Response class
@@ -501,8 +505,7 @@ BOOL DNSIsResolved(IP_ADDR* HostIP)
 			// Remove all Authoritative Records
 			while(DNSHeader.AuthoritativeRecords.Val--)
 			{
-				UDPGet(&DNSAnswerHeader.ResponseName.v[1]);		// Response name
-				UDPGet(&DNSAnswerHeader.ResponseName.v[0]);
+				DNSDiscardName();					// Throw away response name
 				UDPGet(&DNSAnswerHeader.ResponseType.v[1]);		// Response type
 				UDPGet(&DNSAnswerHeader.ResponseType.v[0]);
 				UDPGet(&DNSAnswerHeader.ResponseClass.v[1]);	// Response class
@@ -539,8 +542,7 @@ BOOL DNSIsResolved(IP_ADDR* HostIP)
 			// Remove all Additional Records
 			while(DNSHeader.AdditionalRecords.Val--)
 			{
-				UDPGet(&DNSAnswerHeader.ResponseName.v[1]);		// Response name
-				UDPGet(&DNSAnswerHeader.ResponseName.v[0]);
+				DNSDiscardName();					// Throw away response name
 				UDPGet(&DNSAnswerHeader.ResponseType.v[1]);		// Response type
 				UDPGet(&DNSAnswerHeader.ResponseType.v[0]);
 				UDPGet(&DNSAnswerHeader.ResponseClass.v[1]);	// Response class
@@ -583,12 +585,16 @@ DoneSearchingRecords:
 			// No break, DNS_DONE is the correct step
 
 		case DNS_DONE:
+			// Return 0.0.0.0 if DNS resolution failed, otherwise return the 
+			// resolved IP address
+			if(!Flags.bits.AddressValid)
+				ResolvedInfo.IPAddr.Val = 0;
 			HostIP->Val = ResolvedInfo.IPAddr.Val;
 			return TRUE;
 
 		case DNS_FAIL:
 			// If 3 attempts or more, quit
-			if(vDNSAttemptCount >= 2)
+			if(vDNSAttemptCount >= 2u)
 			{
 				// Return an invalid IP address 0.0.0.0 if we can't finish ARP or DNS query step
 				HostIP->Val = 0x00000000;
@@ -665,7 +671,7 @@ static void DNSPutString(BYTE* String)
 			break;
 	}
 	
-	// Put the string null terminator character
+	// Put the string null terminator character (zero length label)
 	UDPPut(0x00);
 }
 
@@ -718,46 +724,59 @@ static void DNSPutROMString(ROM BYTE* String)
 			break;
 	}
 	
-	// Put the string terminator character
+	// Put the string terminator character (zero length label)
 	UDPPut(0x00);
 }
 #endif
 
+
 /*****************************************************************************
   Function:
-	static void DNSGetString(BYTE* String)
+	static void DNSDiscardName(void)
 
   Summary:
-	Reads a string from the DNS socket.
+	Reads a name string or string pointer from the DNS socket and discards it.
 	
   Description:
-	This function reads a string from the DNS socket, first by reading the
-	length of the string and then the data itself.
+	This function reads a name string from the DNS socket.  Each string 
+	consists of a series of labels.  Each label consists of a length prefix 
+	byte, followed by the label bytes.  At the end of the string, a zero length 
+	label is found as termination.  If name compression is used, this function 
+	will automatically detect the pointer and discard it.
 
   Precondition:
-	UDP socket is obtained and ready for reading and String is large enough
-	to hold the data (or NULL).
+	UDP socket is obtained and ready for reading a DNS name
 
   Parameters:
-	String - where to read the string to
+	None
 
   Returns:
   	None
   ***************************************************************************/
-static void DNSGetString(BYTE* String)
+static void DNSDiscardName(void)
 {
 	BYTE i;
 
 	while(1)
 	{
+		// Get first byte which will tell us if this is a 16-bit pointer or the 
+		// length of the first of a series of labels
 		if(!UDPGet(&i))
 			return;
-		if(i == 0u)
-			return;
-		i = UDPGetArray(String, i);
-		if(String)
-			String += i;
 		
+		// Check if this is a pointer, if so, get the reminaing 8 bits and return
+		if((i & 0xC0u) == 0xC0u)
+		{
+			UDPGet(&i);
+			return;
+		}
+
+		// Exit once we reach a zero length label
+		if(i == 0u)					
+			return;
+
+		// Discard complete label
+		UDPGetArray(NULL, i);		
 	}
 }
 

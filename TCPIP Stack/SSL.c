@@ -47,12 +47,6 @@
  * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
  * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
  *
- *
- * Author               Date        Comment
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Elliott Wood			6/20/07		Original
- * Elliott Wood			12/17/07	Rewritten to integrate with TCP
- *									 and support both client & server
  ********************************************************************/
 #define __SSL_C
 
@@ -130,8 +124,8 @@
 	static BYTE SSLSessionNew(void);
 	static void SSLSessionSync(BYTE id);
 	#define SSLSessionUpdated()		sslSessionUpdated = TRUE;
-	static void SaveOffChip(BYTE *ramAddr, WORD ethAddr, WORD len);
-	static void LoadOffChip(BYTE *ramAddr, WORD ethAddr, WORD len);
+	static void SaveOffChip(BYTE *ramAddr, PTR_BASE ethAddr, WORD len);
+	static void LoadOffChip(BYTE *ramAddr, PTR_BASE ethAddr, WORD len);
 	
 	// Section: Handshake Hash and I/O Functions
 	static void HSStart(void);
@@ -178,8 +172,8 @@
   ***************************************************************************/
 	#define mMIN(a, b)	((a<b)?a:b)
 
-	#define SSL_RSA_EXPORT_WITH_ARCFOUR_40_MD5	0x0003
-	#define SSL_RSA_WITH_ARCFOUR_128_MD5		0x0004
+	#define SSL_RSA_EXPORT_WITH_ARCFOUR_40_MD5	0x0003u
+	#define SSL_RSA_WITH_ARCFOUR_128_MD5		0x0004u
 
 /****************************************************************************
   Section:
@@ -308,7 +302,7 @@ void SSLPeriodic(TCP_SOCKET hTCP, BYTE id)
 			{
 				// Copy over the pre-master secret
 				SSLSessionSync(sslStub.idSession);
-				memcpy((void*)sslSession.masterSecret, (void*)&sslBuffer.full[16], 48);
+				memcpy((void*)sslSession.masterSecret, (void*)&sslBuffer.full[(SSL_RSA_KEY_SIZE/8)-48], 48);
 												
 				// Generate the Master Secret
 				SSLKeysSync(sslStubID);
@@ -331,7 +325,7 @@ void SSLPeriodic(TCP_SOCKET hTCP, BYTE id)
 
 /*****************************************************************************
   Function:
-	BYTE SSLStartSession(TCP_SOCKET hTCP)
+	BYTE SSLStartSession(TCP_SOCKET hTCP, BYTE * buffer, BYTE supDataType)
 
   Description:
 	Begins a new SSL session for the given TCP connection.
@@ -341,12 +335,14 @@ void SSLPeriodic(TCP_SOCKET hTCP, BYTE id)
 
   Parameters:
 	hTCP - the socket to begin the SSL connection on
+	buffer - pointer to a supplementary data buffer
+	supDataType - type of supplementary data to store
 	
   Return Values:
   	SSL_INVALID_ID - insufficient SSL resources to start a new connection
   	others - the allocated SSL stub ID
   ***************************************************************************/
-BYTE SSLStartSession(TCP_SOCKET hTCP)
+BYTE SSLStartSession(TCP_SOCKET hTCP, void * buffer, BYTE supDataType)
 {
 	BYTE i;
 	
@@ -368,7 +364,9 @@ BYTE SSLStartSession(TCP_SOCKET hTCP)
 	sslStub.idTxBuffer = SSL_INVALID_ID;
 	sslStub.requestedMessage = SSL_NO_MESSAGE;
 	sslStub.dwTemp.Val = 0;
-	
+	sslStub.supplementaryBuffer = buffer;
+    sslStub.supplementaryDataType = supDataType;
+
 	// Allocate handshake hashes for use, or fail
 	SSLHashAlloc(&sslStub.idMD5);
 	SSLHashAlloc(&sslStub.idSHA1);
@@ -402,7 +400,7 @@ BYTE SSLStartSession(TCP_SOCKET hTCP)
 	#else
 		i = 0;
 	#endif
-	while(i < 32)
+	while(i < 32u)
 		sslKeys.Local.random[i++] = RandomGet();
 		
 	// Return the ID
@@ -464,14 +462,18 @@ void SSLTerminate(BYTE id)
 
 /*****************************************************************************
   Function:
-	void SSLRxRecord(TCP_SOCKET hTCP, BYTE id)
+	WORD SSLRxRecord(TCP_SOCKET hTCP, BYTE id)
 
   Summary:
 	Receives an SSL record.
 
   Description:
-	Reads the SSL Record header from the TCP stream and determines what
-	to do with the rest of the data.
+	Reads at most one SSL Record header from the TCP stream and determines what
+	to do with the rest of the data.  If not all of the data is available for 
+	the record, then the function returns and future call(s) to SSLRxRecord() 
+	will process the remaining data until the end of the record is reached.  
+	If this call process data from a past record, the next record will not be 
+	started until the next call.
 
   Precondition:
 	The specified SSL stub is initialized and the TCP socket is connected.
@@ -481,9 +483,15 @@ void SSLTerminate(BYTE id)
 	id - The active SSL stub ID
 	
   Returns:
-  	None
+  	WORD indicating the number of data bytes there were decrypted but left in 
+  	the stream.
+
+  Remarks:
+  	SSL record headers, MAC footers, and symetric cipher block padding (if any) 
+  	will be extracted from the TCP stream by this function.  Data will be 
+  	decrypted but left in the stream.
   ***************************************************************************/
-void SSLRxRecord(TCP_SOCKET hTCP, BYTE id)
+WORD SSLRxRecord(TCP_SOCKET hTCP, BYTE id)
 {	
 	BYTE temp[32];
 	WORD wLen;
@@ -492,140 +500,137 @@ void SSLRxRecord(TCP_SOCKET hTCP, BYTE id)
 	
 	// Don't do anything for terminated connections
 	if(sslStub.Flags.bDone)
-		return;
+		return 0;
 
-	do
-	{		
-		// If this is a new record, then read the header
-		// When bytes remain, a message is not yet fully read, so
-		// the switch statement will continue handling the data
-		if(sslStub.wRxBytesRem == 0)
-		{
-			// See if we expect a MAC
-			if(sslStub.Flags.bExpectingMAC)
-			{// Receive and verify the MAC
-				if(TCPIsGetReady(hTCP) < 16)
-					return;
-					
-				// Read the MAC
-				TCPGetArray(hTCP, temp, 16);
+	// If this is a new record, then read the header
+	// When bytes remain, a message is not yet fully read, so
+	// the switch statement will continue handling the data
+	if(sslStub.wRxBytesRem == 0u)
+	{
+		// See if we expect a MAC
+		if(sslStub.Flags.bExpectingMAC)
+		{// Receive and verify the MAC
+			if(TCPIsGetReady(hTCP) < 16u)
+				return 0;
 				
-				// Calculate the expected MAC
-				SSLBufferSync(sslStub.idRxBuffer);
-				SSLKeysSync(id);
-				SSLHashSync(sslStub.idRxHash);
-				
-				ARCFOURCrypt(&sslKeys.Remote.app.cryptCtx, temp, 16);
-				SSLMACCalc(sslKeys.Remote.app.MACSecret, &temp[16]);
-				
-				// MAC no longer expected
-				sslStub.Flags.bExpectingMAC = 0;
-				
-				// Verify the MAC
-				if(memcmp((void*)temp, (void*)&temp[16], 16) != 0)
-				{// MAC fails
-					TCPRequestSSLMessage(hTCP, SSL_ALERT_BAD_RECORD_MAC);
-					return;
-				}
-			}	
+			// Read the MAC
+			TCPGetArray(hTCP, temp, 16);
 			
-			// Check if a new header is available
-			// Also ignore data if SSL is terminated
-			if(TCPIsGetReady(hTCP) < 5)
-				return;
-			
-			// Read the record type (BYTE)
-			TCPGet(hTCP, &sslStub.rxProtocol);
-			
-			#if defined(STACK_USE_SSL_SERVER)
-			// Check if we've received an SSLv2 ClientHello message
-			// Client-only implementations don't need to deal with this
-			if((sslStub.rxProtocol & 0x80) == 0x80)
-			{
-				// After MSB, next 15 bits are the length
-				((BYTE*)&sslStub.wRxBytesRem)[1] = sslStub.rxProtocol & 0x7F;
-				TCPGet(hTCP, ((BYTE*)&sslStub.wRxBytesRem));
-				
-				// Tell the handshaker what message to expect
-				sslStub.wRxHsBytesRem = sslStub.wRxBytesRem;
-				sslStub.rxProtocol = SSL_HANDSHAKE;
-				sslStub.rxHSType = SSL_ANTIQUE_CLIENT_HELLO;
-			}
-			
-			// Otherwise, this is a normal SSLv3 message
-			// Read the rest of the record header and proceed normally
-			else
-			#endif
-			{
-				// Read version (WORD, currently ignored)
-				TCPGet(hTCP, NULL);
-				TCPGet(hTCP, NULL);
-		
-				// Read length (WORD)
-				TCPGet(hTCP, ((BYTE*)&sslStub.wRxBytesRem)+1);
-				TCPGet(hTCP, ((BYTE*)&sslStub.wRxBytesRem));
-				
-				// Determine if a MAC is expected
-				if(sslStub.Flags.bRemoteChangeCipherSpec)
-				{
-					sslStub.Flags.bExpectingMAC = 1;
-					sslStub.wRxBytesRem -= 16;
-								
-					// Set up the MAC
-					SSLKeysSync(sslStubID);
-					SSLHashSync(sslStub.idRxHash);
-					SSLMACBegin(sslKeys.Remote.app.MACSecret, 
-						sslKeys.Remote.app.sequence++, 
-						sslStub.rxProtocol, sslStub.wRxBytesRem);
-				}
-			}
-			
-		}
-		
-		// See if data is ready that needs decryption
-		wLen = TCPIsGetReady(hTCP);
-	
-		// Decrypt and MAC if necessary
-		if(sslStub.Flags.bRemoteChangeCipherSpec && wLen)
-		{// Need to decrypt the data
-			
-			// Only decrypt up to end of record
-			if(wLen > sslStub.wRxBytesRem)
-				wLen = sslStub.wRxBytesRem;
-							
-			// Prepare for decryption
-			SSLKeysSync(id);
+			// Calculate the expected MAC
 			SSLBufferSync(sslStub.idRxBuffer);
+			SSLKeysSync(id);
 			SSLHashSync(sslStub.idRxHash);
-	
-			// Decrypt application data to proper location, non-app in place
-			TCPSSLDecryptMAC(hTCP, &sslKeys.Remote.app.cryptCtx, wLen, (sslStub.rxProtocol != SSL_APPLICATION));
+			
+			ARCFOURCrypt(&sslKeys.Remote.app.cryptCtx, temp, 16);
+			SSLMACCalc(sslKeys.Remote.app.MACSecret, &temp[16]);
+			
+			// MAC no longer expected
+			sslStub.Flags.bExpectingMAC = 0;
+			
+			// Verify the MAC
+			if(memcmp((void*)temp, (void*)&temp[16], 16) != 0)
+			{// MAC fails
+				TCPRequestSSLMessage(hTCP, SSL_ALERT_BAD_RECORD_MAC);
+				return 0;
+			}
+		}	
+		
+		// Check if a new header is available
+		// Also ignore data if SSL is terminated
+		if(TCPIsGetReady(hTCP) < 5u)
+			return 0;
+		
+		// Read the record type (BYTE)
+		TCPGet(hTCP, &sslStub.rxProtocol);
+		
+		#if defined(STACK_USE_SSL_SERVER)
+		// Check if we've received an SSLv2 ClientHello message
+		// Client-only implementations don't need to deal with this
+		if((sslStub.rxProtocol & 0x80) == 0x80)
+		{
+			// After MSB, next 15 bits are the length
+			((BYTE*)&sslStub.wRxBytesRem)[1] = sslStub.rxProtocol & 0x7F;
+			TCPGet(hTCP, ((BYTE*)&sslStub.wRxBytesRem));
+			
+			// Tell the handshaker what message to expect
+			sslStub.wRxHsBytesRem = sslStub.wRxBytesRem;
+			sslStub.rxProtocol = SSL_HANDSHAKE;
+			sslStub.rxHSType = SSL_ANTIQUE_CLIENT_HELLO;
 		}
 		
-		// Determine what to do with the rest of the data
-		switch(sslStub.rxProtocol)
+		// Otherwise, this is a normal SSLv3 message
+		// Read the rest of the record header and proceed normally
+		else
+		#endif
 		{
-			case SSL_HANDSHAKE:
-				SSLRxHandshake(hTCP);
-				break;
-				
-			case SSL_CHANGE_CIPHER_SPEC:
-				SSLRxCCS(hTCP);
-				break;
-				
-			case SSL_APPLICATION:
-				// Data was handled above
-				// Just note that it's all been read
-				sslStub.wRxBytesRem -= wLen;
-				break;
-			
-			case SSL_ALERT:
-				SSLRxAlert(hTCP);
-				break;
-		}
-
-	} while(sslStub.wRxBytesRem == 0);
+			// Read version (WORD, currently ignored)
+			TCPGet(hTCP, NULL);
+			TCPGet(hTCP, NULL);
 	
+			// Read length (WORD)
+			TCPGet(hTCP, ((BYTE*)&sslStub.wRxBytesRem)+1);
+			TCPGet(hTCP, ((BYTE*)&sslStub.wRxBytesRem));
+			
+			// Determine if a MAC is expected
+			if(sslStub.Flags.bRemoteChangeCipherSpec)
+			{
+				sslStub.Flags.bExpectingMAC = 1;
+				sslStub.wRxBytesRem -= 16;
+							
+				// Set up the MAC
+				SSLKeysSync(sslStubID);
+				SSLHashSync(sslStub.idRxHash);
+				SSLMACBegin(sslKeys.Remote.app.MACSecret, 
+					sslKeys.Remote.app.sequence++, 
+					sslStub.rxProtocol, sslStub.wRxBytesRem);
+			}
+		}
+		
+	}
+	
+	// See if data is ready that needs decryption
+	wLen = TCPIsGetReady(hTCP);
+
+	// Decrypt and MAC if necessary
+	if(sslStub.Flags.bRemoteChangeCipherSpec && wLen)
+	{// Need to decrypt the data
+		
+		// Only decrypt up to end of record
+		if(wLen > sslStub.wRxBytesRem)
+			wLen = sslStub.wRxBytesRem;
+						
+		// Prepare for decryption
+		SSLKeysSync(id);
+		SSLBufferSync(sslStub.idRxBuffer);
+		SSLHashSync(sslStub.idRxHash);
+
+		// Decrypt application data to proper location, non-app in place
+		TCPSSLDecryptMAC(hTCP, &sslKeys.Remote.app.cryptCtx, wLen);
+	}
+	
+	// Determine what to do with the rest of the data
+	switch(sslStub.rxProtocol)
+	{
+		case SSL_HANDSHAKE:
+			SSLRxHandshake(hTCP);
+			break;
+			
+		case SSL_CHANGE_CIPHER_SPEC:
+			SSLRxCCS(hTCP);
+			break;
+			
+		case SSL_APPLICATION:
+			// Data was handled above
+			// Just note that it's all been read
+			sslStub.wRxBytesRem -= wLen;
+			return wLen;
+		
+		case SSL_ALERT:
+			SSLRxAlert(hTCP);
+			break;
+	}
+	
+	return 0;
 }
 
 /*****************************************************************************
@@ -664,7 +669,7 @@ void SSLTxRecord(TCP_SOCKET hTCP, BYTE id, BYTE txProtocol)
 	
 	// Determine how many bytes are ready to write
 	wLen.Val = TCPSSLGetPendingTxSize(hTCP);
-	if(wLen.Val == 0)
+	if(wLen.Val == 0u)
 		return;
 	
 	// Determine if a MAC is required
@@ -816,7 +821,7 @@ void SSLTxMessage(TCP_SOCKET hTCP, BYTE id, BYTE msg)
 				break;
 			
 			// Make sure we can write the message
-			if(TCPIsPutReady(hTCP) < 2)
+			if(TCPIsPutReady(hTCP) < 2u)
 				break;
 			
 			// Select FATAL or WARNING
@@ -874,10 +879,10 @@ void SSLRxHandshake(TCP_SOCKET hTCP)
 	// If the message has already been started, there will
 	// still be bytes remaining and the switch statement will 
 	// handle the rest.
-	if(sslStub.wRxHsBytesRem == 0)
+	if(sslStub.wRxHsBytesRem == 0u)
 	{
 		// Make sure entire header is in the buffer
-		if(TCPIsGetReady(hTCP) < 4)
+		if(TCPIsGetReady(hTCP) < 4u)
 			return;
 		
 		// Read the message type (BYTE)
@@ -967,7 +972,7 @@ static void SSLTxClientHello(TCP_SOCKET hTCP)
 	//sslStub.Flags.bIsServer = 0;  // This is the default already
 	
 	// Make sure enough space is available to transmit
-	if(TCPIsPutReady(hTCP) < 100)
+	if(TCPIsPutReady(hTCP) < 100u)
 		return;
 	
 	// Look for a valid session to reuse
@@ -1089,7 +1094,7 @@ static void SSLRxClientHello(TCP_SOCKET hTCP)
 	
 	// Read the Session ID if it exists
 	sslStub.Flags.bNewSession = TRUE;
-	if(c > 0)
+	if(c > 0u)
 	{
 		// Note where it will be stored in RAM
 		ptrID = ptrHS;
@@ -1177,7 +1182,7 @@ static void SSLRxAntiqueClientHello(TCP_SOCKET hTCP)
 	
 	// Read and verify the handshake message type
 	HSGet(hTCP, &c);
-	if(c != 0x01)
+	if(c != 0x01u)
 	{// This message is not supported, so handshake fails
 		TCPRequestSSLMessage(hTCP, SSL_ALERT_HANDSHAKE_FAILURE);
 		return;
@@ -1272,7 +1277,7 @@ static void SSLRxServerHello(TCP_SOCKET hTCP)
 	
 	// Read Session ID (if any)
 	SSLSessionSync(sslStub.idSession);
-	if(b != 0)
+	if(b != 0u)
 	{
 		HSGetArray(hTCP, sessionID, b);
 
@@ -1303,7 +1308,7 @@ static void SSLRxServerHello(TCP_SOCKET hTCP)
 	
 	// Read and verify Compression Method (BYTE)
 	HSGet(hTCP, &b);
-	if(b != 0x00)
+	if(b != 0x00u)
 		TCPRequestSSLMessage(hTCP, SSL_ALERT_HANDSHAKE_FAILURE);
 	
 	// Note that message was received
@@ -1339,7 +1344,7 @@ static void SSLTxServerHello(TCP_SOCKET hTCP)
 		return;
 	
 	// Make sure enough space is available to transmit
-	if(TCPIsPutReady(hTCP) < 78)
+	if(TCPIsPutReady(hTCP) < 78u)
 		return;
 	
 	// Restart the handshake hasher
@@ -1352,7 +1357,7 @@ static void SSLTxServerHello(TCP_SOCKET hTCP)
 	// If this session is new, generate an ID
 	if(sslStub.Flags.bNewSession)
 	{
-		for(i = 0; i < 32; i++)
+		for(i = 0; i < 32u; i++)
 			sslSession.sessionID[i] = RandomGet();
 		SSLSessionUpdated();
 		
@@ -1386,7 +1391,7 @@ static void SSLTxServerHello(TCP_SOCKET hTCP)
 	#else
 		i = 0;
 	#endif
-	while(i < 32)
+	while(i < 32u)
 		sslKeys.Local.random[i++] = RandomGet();
 	HSPutArray(hTCP, sslKeys.Local.random, 32);
 	
@@ -1446,6 +1451,9 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 {
 	WORD len;
 	BYTE i, e[3];
+	WORD data_length;   // number of key bytes read from certificate
+	BYTE length_bytes;  // decoded length value
+	BYTE index;         // temp index
 	
 	// Verify handshake message sequence
 	if(!sslStub.Flags.bServerHello || sslStub.Flags.bServerCertificate)
@@ -1458,7 +1466,7 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 			// Find RSA Public Key Algorithm identifier
 			len = TCPFindROMArray(hTCP, (ROM BYTE*)"\x2A\x86\x48\x86\xF7\x0D\x01\x01\x01", 9, 0, FALSE);
 			
-			if(len == 0xffff)
+			if(len == 0xFFFFu)
 			{// If not found, clear most of buffer and return to wait
 				HSGetArray(hTCP, NULL, TCPIsGetReady(hTCP) - 10);
 				return;
@@ -1472,7 +1480,7 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 			// Search for beginning of struct
 			len = TCPFind(hTCP, 0x30, 0, FALSE);
 			
-			if(len == 0xff)
+			if(len == 0xFFFFu)
 			{// Not found, so clear and return
 				HSGetArray(hTCP, NULL, TCPIsGetReady(hTCP));
 			}
@@ -1481,7 +1489,7 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 			HSGetArray(hTCP, NULL, len + 1);
 			
 			// Make sure 2 more bytes remain
-			if(TCPIsGetReady(hTCP) < 3)
+			if(TCPIsGetReady(hTCP) < 3u)
 				return;
 			
 			// Read 1 or 2 length bytes (ignore)
@@ -1494,30 +1502,41 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 		
 		case RX_SERVER_CERT_FIND_N:
 			// Make sure tag and length bytes are ready, plus one more
-			if(TCPIsGetReady(hTCP) < 4)
+			if(TCPIsGetReady(hTCP) < 8u)
 				return;
-
-			// Read 0x02 (integer identifier)
-			HSGet(hTCP, NULL);
-			
+            // Read until 0x02
+            i = 0;
+            while(i != 2)
+    			HSGet(hTCP, &i);
 			// Read 1 or 2 length bytes to sslStub.dwTemp.v[1]
+			// The next byte tells us how many bytes are in the length structure if it's MSB is set
 			HSGet(hTCP, &i);
-			if(i > 0x80)
-				HSGet(hTCP, &i);
-			sslStub.dwTemp.v[1] = i;
-			
+			data_length = 0;
+			if(i & 0x80)
+			{
+    			length_bytes = i & 0x7F;
+    			for(index=0;index<length_bytes;index++)
+    			{
+    				HSGet(hTCP, &i);
+    				data_length = (data_length<<8)+i;
+    			}
+            }
+            else
+   				data_length = i;
+            
+			sslStub.dwTemp.w[1] = data_length;
 			// If there's one odd byte, it's a leading zero that we don't need
-			if(sslStub.dwTemp.v[1] & 0x01)
+			if(sslStub.dwTemp.w[1] & 0x01)
 			{
 				HSGet(hTCP, NULL);
-				sslStub.dwTemp.v[1]--;
+				sslStub.dwTemp.w[1]--;
 			}
-			
-			// The max modulus we support is 1024 bits
-			if(sslStub.dwTemp.v[1] > 0x80)
+			// The max modulus we support is 2048 bits
+			if(sslStub.dwTemp.w[1] > SSL_RSA_CLIENT_SIZE/8)
 			{
 				TCPRequestSSLMessage(hTCP, SSL_ALERT_HANDSHAKE_FAILURE);
-				sslStub.dwTemp.v[1] = 0x80;
+				sslStub.dwTemp.w[1] = SSL_RSA_CLIENT_SIZE/8;
+				// Need to determine a graceful way to abort
 			}
 
 			// Increment and continue
@@ -1525,7 +1544,7 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 		
 		case RX_SERVER_CERT_READ_N:
 			// Make sure sslStub.dwTemp.v[1] bytes are ready
-			if(TCPIsGetReady(hTCP) < sslStub.dwTemp.v[1])
+			if(TCPIsGetReady(hTCP) < sslStub.dwTemp.w[1])
 				return;
 			
 			// N will be stored in sslBuffer, which is currently in use
@@ -1539,33 +1558,42 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 				return;
 				
 			// Make sure we can claim RSA Engine
-			if(!RSABeginEncrypt(sslStub.dwTemp.v[1]))
+			if(!RSABeginEncrypt(sslStub.dwTemp.w[1]))
 				return;
 			sslRSAStubID = sslStubID;
 			
 			// Read N to proper location
-			for(i = 0; i < 128 - sslStub.dwTemp.v[1]; i++)
-				sslBuffer.full[i] = 0x00;
-			HSGetArray(hTCP, sslBuffer.full, sslStub.dwTemp.v[1]);
+//			for(i = 0; i < 128u - sslStub.dwTemp.v[1]; i++)
+//				sslBuffer.full[i] = 0x00;
+			HSGetArray(hTCP, sslBuffer.full, sslStub.dwTemp.w[1]);
 			
+            if (sslStub.supplementaryDataType == SSL_SUPPLEMENTARY_DATA_CERT_PUBLIC_KEY)
+            {
+                SSL_PKEY_INFO * tmpPKeyPtr = ((SSL_PKEY_INFO *)sslStub.supplementaryBuffer);
+                tmpPKeyPtr->pub_size_bytes = sslStub.dwTemp.w[1];
+                if (tmpPKeyPtr->pub_size_bytes <= sizeof (tmpPKeyPtr->pub_key))
+                    memcpy (&tmpPKeyPtr->pub_key[0], sslBuffer.full, tmpPKeyPtr->pub_size_bytes);
+            }
+
+
 			// Hash what we just read
 			SSLHashSync(sslStub.idSHA1);
-			HashAddData(&sslHash, sslBuffer.full, sslStub.dwTemp.v[1]);
+			HashAddData(&sslHash, sslBuffer.full, sslStub.dwTemp.w[1]);
 			SSLHashSync(sslStub.idMD5);
-			HashAddData(&sslHash, sslBuffer.full, sslStub.dwTemp.v[1]);
+			HashAddData(&sslHash, sslBuffer.full, sslStub.dwTemp.w[1]);
 			
 			// Generate { SSL_VERSION rand[46] } as pre-master secret & save
 			SSLSessionSync(sslStub.idSession);
 			sslSession.masterSecret[0] = SSL_VERSION_HI;
 			sslSession.masterSecret[1] = SSL_VERSION_LO;
-			for(i = 2; i < 48; i++)
+			for(i = 2; i < 48u; i++)
 				sslSession.masterSecret[i] = RandomGet();
 			SSLSessionUpdated();
 			
 			// Set RSA engine to use this data and key
 			RSASetData(sslSession.masterSecret, 48, RSA_BIG_ENDIAN);
 			RSASetN(sslBuffer.full, RSA_BIG_ENDIAN);
-			RSASetResult(sslBuffer.full+128, RSA_BIG_ENDIAN);
+			RSASetResult(sslBuffer.full+sslStub.dwTemp.w[1], RSA_BIG_ENDIAN);
 			
 			// Start a new hash
 			HSStart();
@@ -1575,7 +1603,7 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 			
 		case RX_SERVER_CERT_READ_E:
 			// Make sure 5 bytes are ready
-			if(TCPIsGetReady(hTCP) < 5)
+			if(TCPIsGetReady(hTCP) < 5u)
 				return;
 
 			// Read 0x02
@@ -1583,12 +1611,19 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 			
 			// Read 1 length byte to temp
 			HSGet(hTCP, &i);
-			if(i > 3)
+			if(i > 3u)
 				i = 3;
 			
 			// Read E to temp
 			HSGetArray(hTCP, e, i);
-			
+
+            if (sslStub.supplementaryDataType == SSL_SUPPLEMENTARY_DATA_CERT_PUBLIC_KEY)
+            {
+                SSL_PKEY_INFO * tmpPKeyPtr = ((SSL_PKEY_INFO *)sslStub.supplementaryBuffer);
+                if (i <= sizeof (tmpPKeyPtr->pub_e))
+                    memcpy (&tmpPKeyPtr->pub_e[0], e, i);
+            }
+
 			// Set RSA engine to encrypt with E
 			RSASetE(e, i, RSA_BIG_ENDIAN);
 			
@@ -1603,7 +1638,7 @@ static void SSLRxServerCertificate(TCP_SOCKET hTCP)
 			HSGetArray(hTCP, NULL, len);
 			
 			// If we're done, kick off the RSA encryption next
-			if(sslStub.wRxHsBytesRem == 0)
+			if(sslStub.wRxHsBytesRem == 0u)
 			{
 				// Set periodic function to do RSA operation
 				sslStub.Flags.bRSAInProgress = 1;
@@ -1655,7 +1690,7 @@ static void SSLTxServerCertificate(TCP_SOCKET hTCP)
 	if(sslStub.dwTemp.Val == SSL_CERT_LEN)
 	{
 		// Make sure we can send all headers plus one byte
-		if(len < 11)
+		if(len < 11u)
 			return;
 		
 		// Transmit the handshake headers
@@ -1694,7 +1729,7 @@ static void SSLTxServerCertificate(TCP_SOCKET hTCP)
 	SSLFlushPartialRecord(hTCP);
 		
 	// Check if entire certificate was sent
-	if(sslStub.dwTemp.Val == 0)
+	if(sslStub.dwTemp.Val == 0u)
 	{
 		// Finish the partial record
 		SSLFinishPartialRecord(hTCP);
@@ -1726,7 +1761,7 @@ static void SSLTxServerCertificate(TCP_SOCKET hTCP)
 static void SSLTxServerHelloDone(TCP_SOCKET hTCP)
 {
 	// Make sure enough space is available to transmit
-	if(TCPIsPutReady(hTCP) < 4)
+	if(TCPIsPutReady(hTCP) < 4u)
 		return;
 	
 	// Restart the handshake hasher
@@ -1776,10 +1811,10 @@ static void SSLTxServerHelloDone(TCP_SOCKET hTCP)
 #if defined(STACK_USE_SSL_CLIENT)
 static void SSLTxClientKeyExchange(TCP_SOCKET hTCP)
 {
-	BYTE len;
+	WORD len;
 	
 	// Load length of modulus from RxServerCertificate
-	len = sslStub.dwTemp.v[1];
+	len = sslStub.dwTemp.w[1];
 	
 	// Make sure there's len+9 bytes free
 	if(TCPIsPutReady(hTCP) < len + 9)
@@ -1791,15 +1826,15 @@ static void SSLTxClientKeyExchange(TCP_SOCKET hTCP)
 	// Send handshake message header (hashed)
 	HSPut(hTCP, SSL_CLIENT_KEY_EXCHANGE);
 	HSPut(hTCP, 0x00);				
-	HSPut(hTCP, 0x00);				// Message length is (length of key) bytes
-	HSPut(hTCP, len);
+	HSPut(hTCP, (len>>8)&0xFF);				// Message length is (length of key) bytes
+	HSPut(hTCP, len&0xFF);
 	
 	// Suspend the handshake hasher and load the buffer
 	HSEnd();
 	SSLBufferSync(sslStub.idRxBuffer);	
 
 	// Send encrypted pre-master secret
-	TCPPutArray(hTCP, (BYTE*) sslBuffer.full + 0x80, len);
+	TCPPutArray(hTCP, (BYTE*) sslBuffer.full + len, len);
 	
 	// Free the RSA Engine
 	RSAEndUsage();
@@ -1807,9 +1842,9 @@ static void SSLTxClientKeyExchange(TCP_SOCKET hTCP)
 
 	// Hash what we just sent
 	SSLHashSync(sslStub.idSHA1);
-	HashAddData(&sslHash, sslBuffer.full + 0x80, len);
+	HashAddData(&sslHash, sslBuffer.full + len, len);
 	SSLHashSync(sslStub.idMD5);
-	HashAddData(&sslHash, sslBuffer.full + 0x80, len);
+	HashAddData(&sslHash, sslBuffer.full + len, len);
 	
 	// Generate the Master Secret
 	SSLKeysSync(sslStubID);
@@ -1857,10 +1892,6 @@ static void SSLTxClientKeyExchange(TCP_SOCKET hTCP)
 static void SSLRxClientKeyExchange(TCP_SOCKET hTCP)
 {
 	WORD wKeyLength;
-	
-	// TODO: Add a sanity check here to see if sslStub.wRxHsBytesRem is equal 
-	// to the chosen RSA modulus length (ex: 128 for 1024 bit).  If it is 
-	// wrong, we need to generate a failure alert.
 	
 	// Make sure entire message is ready
 	if(TCPIsGetReady(hTCP) < sslStub.wRxHsBytesRem)
@@ -1924,7 +1955,7 @@ static void SSLTxCCSFin(TCP_SOCKET hTCP)
 	BYTE data[20];
 	
 	// Make sure enough space is available for both
-	if(TCPIsPutReady(hTCP) < 68)
+	if(TCPIsPutReady(hTCP) < 68u)
 		return;
 
 	// Sync up the session
@@ -2362,7 +2393,7 @@ static void CalculateFinishedHash(BYTE hashID, BOOL fromClient, BYTE *result)
 	i = 6;
 	if(sslHash.hashType == HASH_SHA1)
 		i--;
-	for(; i > 0; i--)
+	for(; i > 0u; i--)
 		HashAddROMData(&sslHash, (ROM BYTE*)"\x36\x36\x36\x36\x36\x36\x36\x36", 8);
 	
 	// Calculate the inner hash result and store, start new hash
@@ -2384,7 +2415,7 @@ static void CalculateFinishedHash(BYTE hashID, BOOL fromClient, BYTE *result)
 	i = 6;
 	if(sslHash.hashType == HASH_SHA1)
 		i--;
-	for(; i > 0; i--)
+	for(; i > 0u; i--)
 		HashAddROMData(&sslHash, (ROM BYTE*)"\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c", 8);
 	
 	// Hash in the inner hash result and calculate
@@ -2824,7 +2855,7 @@ static BYTE SSLSessionNew(void)
 	// Search for a free session
 	for(id = 0; id != MAX_SSL_SESSIONS; id++)
 	{
-		if(sslSessionStubs[id].tag.Val == 0)
+		if(sslSessionStubs[id].tag.Val == 0u)
 		{// Unused session, so claim immediately
 			break;
 		}
@@ -2885,7 +2916,7 @@ static BYTE SSLSessionMatchID(BYTE* SessionID)
 	for(i = 0; i < MAX_SSL_SESSIONS; i++)
 	{
 		// Check if tag matches the ID
-		if(sslSessionStubs[i].tag.v[0] == 0 &&
+		if(sslSessionStubs[i].tag.v[0] == 0u &&
 			!memcmp((void*)&sslSessionStubs[i].tag.v[1], (void*)SessionID, 3) )
 		{
 			// Found a partial match, so load it to memory
@@ -3004,9 +3035,9 @@ static void SSLSessionSync(BYTE id)
  *
  * Note:            None
  ********************************************************************/
-static void SaveOffChip(BYTE *ramAddr, WORD ethAddr, WORD len)
+static void SaveOffChip(BYTE *ramAddr, PTR_BASE ethAddr, WORD len)
 {
-	WORD oldPtr;
+	PTR_BASE oldPtr;
 	
 	oldPtr = MACSetWritePtr(ethAddr);
 	MACPutArray(ramAddr, len);
@@ -3031,9 +3062,9 @@ static void SaveOffChip(BYTE *ramAddr, WORD ethAddr, WORD len)
  *
  * Note:            None
  ********************************************************************/
-static void LoadOffChip(BYTE *ramAddr, WORD ethAddr, WORD len)
+static void LoadOffChip(BYTE *ramAddr, PTR_BASE ethAddr, WORD len)
 {
-	WORD oldPtr;
+    PTR_BASE oldPtr;
 	
 	oldPtr = MACSetReadPtr(ethAddr);
 	MACGetArray(ramAddr, len);
@@ -3244,7 +3275,7 @@ static WORD HSGetArray(TCP_SOCKET skt, BYTE *data, WORD len)
 		for(i = 0; i < len; )
 		{
 			// Determine how much we can read
-			rem = (sslBuffer.full + 255) - ptrHS;
+			rem = (sslBuffer.full + 256) - ptrHS;
 			if(rem > len - i)
 				rem = len - i;
 
@@ -3261,7 +3292,7 @@ static WORD HSGetArray(TCP_SOCKET skt, BYTE *data, WORD len)
 			i += rem;
 			
 			// Make sure we aren't in an infinite loop
-			if(rem == 0)
+			if(rem == 0u)
 				break;
 		}
 		
@@ -3270,9 +3301,7 @@ static WORD HSGetArray(TCP_SOCKET skt, BYTE *data, WORD len)
 	
 	len = TCPGetArray(skt, data, len);
 	w = len;
-	
-	// TODO: BUG!!!: This must be fixed somehow so that buffer overflow is not 
-	// possible
+
 	memcpy(ptrHS, (void*)data, len);
 	ptrHS += len;
 
@@ -3297,7 +3326,7 @@ static WORD HSGetArray(TCP_SOCKET skt, BYTE *data, WORD len)
 	sslStub.wRxBytesRem -= len;
 	sslStub.wRxHsBytesRem -= len;
 	
-	if(ptrHS > sslBuffer.full + 128)
+	if(ptrHS > sslBuffer.full + (sizeof(sslBuffer.full)/2))
 	{
 		HSEnd();
 		HSStart();
@@ -3482,7 +3511,7 @@ void SSLMACBegin(BYTE *MACSecret, DWORD seq, BYTE protocol, WORD len)
 	HashAddData(&sslHash, MACSecret, 16);
 	
 	// Add in the padding
-	for(i = 0; i < 6; i++)
+	for(i = 0; i < 6u; i++)
 	{
 		HashAddROMData(&sslHash, (ROM BYTE*)"\x36\x36\x36\x36\x36\x36\x36\x36", 8);
 	}
@@ -3544,7 +3573,7 @@ void SSLMACCalc(BYTE *MACSecret, BYTE *result)
 	HashAddData(&sslHash, MACSecret, 16);
 	
 	// Add in padding
-	for(i = 0; i < 6; i++)
+	for(i = 0; i < 6u; i++)
 	{
 		HashAddROMData(&sslHash, (ROM BYTE*)"\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c", 8);
 	}

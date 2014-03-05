@@ -101,7 +101,8 @@ void RebootTask(void)
 	} BootloaderAddress;
 	
 	if(MySocket == INVALID_UDP_SOCKET)
-		MySocket = UDPOpen(REBOOT_PORT, NULL, INVALID_UDP_PORT);
+		MySocket = UDPOpenEx(0,UDP_OPEN_SERVER,REBOOT_PORT,INVALID_UDP_PORT);
+//		MySocket = UDPOpen(REBOOT_PORT, NULL, INVALID_UDP_PORT);
 
 	if(MySocket == INVALID_UDP_SOCKET)
 		return;

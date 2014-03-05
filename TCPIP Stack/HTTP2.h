@@ -61,13 +61,21 @@
   Section:
 	Server Configuration Settings
   ***************************************************************************/
-  
-  	#define HTTP_PORT               (80u)	// Listening port for HTTP server
-	#define HTTPS_PORT				(443u)	// Listening port for HTTPS server (when SSL enabled)
-	#define HTTP_MAX_DATA_LEN		(100u)	// Max bytes to store get and cookie args
-	#define HTTP_MIN_CALLBACK_FREE	(16u)	// Min bytes free in TX FIFO before callbacks execute
+
+    #if !defined(HTTP_PORT)
+        #define HTTP_PORT               (80u)	// Listening port for HTTP server
+    #endif
+    #if !defined(HTTPS_PORT)
+        #define HTTPS_PORT				(443u)	// Listening port for HTTPS server (when SSL enabled)
+    #endif
+    #if !defined(HTTP_MAX_DATA_LEN)
+        #define HTTP_MAX_DATA_LEN		(100u)
+    #endif
+    #if !defined(HTTP_MIN_CALLBACK_FREE)
+        #define HTTP_MIN_CALLBACK_FREE	(16u)
+    #endif
 	#define HTTP_CACHE_LEN			("600")	// Max lifetime (sec) of static responses as string
-	#define HTTP_TIMEOUT			(45u)	// Max time (sec) to await more data before
+	#define HTTP_TIMEOUT			(45u)	// Max time (sec) to await more data before timing out and disconnecting the socket
 
 	// Authentication requires Base64 decoding
 	#if defined(HTTP_USE_AUTHENTICATION)
@@ -86,6 +94,7 @@
 	{
 	    HTTP_GET = 0u,					// GET command is being processed
 	    HTTP_POST,						// POST command is being processed
+	    HTTP_BAD_REQUEST,				// 400 Bad Request will be returned
 		HTTP_UNAUTHORIZED,				// 401 Unauthorized will be returned
 	    HTTP_NOT_FOUND,					// 404 Not Found will be returned
 		HTTP_OVERFLOW,					// 414 Request-URI Too Long will be returned
@@ -98,10 +107,9 @@
 		HTTP_MPFS_ERROR,				// An MPFS Upload was not a valid image
 		#endif
 		HTTP_REDIRECT,					// 302 Redirect will be returned
-		HTTP_SSL_REQUIRED,				// 403 Forbidden is returned, indicating SSL is required
-		HTTP_OPTIONS					// Dummy process of OPTIONS command to support CORS
+		HTTP_SSL_REQUIRED				// 403 Forbidden is returned, indicating SSL is required
 	} HTTP_STATUS;
-	
+
 /****************************************************************************
   Section:
 	HTTP State Definitions
@@ -123,7 +131,7 @@
 		SM_HTTP_SEND_FROM_CALLBACK,		// Invokes a dynamic variable callback
 		SM_HTTP_DISCONNECT				// Disconnects the server and closes all files
 	} SM_HTTP2;
-	
+
 	// Result states for execution callbacks
 	typedef enum
 	{
@@ -139,7 +147,7 @@
 		HTTP_READ_TRUNCATED,	// Buffer overflow prevented by truncating value
 		HTTP_READ_INCOMPLETE	// Entire object is not yet in the buffer.  Try again later.
 	} HTTP_READ_STATUS;
-	
+
 	// File type definitions
 	typedef enum
 	{
@@ -154,7 +162,6 @@
 		HTTP_JPG,			// File is JPG image (extension .jpg)
 		HTTP_JAVA,			// File is java (extension .java)
 		HTTP_WAV,			// File is audio (extension .wav)
-		HTTP_JS,			// File is javascript (extension .js)
 		HTTP_UNKNOWN		// File type is unknown
 	} HTTP_FILE_TYPE;
 
@@ -168,7 +175,6 @@
 	} HTTP_STUB;
 
 	#define sktHTTP		httpStubs[curHTTPID].socket		// Access the current socket
-	#define smHTTP		httpStubs[curHTTPID].sm			// Access the current state machine
 
 	// Stores extended state data for each connection
 	typedef struct
@@ -181,7 +187,7 @@
 		BYTE *ptrRead;						// Points to current read location
 		MPFS_HANDLE file;					// File pointer for the file being served
 	    MPFS_HANDLE offsets;				// File pointer for any offset info being used
-		BYTE hasArgs;						// True if there were get or cookie arguments	
+		BYTE hasArgs;						// True if there were get or cookie arguments
 		BYTE isAuthorized;					// 0x00-0x79 on fail, 0x80-0xff on pass
 		HTTP_STATUS httpStatus;				// Request method/status
 	    HTTP_FILE_TYPE fileType;			// File type to return with Content-Type
@@ -190,15 +196,25 @@
 		BYTE smPost;						// POST state machine variable
 		#endif
 	} HTTP_CONN;
-	
-	#define RESERVED_HTTP_MEMORY ( (DWORD)MAX_HTTP_CONNECTIONS * (DWORD)sizeof(HTTP_CONN))
+
+#if defined(HTTP_SAVE_CONTEXT_IN_PIC_RAM)
+	#define RESERVED_HTTP_MEMORY 0ul        // Macro indicating how much RAM to allocate on an ethernet controller to store HTTP state data.
+#else
+	#define RESERVED_HTTP_MEMORY ((DWORD)MAX_HTTP_CONNECTIONS * (DWORD)sizeof(HTTP_CONN))
+#endif
 
 /****************************************************************************
   Section:
 	Global HTTP Variables
   ***************************************************************************/
 
-extern HTTP_CONN curHTTP;
+#if defined(HTTP_SAVE_CONTEXT_IN_PIC_RAM)
+	extern HTTP_CONN		HTTPControlBlocks[MAX_HTTP_CONNECTIONS];
+	#define curHTTP			HTTPControlBlocks[curHTTPID]							// Current HTTP connection state
+#else
+	extern HTTP_CONN curHTTP;
+#endif
+
 extern HTTP_STUB httpStubs[MAX_HTTP_CONNECTIONS];
 extern BYTE curHTTPID;
 
@@ -234,27 +250,27 @@ void HTTPIncFile(ROM BYTE* cFile);
 
   Description:
 	Reads a name and value pair from a URL encoded string in the TCP buffer.
-	This function is meant to be called from an HTTPExecutePost callback to 
-	facilitate easier parsing of incoming data.  This function also prevents 
-	buffer overflows by forcing the programmer to indicate how many bytes are 
-	expected.  At least 2 extra bytes are needed in cData over the maximum 
+	This function is meant to be called from an HTTPExecutePost callback to
+	facilitate easier parsing of incoming data.  This function also prevents
+	buffer overflows by forcing the programmer to indicate how many bytes are
+	expected.  At least 2 extra bytes are needed in cData over the maximum
 	length of data expected to be read.
-	
+
 	This function will read until the next '&' character, which indicates the
 	end of a value parameter.  It assumes that the front of the buffer is
 	the beginning of the name paramter to be read.
-	
+
 	This function properly updates curHTTP.byteCount by decrementing it
 	by the number of bytes read.  It also removes the delimiting '&' from
 	the buffer.
-	
-	Once complete, two strings will exist in the cData buffer.  The first is 
-	the parameter name that was read, while the second is the associated 
+
+	Once complete, two strings will exist in the cData buffer.  The first is
+	the parameter name that was read, while the second is the associated
 	value.
 
   Precondition:
 	Front of TCP buffer is the beginning of a name parameter, and the rest of
-	the TCP buffer contains a URL-encoded string with a name parameter 
+	the TCP buffer contains a URL-encoded string with a name parameter
 	terminated by a '=' character and a value parameter terminated by a '&'.
 
   Parameters:
@@ -263,9 +279,9 @@ void HTTPIncFile(ROM BYTE* cFile);
 
   Return Values:
 	HTTP_READ_OK - name and value were successfully read
-	HTTP_READ_TRUNCTATED - entire name and value could not fit in the buffer, 
+	HTTP_READ_TRUNCTATED - entire name and value could not fit in the buffer,
 							so input was truncated and data has been lost
-	HTTP_READ_INCOMPLETE - entire name and value was not yet in the buffer, 
+	HTTP_READ_INCOMPLETE - entire name and value was not yet in the buffer,
 							so call this function again later to retrieve
 
   Remarks:
@@ -273,13 +289,13 @@ void HTTPIncFile(ROM BYTE* cFile);
 	perform the same task.  The name is provided only for completeness.
   ***************************************************************************/
 #define HTTPReadPostPair(cData, wLen) HTTPReadPostValue(cData, wLen)
-	
+
 
 /****************************************************************************
   Section:
 	User-Implemented Callback Function Prototypes
   ***************************************************************************/
-     
+
 /*****************************************************************************
   Function:
 	HTTP_IO_RESULT HTTPExecuteGet(void)
@@ -288,30 +304,30 @@ void HTTPIncFile(ROM BYTE* cFile);
 	Processes GET form field variables and cookies.
 
   Description:
-	This function is implemented by the application developer in 
+	This function is implemented by the application developer in
 	CustomHTTPApp.c.  Its purpose is to parse the data received from
-	URL parameters (GET method forms) and cookies and perform any 
-	application-specific tasks in response to these inputs.  Any 
+	URL parameters (GET method forms) and cookies and perform any
+	application-specific tasks in response to these inputs.  Any
 	required authentication has already been validated.
-	
+
 	When this function is called, curHTTP.data contains sequential
 	name/value pairs of strings representing the data received.  In this
-	format, HTTPGetArg and HTTPGetROMArg can be used to search for 
-	specific variables in the input.  If data buffer space associated 
+	format, HTTPGetArg and HTTPGetROMArg can be used to search for
+	specific variables in the input.  If data buffer space associated
 	with this connection is required, curHTTP.data may be overwritten
 	here once the application is done with the values.  Any data placed
-	there will be available to future callbacks for this connection, 
+	there will be available to future callbacks for this connection,
 	including HTTPExecutePost and any HTTPPrint_varname dynamic
 	substitutions.
-	
+
 	This function may also issue redirections by setting curHTTP.data
 	to the destination file name or URL, and curHTTP.httpStatus to
 	HTTP_REDIRECT.
-	
+
 	Finally, this function may set cookies.  Set curHTTP.data to a series
 	of name/value string pairs (in the same format in which parameters
 	arrive) and then set curHTTP.hasArgs equal to the number of cookie
-	name/value pairs.  The cookies will be transmitted to the browser, 
+	name/value pairs.  The cookies will be transmitted to the browser,
 	and any future requests will have those values available in
 	curHTTP.data.
 
@@ -333,10 +349,10 @@ void HTTPIncFile(ROM BYTE* cFile);
 	This function is only called if variables are received via URL
 	parameters or Cookie arguments.  This function may NOT write to the
 	TCP buffer.
-	
-	This function may service multiple HTTP requests simultaneously.  
-	Exercise caution when using global or static variables inside this 
-	routine.  Use curHTTP.callbackPos or curHTTP.data for storage associated 
+
+	This function may service multiple HTTP requests simultaneously.
+	Exercise caution when using global or static variables inside this
+	routine.  Use curHTTP.callbackPos or curHTTP.data for storage associated
 	with individual requests.
   ***************************************************************************/
 HTTP_IO_RESULT HTTPExecuteGet(void);
@@ -349,13 +365,13 @@ HTTP_IO_RESULT HTTPExecuteGet(void);
 	Processes POST form variables and data.
 
   Description:
-	This function is implemented by the application developer in 
+	This function is implemented by the application developer in
 	CustomHTTPApp.c.  Its purpose is to parse the data received from
 	POST forms and perform any application-specific tasks in response
 	to these inputs.  Any required authentication has already been
 	validated before this function is called.
 
-	When this function is called, POST data will be waiting in the 
+	When this function is called, POST data will be waiting in the
 	TCP buffer.  curHTTP.byteCount will indicate the number of bytes
 	remaining to be received before the browser request is complete.
 
@@ -368,25 +384,25 @@ HTTP_IO_RESULT HTTPExecuteGet(void);
 
 	In general, data submitted from web forms via POST is URL encoded.
 	The HTTPURLDecode function can be used to decode this information
-	back to a standard string if required.  If data buffer space  
-	associated with this connection is required, curHTTP.data may be 
-	overwritten here once the application is done with the values.  
-	Any data placed there will be available to future callbacks for 
-	this connection,  including HTTPExecutePost and any 
+	back to a standard string if required.  If data buffer space
+	associated with this connection is required, curHTTP.data may be
+	overwritten here once the application is done with the values.
+	Any data placed there will be available to future callbacks for
+	this connection,  including HTTPExecutePost and any
 	HTTPPrint_varname dynamic substitutions.
 
-	Whenever a POST form is processed it is recommended to issue a 
+	Whenever a POST form is processed it is recommended to issue a
 	redirect back to the browser, either to a status page or to
-	the same form page that was posted.  This prevents accidental 
-	duplicate submissions (by clicking refresh or back/forward) and 
+	the same form page that was posted.  This prevents accidental
+	duplicate submissions (by clicking refresh or back/forward) and
 	avoids browser warnings about "resubmitting form data".  Redirects
 	may be issued to the browser by setting curHTTP.data to the
 	destination file or URL, and curHTTP.httpStatus to HTTP_REDIRECT.
-	
+
 	Finally, this function may set cookies.  Set curHTTP.data to a series
 	of name/value string pairs (in the same format in which parameters
 	arrive) and then set curHTTP.hasArgs equal to the number of cookie
-	name/value pairs.  The cookies will be transmitted to the browser, 
+	name/value pairs.  The cookies will be transmitted to the browser,
 	and any future requests will have those values available in
 	curHTTP.data.
 
@@ -408,10 +424,10 @@ HTTP_IO_RESULT HTTPExecuteGet(void);
 	This function is only called when the request method is POST, and is
 	only used when HTTP_USE_POST is defined.  This method may NOT write
 	to the TCP buffer.
-	
-	This function may service multiple HTTP requests simultaneously.  
-	Exercise caution when using global or static variables inside this 
-	routine.  Use curHTTP.callbackPos or curHTTP.data for storage associated 
+
+	This function may service multiple HTTP requests simultaneously.
+	Exercise caution when using global or static variables inside this
+	routine.  Use curHTTP.callbackPos or curHTTP.data for storage associated
 	with individual requests.
   ***************************************************************************/
 #if defined(HTTP_USE_POST)
@@ -421,38 +437,38 @@ HTTP_IO_RESULT HTTPExecutePost(void);
 /*****************************************************************************
   Function:
 	BYTE HTTPNeedsAuth(BYTE* cFile)
-	
+
   Summary:
 	Determines if a given file name requires authentication
-	
+
   Description:
-	This function is implemented by the application developer in 
+	This function is implemented by the application developer in
 	CustomHTTPApp.c.  Its function is to determine if a file being
 	requested requires authentication to view.  The user name and password,
 	if supplied, will arrive later with the request headers, and will be
 	processed at that time.
-	
-	Return values 0x80 - 0xff indicate that authentication is not required, 
-	while values from 0x00 to 0x79 indicate that a user name and password 
-	are required before proceeding.  While most applications will only use a 
-	single value to grant access and another to require authorization, the 
-	range allows multiple "realms" or sets of pages to be protected, with 
+
+	Return values 0x80 - 0xff indicate that authentication is not required,
+	while values from 0x00 to 0x79 indicate that a user name and password
+	are required before proceeding.  While most applications will only use a
+	single value to grant access and another to require authorization, the
+	range allows multiple "realms" or sets of pages to be protected, with
 	different credential requirements for each.
-	
+
 	The return value of this function is saved as curHTTP.isAuthorized, and
 	will be available to future callbacks, including HTTPCheckAuth and any
 	of the HTTPExecuteGet, HTTPExecutePost, or HTTPPrint_varname callbacks.
-	
+
   Precondition:
 	None
-	
+
   Parameters:
 	cFile - the name of the file being requested
-	
+
   Return Values:
 	<= 0x79 - valid authentication is required
 	>= 0x80 - access is granted for this connection
-	
+
   Remarks:
 	This function may NOT write to the TCP buffer.
   ***************************************************************************/
@@ -463,45 +479,45 @@ HTTP_IO_RESULT HTTPExecutePost(void);
 /*****************************************************************************
   Function:
 	BYTE HTTPCheckAuth(BYTE* cUser, BYTE* cPass)
-	
+
   Summary:
 	Performs validation on a specific user name and password.
-	
+
   Description:
-	This function is implemented by the application developer in 
+	This function is implemented by the application developer in
 	CustomHTTPApp.c.  Its function is to determine if the user name and
 	password supplied by the client are acceptable for this resource.
-	
+
 	The value of curHTTP.isAuthorized will be set to the previous return
 	value of HTTPRequiresAuthorization.  This callback function can check
 	this value to determine if only specific user names or passwords will
 	be accepted for this resource.
-	
-	Return values 0x80 - 0xff indicate that the credentials were accepted, 
-	while values from 0x00 to 0x79 indicate that authorization failed.  
-	While most applications will only use a single value to grant access, 
-	flexibility is provided to store multiple values in order to 
+
+	Return values 0x80 - 0xff indicate that the credentials were accepted,
+	while values from 0x00 to 0x79 indicate that authorization failed.
+	While most applications will only use a single value to grant access,
+	flexibility is provided to store multiple values in order to
 	indicate which user (or user's group) logged in.
-	
+
 	The return value of this function is saved as curHTTP.isAuthorized, and
-	will be available to future callbacks, including any of the 
+	will be available to future callbacks, including any of the
 	HTTPExecuteGet, HTTPExecutePost, or HTTPPrint_varname callbacks.
-	
+
   Precondition:
 	None
-	
+
   Parameters:
 	cUser - the user name supplied by the client
 	cPass - the password supplied by the client
-	
+
   Return Values:
 	<= 0x79 - the credentials were rejected
 	>= 0x80 - access is granted for this connection
-	
+
   Remarks:
-	This function is only called when an Authorization header is 
+	This function is only called when an Authorization header is
 	encountered.
-	
+
 	This function may NOT write to the TCP buffer.
   ***************************************************************************/
 #if defined(HTTP_USE_AUTHENTICATION)
@@ -513,35 +529,35 @@ HTTP_IO_RESULT HTTPExecutePost(void);
 	void HTTPPrint_varname(void)
 	void HTTPPrint_varname(WORD wParam1)
 	void HTTPPrint_varname(WORD wParam1, WORD wParam2, ...)
-	
+
   Summary:
 	Inserts dynamic content into a web page
-	
+
   Description:
-	Functions in this style are implemented by the application developer in 
-	CustomHTTPApp.c.  These functions generate dynamic content to be 
+	Functions in this style are implemented by the application developer in
+	CustomHTTPApp.c.  These functions generate dynamic content to be
 	inserted into web pages and other files returned by the HTTP2 server.
-	
+
 	Functions of this type are called when a dynamic variable is located
-	in a web page.  (ie, ~varname~ )  The name between the tilde '~' 
+	in a web page.  (ie, ~varname~ )  The name between the tilde '~'
 	characters is appended to the base function name.  In this example, the
 	callback would be named HTTPPrint_varname.
-	
+
 	The function prototype is located in your project's HTTPPrint.h, which
-	is automatically generated by the MPFS2 Utility.  The prototype will 
+	is automatically generated by the MPFS2 Utility.  The prototype will
 	have WORD parameters included for each parameter passed in the dynamic
-	variable.  For example, the variable "~myArray(2,6)~" will generate the 
+	variable.  For example, the variable "~myArray(2,6)~" will generate the
 	prototype "void HTTPPrint_varname(WORD, WORD);".
-	
-	When called, this function should write its output directly to the TCP 
-	socket using any combination of TCPIsPutReady, TCPPut, TCPPutArray, 
+
+	When called, this function should write its output directly to the TCP
+	socket using any combination of TCPIsPutReady, TCPPut, TCPPutArray,
 	TCPPutString, TCPPutROMArray, and TCPPutROMString.
-	
-	Before calling, the HTTP2 server guarantees that at least 
-	HTTP_MIN_CALLBACK_FREE bytes (defaults to 16 bytes) are free in the 
+
+	Before calling, the HTTP2 server guarantees that at least
+	HTTP_MIN_CALLBACK_FREE bytes (defaults to 16 bytes) are free in the
 	output buffer.  If the function is writing less than this amount, it
 	should simply write the data to the socket and return.
-	
+
 	In situations where a function needs to write more this amount, it
 	must manage its output state using curHTTP.callbackPos.  This value
 	will be set to zero before the function is called.  If the function is
@@ -554,18 +570,18 @@ HTTP_IO_RESULT HTTPExecutePost(void);
 
   Precondition:
 	None
-	
+
   Parameters:
 	wParam1 - first parameter passed in the dynamic variable (if any)
 	wParam2 - second parameter passed in the dynamic variable (if any)
 	... - additional parameters as necessary
-	
+
   Returns:
   	None
-	
+
   Remarks:
-	This function may service multiple HTTP requests simultaneously, 
-	especially when managing its output state.  Exercise caution when using 
+	This function may service multiple HTTP requests simultaneously,
+	especially when managing its output state.  Exercise caution when using
 	global or static variables inside this routine.  Use curHTTP.callbackPos
 	or curHTTP.data for storage associated with individual requests.
   ***************************************************************************/

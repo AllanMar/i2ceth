@@ -62,9 +62,8 @@ LONG ICMPGetReply(void);
 void ICMPEndUsage(void);
 
 #if defined(__18CXX)
-	void ICMPSendPingToHostROM(ROM BYTE* szRemoteHost);
+	void ICMPSendPingToHostROM(ROM BYTE * szRemoteHost);
 #else
-	// Non-ROM variant for C30/C32
 	#define ICMPSendPingToHostROM(a) 	ICMPSendPingToHost((BYTE*)(a))
 #endif
 

@@ -8,7 +8,7 @@
  *********************************************************************
  * FileName:        IP.c
  * Dependencies:    Network Layer interface (ENC28J60.c, ETH97J60.c, 
- *					ENCX24J600.c or ZG2100.c)
+ *					ENCX24J600.c or WFMac.c)
  * Processor:       PIC18, PIC24F, PIC24H, dsPIC30F, dsPIC33F, PIC32
  * Compiler:        Microchip C32 v1.05 or higher
  *					Microchip C30 v3.12 or higher
@@ -89,8 +89,12 @@
 
 #define IP_SERVICE          (IP_SERVICE_ROUTINE | IP_SERVICE_N_DELAY)
 
-#define MY_IP_TTL           (100)  // Time-To-Live in hops
-
+#if defined(STACK_USE_ZEROCONF_MDNS_SD)
+  #define MY_IP_TTL           (255)  // Time-To-Live in hops 
+  // IP TTL is set to 255 for Multicast DNS compatibility. See mDNS-draft-08, section 4.
+#else
+  #define MY_IP_TTL           (100)  // Time-To-Live in hops
+#endif
 
 
 
@@ -141,7 +145,7 @@ BOOL IPGetHeader(IP_ADDR *localIP,
     WORD_VAL    ReceivedChecksum;
     WORD        checksums[2];
     BYTE        optionsLen;
-	#define MAX_OPTIONS_LEN     (40)            // As per RFC 791.
+	#define MAX_OPTIONS_LEN     (40u)            // As per RFC 791.
     BYTE        options[MAX_OPTIONS_LEN];
 #endif
 
@@ -181,7 +185,7 @@ BOOL IPGetHeader(IP_ADDR *localIP,
     if ( optionsLen > MAX_OPTIONS_LEN )
         return FALSE;
 
-    if ( optionsLen > 0 )
+    if ( optionsLen > 0u )
         MACGetArray(options, optionsLen);
 
     // Save header checksum; clear it and recalculate it ourselves.
@@ -192,7 +196,7 @@ BOOL IPGetHeader(IP_ADDR *localIP,
     checksums[0] = ~CalcIPChecksum((BYTE*)&header, sizeof(header));
 
     // Calculate Options checksum too, if they are present.
-    if ( optionsLen > 0 )
+    if ( optionsLen > 0u )
         checksums[1] = ~CalcIPChecksum((BYTE*)options, optionsLen);
     else
         checksums[1] = 0;

@@ -78,12 +78,26 @@ static BYTE bCount;
  *
  * Overview:        Sets up the random generator structure.
  *
- * Note:            Data is not secure until several packets have
+ * Note:            Data may not be secure until several packets have
  *					been received.
  ********************************************************************/
 void RandomInit(void)
 {
+	unsigned char i;
+	unsigned long dw;
+	
 	SHA1Initialize(&randHash);
+	
+	// Add some starting entropy to the pool.  This is slow.
+	for(i = 0; i < 5; i++)
+	{
+		dw = GenerateRandomDWORD();
+		RandomAdd(((BYTE*)&dw)[0]);
+		RandomAdd(((BYTE*)&dw)[1]);
+		RandomAdd(((BYTE*)&dw)[2]);
+		RandomAdd(((BYTE*)&dw)[3]);
+	}
+		
 	bCount = 20;
 }
 
@@ -104,7 +118,7 @@ void RandomInit(void)
  ********************************************************************/
 BYTE RandomGet(void)
 {
-	if(bCount >= 20)
+	if(bCount >= 20u)
 	{//we need to get new random bytes
 		SHA1Calculate(&randHash, output);
 		RandomAdd(output[0]);
@@ -127,7 +141,7 @@ BYTE RandomGet(void)
  *
  * Side Effects:    None
  *
- * Overview:        Hashes the byte and a timer value
+ * Overview:        Hashes the byte and an asynchronous timer value
  *
  * Note:            None
  ********************************************************************/

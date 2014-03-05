@@ -3,7 +3,7 @@
  *               Microchip File System
  *
  *********************************************************************
- * FileName:        MPFS.h
+ * FileName:        MPFS2.h
  * Dependencies:    StackTsk.H
  * Processor:       PIC18, PIC24F, PIC24H, dsPIC30F, dsPIC33F, PIC32
  * Compiler:        Microchip C32 v1.05 or higher
@@ -44,10 +44,7 @@
  * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
  *
  *
- * Author               Date        Comment
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Elliott Wood			07/2007		Complete rewrite as MPFS2
- * E. Wood				04/2008		Updated as MPFS2.1
+ *V5.36  ----  STACK_USE_MPFS has been removed
  ********************************************************************/
 
 #ifndef __MPFS2_H
@@ -58,9 +55,12 @@
   Section:
 	Storage Type Configurations
   ***************************************************************************/
+
+/*	
 	#if defined(STACK_USE_MPFS) && defined(STACK_USE_MPFS2)
 		#error Both MPFS and MPFS2 are included
 	#endif
+*/
 
 	#if defined(MPFS_USE_EEPROM)
 		#if defined(USE_EEPROM_25LC1024)
