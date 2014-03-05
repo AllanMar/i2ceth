@@ -102,7 +102,7 @@ BYTE HTTPNeedsAuth(BYTE* cFile)
 	if(memcmppgm2ram(cFile, (ROM void*)"protect", 7) == 0)
 		return 0x00;		// Authentication will be needed later
 
-	if(WebSrvConfig.Flags.DataRequireAuth && (!memcmppgm2ram(cFile, "btnic.cgi", 9) || !memcmppgm2ram(cFile, "data.cgi", 8)))
+	if(WebSrvConfig.Flags.DataRequireAuth && (!memcmppgm2ram(cFile, "btnic.cgi", 9)))
 		return 0x00;		// Authentication will be needed later
 
 	#if defined(HTTP_MPFS_UPLOAD_REQUIRES_AUTH)
@@ -1000,6 +1000,13 @@ void HTTPPrint_MEMDUMP(WORD memType)
 		curHTTP.callbackPos--;
 	}
 	return;
+}
+
+void HTTPPrint_FLASHSTATUS(void)
+{
+	unsigned char string[6];
+	itoa(SPIFlashRDSR(), string);
+	TCPPutString(sktHTTP, string);
 }
 
 void HTTPPrint_config_httpPort(void){

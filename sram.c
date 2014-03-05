@@ -7,7 +7,7 @@ void sramReadBytes(char *dest, unsigned int addr, unsigned char len)
 	sramEnable();
 	WriteSWSPI( SRAM_CMD_READ );
 	sramAddr( addr );
-	while (len--) *pDest++ = ReadSWSPI();
+	while (len--) *pDest++ = WriteSWSPI(0);
 	sramDisable();
 }
 
@@ -18,7 +18,7 @@ char sramReadByte(unsigned int addr)
 	sramEnable();
 	WriteSWSPI( SRAM_CMD_READ );
 	sramAddr( addr );
-	data = ReadSWSPI();
+	data = WriteSWSPI(0);
 	sramDisable();
 	return data;
 }
@@ -49,7 +49,7 @@ char sramRDSR(void)
 	char data;
 	sramEnable();
 	WriteSWSPI( SRAM_CMD_RDSR );
-	data = ReadSWSPI();
+	data = WriteSWSPI(0);
 	sramDisable();
 	return data;
 }

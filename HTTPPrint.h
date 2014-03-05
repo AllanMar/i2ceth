@@ -74,6 +74,7 @@ void HTTPPrint_config_stateTimeRX(void);
 void HTTPPrint_config_stateTimeMsg(void);
 void HTTPPrint_SSP1STAT_DA(void);
 void HTTPPrint_SSP1STAT_RW(void);
+void HTTPPrint_FLASHSTATUS(void);
 
 void HTTPPrint(DWORD callbackID)
 {
@@ -252,6 +253,9 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x0000004a:
 			HTTPPrint_SSP1STAT_RW();
+			break;
+        case 0x0000004b:
+			HTTPPrint_FLASHSTATUS();
 			break;
 		default:
 			// Output notification for undefined values

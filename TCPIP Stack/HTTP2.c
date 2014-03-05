@@ -88,6 +88,7 @@
 	    "jpg",          // HTTP_JPG
 	    "cla",          // HTTP_JAVA
 	    "wav",          // HTTP_WAV
+		"js"			// HTTP_JS
 		"\0\0\0"		// HTTP_UNKNOWN
 	};
 	
@@ -105,6 +106,7 @@
 	    "image/jpeg",            // HTTP_JPG
 	    "application/java-vm",   // HTTP_JAVA
 	    "audio/x-wave",          // HTTP_WAV
+		"application/javascript",// HTTP_JS
 		""						 // HTTP_UNKNOWN
 	};
 		
@@ -119,11 +121,11 @@
 		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n",
 		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n",
 		"HTTP/1.1 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nWWW-Authenticate: Basic realm=\"Protected\"\r\nConnection: close\r\n\r\n401 Unauthorized: Password required\r\n",
-		#if defined(HTTP_MPFS_UPLOAD)
-		"HTTP/1.1 404 Not found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n404: File not found<br>Use <a href=\"/" HTTP_MPFS_UPLOAD "\">MPFS Upload</a> to program web pages\r\n",
-		#else		
+		//#if defined(HTTP_MPFS_UPLOAD)
+		//"HTTP/1.1 404 Not found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n404: File not found<br>Use <a href=\"/" HTTP_MPFS_UPLOAD "\">MPFS Upload</a> to program web pages\r\n",
+		//#else		
 		"HTTP/1.1 404 Not found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n404: File not found\r\n",
-		#endif
+		//#endif
 		"HTTP/1.1 414 Request-URI Too Long\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n414 Request-URI Too Long: Buffer overflow detected\r\n",
 		"HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n500 Internal Server Error: Expected data not present\r\n",
 		"HTTP/1.1 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n501 Not Implemented: Only GET and POST supported\r\n",

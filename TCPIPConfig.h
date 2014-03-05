@@ -116,7 +116,7 @@
  *   Supported serial flash parts include the SST25VFxxxB series.
  */
 //#define MPFS_USE_EEPROM
-//#define MPFS_USE_SPI_FLASH
+#define MPFS_USE_SPI_FLASH
 
 /* EEPROM Addressing Selection
  *   If using the 1Mbit EEPROM, uncomment this line
@@ -131,7 +131,7 @@
  *   For MPFS Classic, this setting must match the Reserved setting
  *	 on the Advanced Settings page of the MPFS2 Utility.
  */
-//#define MPFS_RESERVE_BLOCK                (4096ul)
+#define MPFS_RESERVE_BLOCK                (0ul)
 
 /* MPFS File Handles
  *   Maximum number of simultaneously open MPFS2 files.
@@ -386,8 +386,8 @@
 			//{TCP_PURPOSE_TCP_PERFORMANCE_TX, TCP_ETH_RAM, 200, 1},
 			//{TCP_PURPOSE_TCP_PERFORMANCE_RX, TCP_ETH_RAM, 40, 1500},
 			//{TCP_PURPOSE_UART_2_TCP_BRIDGE, TCP_ETH_RAM, 256, 256},
-			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
-			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
+			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 1024, 1024},
+			//{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
 			{TCP_PURPOSE_DEFAULT, TCP_ETH_RAM, 200, 200},
 			//{TCP_PURPOSE_BERKELEY_SERVER, TCP_ETH_RAM, 25, 20},
 			//{TCP_PURPOSE_BERKELEY_CLIENT, TCP_ETH_RAM, 125, 100},
@@ -424,7 +424,7 @@
 
 	// Maximum numbers of simultaneous HTTP connections allowed.
 	// Each connection consumes 2 bytes of RAM and a TCP socket
-	#define MAX_HTTP_CONNECTIONS	(2u)
+	#define MAX_HTTP_CONNECTIONS	(1u)
 
 	// Indicate what file to serve when no specific one is requested
 	#define HTTP_DEFAULT_FILE		"index.html"
@@ -434,8 +434,8 @@
 
 	// Configure MPFS over HTTP updating
 	// Comment this line to disable updating via HTTP
-	//#define HTTP_MPFS_UPLOAD		"mpfsupload"
-	//#define HTTP_MPFS_UPLOAD_REQUIRES_AUTH	// Require password for MPFS uploads
+	#define HTTP_MPFS_UPLOAD		"mpfsupload"
+	#define HTTP_MPFS_UPLOAD_REQUIRES_AUTH	// Require password for MPFS uploads
 		// Certain firewall and router combinations cause the MPFS2 Utility to fail
 		// when uploading.  If this happens, comment out this definition.
 

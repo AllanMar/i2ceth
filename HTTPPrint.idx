@@ -73,3 +73,5 @@ config_debugMode
 +config_stateTimeMsg
 +SSP1STAT_DA
 +SSP1STAT_RW
++FLASHSTATUS
+flashWrite

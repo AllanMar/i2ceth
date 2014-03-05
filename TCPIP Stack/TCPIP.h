@@ -298,8 +298,8 @@
 	#include "TCPIP Stack/SPIRAM.h"
 #endif
 
-#if defined(SPIFLASH_CS_TRIS)
-	#include "TCPIP Stack/SPIFlash.h"
+#if defined(MPFS_USE_SPI_FLASH)
+	#include "dataflash.h"
 #endif
 
 #if defined(STACK_USE_UDP)

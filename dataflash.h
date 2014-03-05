@@ -24,16 +24,24 @@
 #define DATAFLASH_CMD_EBSY				0x70
 #define DATAFLASH_CMD_DBSY				0x80
 
-void SPIFlashReadBytes(unsigned short long addr, char *dest, unsigned char len);
+#define SPI_FLASH_SECTOR_SIZE		(4096ul)
+#define SPI_FLASH_SECTOR_MASK		(SPI_FLASH_SECTOR_SIZE - 1)
+
+void SPIFlashInit(void);
+void SPIFlashReadArray(unsigned short long addr, char *dest, unsigned char len);
 char SPIFlashReadByte(unsigned short long addr);
+void SPIFlashBeginWrite(DWORD dwAddr);
 void SPIFlashWriteByte(char data);
-void SPIFlashWriteBytes(char *dest, unsigned char len);
+void SPIFlashWriteArray(char *dest, unsigned char len);
+void SPIFlashChipErase(void);
 void SPIFlashEraseSector(unsigned short long addr);
 char SPIFlashRDSR(void);
 void SPIFlashWRSR(char data);
 char SPIFlashBusy(void);
 void SPIFlashAddr(unsigned short long addr);
 void SPIFlashWREN(void);
+void SPIFlashEWSR(void);
+void SPIFlashWRDI(void);
 void SPIFlashDisable(void);
 void SPIFlashEnable(void);
 

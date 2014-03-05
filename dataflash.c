@@ -5,17 +5,17 @@ DWORD dwWriteAddr;
 
 void SPIFlashInit()
 {
+	SPIFlashWRDI();
+	SPIFlashWRSR(0);
 }
 
-void SPIFlashReadBytes(unsigned short long addr, char *dest, unsigned char len)
+void SPIFlashReadArray(unsigned short long addr, char *dest, unsigned char len)
 {
-	char *pDest = dest;
 	while(SPIFlashBusy());
 	SPIFlashEnable();
 	WriteSWSPI( DATAFLASH_CMD_READ );
 	SPIFlashAddr( addr );
-
-	while (len--) *pDest++ = ReadSWSPI();
+	while (len--) *dest++ = WriteSWSPI(0);
 	SPIFlashDisable();
 }
 
@@ -26,7 +26,7 @@ char SPIFlashReadByte(unsigned short long addr)
 	SPIFlashEnable();
 	WriteSWSPI( DATAFLASH_CMD_READ );
 	SPIFlashAddr( addr );
-	data = ReadSWSPI();
+	data = WriteSWSPI(0);
 	SPIFlashDisable();
 	return data;
 }
@@ -47,25 +47,41 @@ void SPIFlashWriteByte(char data)
 	SPIFlashDisable();
 }
 
-void SPIFlashWriteBytes(char *data, unsigned char len)
+void SPIFlashWriteArray(char *data, unsigned char len)
 {
 	unsigned char sendAddr = 1;
-	char *pData = data;
-	while(SPIFlashBusy());
-	while (len) {
-		SPIFlashWREN();
-		while (len) {
-			SPIFlashEnable();
-			WriteSWSPI( DATAFLASH_CMD_AAIWORDPGM );
-			if (sendAddr) { sendAddr = 0; SPIFlashAddr( dwWriteAddr ); }
-			WriteSWSPI(*pData++); WriteSWSPI(*pData++); len-=2;
-			SPIFlashDisable();
-			while(SPIFlashBusy());
-		}
+
+	// If address is 0 start with chip erase
+    if((dwWriteAddr) == 0)
+    	SPIFlashChipErase();
+
+	SPIFlashWREN();
+
+	while (len > 1) {
+		while(SPIFlashBusy());
 		SPIFlashEnable();
-		WriteSWSPI( DATAFLASH_CMD_WRDI );
+		WriteSWSPI( DATAFLASH_CMD_AAIWORDPGM );
+		if (sendAddr) {
+			SPIFlashAddr( dwWriteAddr );
+			sendAddr = 0;
+		}
+		WriteSWSPI(*data++);
+		WriteSWSPI(*data++);
+		len -= 2;
+		dwWriteAddr += 2;
 		SPIFlashDisable();
-	}	
+		while(SPIFlashBusy());
+	}
+	SPIFlashWRDI();
+}
+
+void SPIFlashChipErase()
+{
+	while(SPIFlashBusy());
+	SPIFlashWREN();
+	SPIFlashEnable();
+	WriteSWSPI( DATAFLASH_CMD_CHIPERASE );
+	SPIFlashDisable();
 }
 
 void SPIFlashEraseSector(unsigned short long addr)
@@ -82,11 +98,10 @@ char SPIFlashBusy(void) { return (SPIFlashRDSR() & 1); }
 
 char SPIFlashRDSR(void)
 {
-	char data, dummy;
+	char data;
 	SPIFlashEnable();
 	WriteSWSPI( DATAFLASH_CMD_RDSR );
-	data = ReadSWSPI();
-	dummy = data;
+	data = WriteSWSPI(0);
 	SPIFlashDisable();
 	return data;
 }
@@ -94,7 +109,7 @@ char SPIFlashRDSR(void)
 void SPIFlashWRSR(char data)
 {
 	while(SPIFlashBusy());
-	SPIFlashWREN();
+	SPIFlashEWSR();
 	SPIFlashEnable();
 	WriteSWSPI( DATAFLASH_CMD_WRSR );
 	WriteSWSPI(data);
@@ -109,8 +124,21 @@ void SPIFlashAddr(unsigned short long addr)
 }
 
 void SPIFlashWREN() {
+	while(SPIFlashBusy());
 	SPIFlashEnable();
 	WriteSWSPI( DATAFLASH_CMD_WREN );
+	SPIFlashDisable();
+}
+
+void SPIFlashEWSR() {
+	SPIFlashEnable();
+	WriteSWSPI( DATAFLASH_CMD_EWSR );
+	SPIFlashDisable();
+}
+
+void SPIFlashWRDI() {
+	SPIFlashEnable();
+	WriteSWSPI( DATAFLASH_CMD_WRDI );
 	SPIFlashDisable();
 }
 

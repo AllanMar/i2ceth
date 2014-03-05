@@ -68,8 +68,6 @@ void OpenSWSPI(void);
 char WriteSWSPI( char output);
 #define SWWriteSPI WriteSWSPI
 
-char ReadSWSPI(void);
-
 void SetCSSWSPI(void);
 #define SWSetCSSPI SetCSSWSPI
 
