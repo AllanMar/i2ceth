@@ -107,7 +107,8 @@
 		HTTP_MPFS_ERROR,				// An MPFS Upload was not a valid image
 		#endif
 		HTTP_REDIRECT,					// 302 Redirect will be returned
-		HTTP_SSL_REQUIRED				// 403 Forbidden is returned, indicating SSL is required
+		HTTP_SSL_REQUIRED,				// 403 Forbidden is returned, indicating SSL is required
+		HTTP_OPTIONS					// Dummy process of OPTIONS command to support CORS
 	} HTTP_STATUS;
 
 /****************************************************************************
@@ -162,6 +163,7 @@
 		HTTP_JPG,			// File is JPG image (extension .jpg)
 		HTTP_JAVA,			// File is java (extension .java)
 		HTTP_WAV,			// File is audio (extension .wav)
+		HTTP_JS,			// File is javascript (extension .js)
 		HTTP_UNKNOWN		// File type is unknown
 	} HTTP_FILE_TYPE;
 

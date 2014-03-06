@@ -56,7 +56,6 @@
 #include "TCPIPConfig.h"
 #include "BTnic_Comm.h"
 #include "eeprom.h"
-#include "dataflash.h"
 #include "sram.h"
 
 #if defined(STACK_USE_HTTP2_SERVER)
@@ -969,13 +968,13 @@ void HTTPPrint_status_fail(void)
 
 void HTTPPrint_MEMDUMP(WORD memType)
 {
-	WORD len;
+	DWORD len;
 	unsigned short long size;
 	len = TCPIsPutReady(sktHTTP);
 
-	if (memType == 0u) size = 256u; //EEPROM 256 Bytes
-	else if (memType == 1u) size = 4194303u; //Flash xxx bytes
-	else if (memType == 2u) size = 32768u; //SRAM xxx bytes
+	if (memType == 0u) size = 256l; //EEPROM 256 Bytes
+	else if (memType == 1u) size = 4194303l; //Flash xxx bytes
+	else if (memType == 2u) size = 32768l; //SRAM xxx bytes
 	else return;
 
 	if(curHTTP.callbackPos == 0u) curHTTP.callbackPos = size;
@@ -984,7 +983,7 @@ void HTTPPrint_MEMDUMP(WORD memType)
 	{
 		char data;
 		if (memType == 0) data = eepromReadByte(size - curHTTP.callbackPos);
-		else if (memType == 1) data = SPIFlashReadByte(size - curHTTP.callbackPos);
+		else if (memType == 1) SPIFlashReadArray(size - curHTTP.callbackPos, &data, 1);
 		else if (memType == 2) data = sramReadByte(size - curHTTP.callbackPos);
 		
 		len -= TCPPut(sktHTTP, btohexa_high(data));

@@ -386,8 +386,8 @@
 			//{TCP_PURPOSE_TCP_PERFORMANCE_TX, TCP_ETH_RAM, 200, 1},
 			//{TCP_PURPOSE_TCP_PERFORMANCE_RX, TCP_ETH_RAM, 40, 1500},
 			//{TCP_PURPOSE_UART_2_TCP_BRIDGE, TCP_ETH_RAM, 256, 256},
-			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 1024, 1024},
-			//{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
+			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
+			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
 			{TCP_PURPOSE_DEFAULT, TCP_ETH_RAM, 200, 200},
 			//{TCP_PURPOSE_BERKELEY_SERVER, TCP_ETH_RAM, 25, 20},
 			//{TCP_PURPOSE_BERKELEY_CLIENT, TCP_ETH_RAM, 125, 100},
@@ -424,7 +424,7 @@
 
 	// Maximum numbers of simultaneous HTTP connections allowed.
 	// Each connection consumes 2 bytes of RAM and a TCP socket
-	#define MAX_HTTP_CONNECTIONS	(1u)
+	#define MAX_HTTP_CONNECTIONS	(2u)
 
 	// Indicate what file to serve when no specific one is requested
 	#define HTTP_DEFAULT_FILE		"index.html"

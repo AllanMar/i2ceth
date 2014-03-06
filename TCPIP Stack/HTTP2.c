@@ -61,6 +61,7 @@
 #if defined(STACK_USE_HTTP2_SERVER)
 
 #include "HTTPPrint.h"
+#include "Main.h"
 
 /****************************************************************************
   Section:
@@ -87,6 +88,7 @@
 	    "jpg",          // HTTP_JPG
 	    "cla",          // HTTP_JAVA
 	    "wav",          // HTTP_WAV
+		"js"			// HTTP_JS
 		"\0\0\0"		// HTTP_UNKNOWN
 	};
 	
@@ -104,6 +106,7 @@
 	    "image/jpeg",            // HTTP_JPG
 	    "application/java-vm",   // HTTP_JAVA
 	    "audio/x-wave",          // HTTP_WAV
+		"application/javascript",// HTTP_JS
 		""						 // HTTP_UNKNOWN
 	};
 		
@@ -115,26 +118,22 @@
 	// Initial response strings (Corresponding to HTTP_STATUS)
 	static ROM char * ROM HTTPResponseHeaders[] =
 	{
-		"HTTP/1.1 200 OK\r\nConnection: close\r\n",
-		"HTTP/1.1 200 OK\r\nConnection: close\r\n",
-		"HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n400 Bad Request: can't handle Content-Length\r\n",
-		"HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Protected\"\r\nConnection: close\r\n\r\n401 Unauthorized: Password required\r\n",
+		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n",
+		"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n",
+		"HTTP/1.1 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n400 Bad Request: can't handle Content-Length\r\n",
+		"HTTP/1.1 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nWWW-Authenticate: Basic realm=\"Protected\"\r\nConnection: close\r\n\r\n401 Unauthorized: Password required\r\n",
+		"HTTP/1.1 404 Not found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n404: File not found\r\n",
+		"HTTP/1.1 414 Request-URI Too Long\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n414 Request-URI Too Long: Buffer overflow detected\r\n",
+		"HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n500 Internal Server Error: Expected data not present\r\n",
+		"HTTP/1.1 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n501 Not Implemented: Only GET and POST supported\r\n",
 		#if defined(HTTP_MPFS_UPLOAD)
-		"HTTP/1.1 404 Not found\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n404: File not found<br>Use <a href=\"/" HTTP_MPFS_UPLOAD "\">MPFS Upload</a> to program web pages\r\n",
-		#else		
-		"HTTP/1.1 404 Not found\r\nConnection: close\r\n\r\n404: File not found\r\n",
-		#endif
-		"HTTP/1.1 414 Request-URI Too Long\r\nConnection: close\r\n\r\n414 Request-URI Too Long: Buffer overflow detected\r\n",
-		"HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n500 Internal Server Error: Expected data not present\r\n",
-		"HTTP/1.1 501 Not Implemented\r\nConnection: close\r\n\r\n501 Not Implemented: Only GET and POST supported\r\n",
-		#if defined(HTTP_MPFS_UPLOAD)
-		"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><form method=post action=\"/" HTTP_MPFS_UPLOAD "\" enctype=\"multipart/form-data\"><b>MPFS Image Upload</b><p><input type=file name=i size=40> &nbsp; <input type=submit value=\"Upload\"></form></body></html>",
+		"HTTP/1.1 200 OK\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><form method=post action=\"/" HTTP_MPFS_UPLOAD "\" enctype=\"multipart/form-data\"><b>MPFS Image Upload</b><p><input type=file name=i size=40> &nbsp; <input type=submit value=\"Upload\"></form></body></html>",
 		"",
-		"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Update Successful</b><p><a href=\"/\">Site main page</a></body></html>",
-		"HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Image Corrupt or Wrong Version</b><p><a href=\"/" HTTP_MPFS_UPLOAD "\">Try again?</a></body></html>",
+		"HTTP/1.1 200 OK\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Update Successful</b><p><a href=\"/\">Site main page</a></body></html>",
+		"HTTP/1.1 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><body style=\"margin:100px\"><b>MPFS Image Corrupt or Wrong Version</b><p><a href=\"/" HTTP_MPFS_UPLOAD "\">Try again?</a></body></html>",
 		#endif
-		"HTTP/1.1 302 Found\r\nConnection: close\r\nLocation: ",
-		"HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n403 Forbidden: SSL Required - use HTTPS\r\n"
+		"HTTP/1.1 302 Found\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\nLocation: ",
+		"HTTP/1.1 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n403 Forbidden: SSL Required - use HTTPS\r\n"
 	};
 	
 /****************************************************************************
@@ -463,6 +462,13 @@ static void HTTPProcess(void)
 		    else if ( memcmppgm2ram(curHTTP.data, (ROM void*)"POST", 4) == 0)
 			    curHTTP.httpStatus = HTTP_POST;
 			#endif
+		    else if ( memcmppgm2ram(curHTTP.data, (ROM void*)"OPTIONS", 7) == 0)
+			{
+			    curHTTP.httpStatus = HTTP_OPTIONS;
+				smHTTP = SM_HTTP_SERVE_HEADERS;
+				isDone = FALSE;
+				break;
+			}
 		    else
 			{// Unrecognized method, so return not implemented
 		        curHTTP.httpStatus = HTTP_NOT_IMPLEMENTED;
