@@ -90,16 +90,20 @@ extern NODE_INFO remoteNode;
  *					bootloader can take control for a second and let
  *					a firmware upgrade take place.
  ********************************************************************/
-void RebootTask(void)
-{
-	static UDP_SOCKET	MySocket = INVALID_UDP_SOCKET;
-	struct
+
+#pragma udata BOOTIP_SEC
+	static struct
 	{
 		BYTE vMACAddress[6];
 		DWORD dwIPAddress;
 		WORD wChecksum;
 	} BootloaderAddress;
-	
+#pragma udata
+
+void RebootTask(void)
+{
+	static UDP_SOCKET	MySocket = INVALID_UDP_SOCKET;
+
 	if(MySocket == INVALID_UDP_SOCKET)
 		MySocket = UDPOpenEx(0,UDP_OPEN_SERVER,REBOOT_PORT,INVALID_UDP_PORT);
 //		MySocket = UDPOpen(REBOOT_PORT, NULL, INVALID_UDP_PORT);

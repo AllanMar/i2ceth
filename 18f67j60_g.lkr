@@ -54,12 +54,14 @@ DATABANK   NAME=buffers    START=0x500             END=0xCFF          PROTECTED
 
 DATABANK   NAME=gpr14      START=0xE00             END=0xE7F
 DATABANK   NAME=sfr14      START=0xE80             END=0xEFF          PROTECTED
-DATABANK   NAME=gpr15      START=0xF00             END=0xF5F
+DATABANK   NAME=gpr15      START=0xF00             END=0xF4F
+DATABANK   NAME=bootip     START=0xF50             END=0xF5F		PROTECTED
 ACCESSBANK NAME=accesssfr  START=0xF60             END=0xFFF          PROTECTED
 
 #IFDEF _CRUNTIME
   SECTION    NAME=CONFIG     ROM=config
   SECTION    NAME=BUFFERS    RAM=buffers
+  SECTION    NAME=BOOTIP_SEC    RAM=bootip
   #IFDEF _DEBUGDATASTART
     STACK SIZE=0x100 RAM=gpr12
   #ELSE

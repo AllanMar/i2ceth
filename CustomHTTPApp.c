@@ -972,30 +972,36 @@ void HTTPPrint_MEMDUMP(WORD memType)
 	unsigned short long size;
 	len = TCPIsPutReady(sktHTTP);
 
-	if (memType == 0u) size = 256l; //EEPROM 256 Bytes
-	else if (memType == 1u) size = 4194303l; //Flash xxx bytes
-	else if (memType == 2u) size = 32768l; //SRAM xxx bytes
+	if (memType == 0u) size = 256ul; //EEPROM 256 Bytes
+	else if (memType == 1u) size = 4194304ul; //Flash xxx bytes
+	else if (memType == 2u) size = 32768ul; //SRAM xxx bytes
 	else return;
 
 	if(curHTTP.callbackPos == 0u) curHTTP.callbackPos = size;
 
-	while(len > 5 && curHTTP.callbackPos)
+	while(len > 12 && curHTTP.callbackPos)
 	{
-		char data;
-		if (memType == 0) data = eepromReadByte(size - curHTTP.callbackPos);
-		else if (memType == 1) SPIFlashReadArray(size - curHTTP.callbackPos, &data, 1);
-		else if (memType == 2) data = sramReadByte(size - curHTTP.callbackPos);
-		
-		len -= TCPPut(sktHTTP, btohexa_high(data));
-		len -= TCPPut(sktHTTP, btohexa_low(data));
-
-		if ((curHTTP.callbackPos & 15) == 1) {
+		char data[1];
+		if ((curHTTP.callbackPos & 63) == 0) {
+			char lineNumber[7];
+			sprintf(lineNumber, "%06lx", size - curHTTP.callbackPos);
+			//Start of line
 			TCPPutROMString(sktHTTP, (ROM BYTE*)"<br>");
-			len -= 4;
-		} else {
-			TCPPutROMString(sktHTTP, (ROM BYTE*)" ");
-			len--;
+			TCPPutString(sktHTTP, lineNumber);
+			len -= 10;
 		}
+
+		//Continue line
+		TCPPutROMString(sktHTTP, (ROM BYTE*)" ");
+		len--;
+
+		if (memType == 0) data[0] = eepromReadByte(size - curHTTP.callbackPos);
+		else if (memType == 1) SPIFlashReadArray(size - curHTTP.callbackPos, data, 1);
+		else if (memType == 2) data[0] = sramReadByte(size - curHTTP.callbackPos);
+		
+		len -= TCPPut(sktHTTP, btohexa_high(data[0]));
+		len -= TCPPut(sktHTTP, btohexa_low(data[0]));
+
 		curHTTP.callbackPos--;
 	}
 	return;

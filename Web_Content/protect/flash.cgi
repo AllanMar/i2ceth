@@ -4,5 +4,5 @@
 <h2>Flash Status Register</h2>
 ~FLASHSTATUS~
 <h2>Flash Data</h2>
-~MEMDUMP(1)~
+<pre>~MEMDUMP(1)~</pre>
 </body></html>
