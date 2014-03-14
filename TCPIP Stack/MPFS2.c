@@ -234,7 +234,7 @@ void MPFSInit(void)
 	Opens a file in the MPFS2 file system.
 	
   Precondition:
-	None
+	MPFSInit has been called
 
   Parameters:
 	cFile - a null terminated file name to open
@@ -275,7 +275,7 @@ MPFS_HANDLE MPFSOpen(BYTE* cFile)
 	for(i = 0; i < numFiles; i++)
 	{
 		// For new block of 8, read in data
-		if((i & 0x07) == 0)
+		if((i & 0x07) == 0u)
 		{
 			MPFSStubs[0].addr = 8 + i*2;
 			MPFSStubs[0].bytesRem = 16;
@@ -364,7 +364,7 @@ MPFS_HANDLE MPFSOpenROM(ROM BYTE* cFile)
 	for(i = 0; i < numFiles; i++)
 	{
 		// For new block of 8, read in data
-		if((i & 0x07) == 0)
+		if((i & 0x07) == 0u)
 		{
 			MPFSStubs[0].addr = 8 + i*2;
 			MPFSStubs[0].bytesRem = 16;
@@ -612,7 +612,7 @@ WORD MPFSGetArray(MPFS_HANDLE hMPFS, BYTE* cData, WORD wLen)
 		wLen = MPFSStubs[hMPFS].bytesRem;
 
 	// Make sure we're reading a valid address
-	if(MPFSStubs[hMPFS].addr == MPFS_INVALID || wLen == 0)
+	if(MPFSStubs[hMPFS].addr == MPFS_INVALID || wLen == 0u)
 		return 0;
 		
 	if(cData == NULL)
@@ -722,7 +722,7 @@ WORD MPFSGetArray(MPFS_HANDLE hMPFS, BYTE* cData, WORD wLen)
   ***************************************************************************/
 BOOL MPFSGetLong(MPFS_HANDLE hMPFS, DWORD* ul)
 {
-	return ( MPFSGetArray(hMPFS, (BYTE*)ul, 4) == 4 );
+	return ( MPFSGetArray(hMPFS, (BYTE*)ul, 4) == 4u );
 }
 
 /*****************************************************************************
@@ -901,7 +901,7 @@ WORD MPFSPutArray(MPFS_HANDLE hMPFS, BYTE* cData, WORD wLen)
 			MPFSStubs[hMPFS].addr++;
 			MPFSStubs[hMPFS].bytesRem--;
 			
-			if(MPFSStubs[hMPFS].bytesRem == 0)
+			if(MPFSStubs[hMPFS].bytesRem == 0u)
 			{
 				MPFSPutEnd(FALSE);
 				isMPFSLocked = TRUE;
@@ -915,6 +915,7 @@ WORD MPFSPutArray(MPFS_HANDLE hMPFS, BYTE* cData, WORD wLen)
 	#else
 		// Write to the SPI Flash
 		SPIFlashWriteArray(cData, wLen);
+		return wLen;
 	#endif
 }
 #endif

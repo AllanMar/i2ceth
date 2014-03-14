@@ -59,26 +59,34 @@
 
 #if defined(STACK_USE_ICMP_CLIENT)
 
+// ICMP Timeout Value
 #define ICMP_TIMEOUT	(4ul*TICK_SECOND)
 
+// ICMP Packet Structure
 typedef struct
 {
 	BYTE vType;
 	BYTE vCode;
-	WORD_VAL wvChecksum;
-	WORD_VAL wvIdentifier;
-	WORD_VAL wvSequenceNumber;
+	WORD wChecksum;
+	WORD wIdentifier;
+	WORD wSequenceNumber;
 	WORD wData;
 } ICMP_PACKET;
 
+// ICMP Sequence Number
 static WORD wICMPSequenceNumber;
-static TICK ICMPTimer;
+// ICMP tick timer variable
+static DWORD ICMPTimer;
+
+// ICMP Flag structure
 static struct
 {
-	unsigned char bICMPInUse:1;
-	unsigned char bReplyValid:1;
-	unsigned char bRemoteHostIsROM:1;
+	unsigned char bICMPInUse:1;         // Indicates that the ICMP Client is in use
+	unsigned char bReplyValid:1;        // Indicates that a correct Ping response to one of our pings was received
+	unsigned char bRemoteHostIsROM:1;   // Indicates that a remote host name was passed as a ROM pointer argument
 } ICMPFlags = {0x00};
+
+// ICMP Static Variables
 static union
 {
 	union
@@ -88,6 +96,8 @@ static union
 	} RemoteHost;
 	NODE_INFO ICMPRemote;
 } StaticVars;
+
+// ICMP State Machine Enumeration
 static enum
 {
 	SM_IDLE = 0,
@@ -98,7 +108,8 @@ static enum
 	SM_ICMP_SEND_ECHO_REQUEST,
 	SM_ICMP_GET_ECHO_RESPONSE
 } ICMPState;
-#endif	//#if defined(STACK_USE_ICMP_CLIENT)
+
+#endif
 
 /*********************************************************************
  * Function:        void ICMPProcess(void)
@@ -152,7 +163,7 @@ void ICMPProcess(NODE_INFO *remote, WORD len)
 	    while(!IPIsTxReady());
 
 		// Position the write pointer for the next IPPutHeader operation
-		// NOTE: do not put this before the IPIsTxReady() call for ZG compatbility
+		// NOTE: do not put this before the IPIsTxReady() call for WF compatbility
 	    MACSetWritePtr(BASE_TX_ADDR + sizeof(ETHER_HEADER));
         	
 		// Create IP header in TX memory
@@ -191,14 +202,15 @@ void ICMPProcess(NODE_INFO *remote, WORD len)
 #endif
 }
 
+#if defined(STACK_USE_ICMP_CLIENT)
 /*********************************************************************
  * Function:        void ICMPSendPing(DWORD dwRemoteIP)
  *
  * PreCondition:    ICMPBeginUsage() returned TRUE
  *
  * Input:           dwRemoteIP: IP Address to ping.  Must be stored 
- *								big endian.  Ex: 192.168.0.1 should be
- *								passed as 0xC0A80001.
+ *								big endian.  Ex. 192.168.0.1 should be
+ *								passed as 0x0100A8C0.
  *
  * Output:          Begins the process of transmitting an ICMP echo 
  *					request.  This normally involves an ARP 
@@ -210,7 +222,6 @@ void ICMPProcess(NODE_INFO *remote, WORD len)
  *
  * Note:            None
  ********************************************************************/
-#if defined(STACK_USE_ICMP_CLIENT)
 void ICMPSendPing(DWORD dwRemoteIP)
 {
 	ICMPFlags.bReplyValid = 0;
@@ -220,6 +231,25 @@ void ICMPSendPing(DWORD dwRemoteIP)
 }
 
 #if defined(STACK_USE_DNS)
+/*********************************************************************
+ * Function:        void ICMPSendPingToHost (BYTE * szRemoteHost)
+ *
+ * PreCondition:    ICMPBeginUsage() returned TRUE
+ *
+ * Input:           szRemoteHost: Host name to ping.  Must be stored 
+ *								  in RAM if being called by PIC18.
+ *								  Ex. www.microchip.com
+ *
+ * Output:          Begins the process of transmitting an ICMP echo 
+ *					request.  This normally involves an ARP 
+ *					resolution procedure first.
+ *
+ * Side Effects:    None
+ *
+ * Overview:        None
+ *
+ * Note:            None
+ ********************************************************************/
 void ICMPSendPingToHost(BYTE * szRemoteHost)
 {
 	ICMPFlags.bReplyValid = 0;
@@ -228,7 +258,28 @@ void ICMPSendPingToHost(BYTE * szRemoteHost)
 	StaticVars.RemoteHost.szRAM = szRemoteHost;
 	ICMPState = SM_DNS_SEND_QUERY;
 }
+
 #if defined(__18CXX)
+
+/*********************************************************************
+ * Function:        void ICMPSendPingToHostROM (ROM BYTE * szRemoteHost)
+ *
+ * PreCondition:    ICMPBeginUsage() returned TRUE
+ *
+ * Input:           szRemoteHost: Host name to ping.  Must be stored 
+ *								  in ROM. Should only be called by PIC18.
+ *								  Ex. www.microchip.com
+ *
+ * Output:          None
+ *
+ * Side Effects:    None
+ *
+ * Overview:        Begins the process of transmitting an ICMP echo 
+ *					request.  This normally involves an ARP 
+ *					resolution procedure first.
+ *
+ * Note:            None
+ ********************************************************************/
 void ICMPSendPingToHostROM(ROM BYTE * szRemoteHost)
 {
 	ICMPFlags.bReplyValid = 0;
@@ -237,6 +288,7 @@ void ICMPSendPingToHostROM(ROM BYTE * szRemoteHost)
 	StaticVars.RemoteHost.szROM = szRemoteHost;
 	ICMPState = SM_DNS_SEND_QUERY;
 }
+
 #endif
 #endif
 
@@ -249,7 +301,7 @@ void ICMPSendPingToHostROM(ROM BYTE * szRemoteHost)
  * Input:           None
  *
  * Output:          -3: Could not resolve hostname (DNS timeout or 
- *						hostname invalid)
+ *			    	    hostname invalid)
  *					-2: No response received yet
  *					-1: Operation timed out (longer than ICMP_TIMEOUT) 
  *						has elapsed.
@@ -323,12 +375,12 @@ LONG ICMPGetReply(void)
 			// Set up the ping packet
 			ICMPPacket.vType = 0x08;	// 0x08: Echo (ping) request
 			ICMPPacket.vCode = 0x00;
-			ICMPPacket.wvChecksum.Val = 0x0000;
-			ICMPPacket.wvIdentifier.Val = 0xEFBE;
+			ICMPPacket.wChecksum = 0x0000;
+			ICMPPacket.wIdentifier = 0xEFBE;
 			wICMPSequenceNumber++; 
-			ICMPPacket.wvSequenceNumber.Val = wICMPSequenceNumber;
+			ICMPPacket.wSequenceNumber = wICMPSequenceNumber;
 			ICMPPacket.wData = 0x2860;
-			ICMPPacket.wvChecksum.Val = CalcIPChecksum((BYTE*)&ICMPPacket, sizeof(ICMPPacket));
+			ICMPPacket.wChecksum = CalcIPChecksum((BYTE*)&ICMPPacket, sizeof(ICMPPacket));
 		
 			// Record the current time.  This will be used as a basis for 
 			// finding the echo response time, which exludes the ARP and DNS 
@@ -395,7 +447,7 @@ LONG ICMPGetReply(void)
  *
  * Side Effects:    None
  *
- * Overview:        None
+ * Overview:        Claims ownership of the ICMP module.
  *
  * Note:            None
  ********************************************************************/
@@ -422,7 +474,7 @@ BOOL ICMPBeginUsage(void)
  *
  * Side Effects:    None
  *
- * Overview:        None
+ * Overview:        Gives up ownership of the ICMP module.
  *
  * Note:            None
  ********************************************************************/
@@ -430,6 +482,7 @@ void ICMPEndUsage(void)
 {
 	ICMPFlags.bICMPInUse = FALSE;
 }
+
 #endif //#if defined(STACK_USE_ICMP_CLIENT)
 
 #endif //#if defined(STACK_USE_ICMP_SERVER) || defined(STACK_USE_ICMP_CLIENT)

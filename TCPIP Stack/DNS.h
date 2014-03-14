@@ -69,4 +69,8 @@ BOOL DNSEndUsage(void);
 	#define DNSResolveROM(a,b)	DNSResolve((BYTE*)a,b)
 #endif
 
+
+// DNSs.c function prototypes
+void DNSServerTask(void);
+
 #endif

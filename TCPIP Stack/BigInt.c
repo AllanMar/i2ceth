@@ -45,23 +45,23 @@
  * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
  * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
  *
- *
- * Author               Date		Comment
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Elliott Wood	        6/20/07		Original
- * Howard Schlunder		11/21/07	Converted to little endian
  ********************************************************************/
 #define __BIGINT_C
 
 #include "TCPIPConfig.h"
 #include "HardwareProfile.h"
+#include "TCPIP Stack/SSLClientSize.h"
 
-#if (defined(STACK_USE_SSL_SERVER) || defined(STACK_USE_SSL_CLIENT)) && !defined(ENC100_INTERFACE_MODE)
+#if (defined(STACK_USE_SSL_SERVER) || defined(STACK_USE_SSL_CLIENT)) && (!defined(ENC100_INTERFACE_MODE) || (SSL_RSA_CLIENT_SIZE > 1024))
 
 #include "TCPIP Stack/TCPIP.h"
 
 // External declarations for assembly helpers
-extern BIGINT_DATA_TYPE *_iA, *_iB, *_xA, *_xB, *_iR, _wC;
+#if defined(__C30__)
+	extern __attribute__((__near__)) BIGINT_DATA_TYPE *_iA, *_iB, *_xA, *_xB, *_iR, _wC;
+#else
+	extern BIGINT_DATA_TYPE *_iA, *_iB, *_xA, *_xB, *_iR, _wC;
+#endif
 extern void _addBI(void);
 extern void _subBI(void);
 extern void _zeroBI(void);

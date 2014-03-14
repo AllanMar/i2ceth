@@ -58,10 +58,13 @@
 #ifndef __STACK_TSK_H
 #define __STACK_TSK_H
 
+#if defined (WF_CS_TRIS)
+    #include "WF_Config.h"     
+#endif
 
 // Check for potential configuration errors in "TCPIPConfig.h"
 #if (MAX_UDP_SOCKETS <= 0 || MAX_UDP_SOCKETS > 255 )
-#error Invlaid MAX_UDP_SOCKETS value specified
+#error Invalid MAX_UDP_SOCKETS value specified
 #endif
 
 // Check for potential configuration errors in "TCPIPConfig.h"
@@ -69,44 +72,56 @@
 #error Invalid MAX_HTTP_CONNECTIONS value specified.
 #endif
 
-
-typedef struct __attribute__((__packed__)) _MAC_ADDR
+// Structure to contain a MAC address
+typedef struct __attribute__((__packed__))
 {
     BYTE v[6];
 } MAC_ADDR;
 
+// Definition to represent an IP address
 #define IP_ADDR		DWORD_VAL
 
-typedef struct __attribute__((__packed__)) _NODE_INFO
+// Address structure for a node
+typedef struct __attribute__((__packed__))
 {
     IP_ADDR     IPAddr;
     MAC_ADDR    MACAddr;
 } NODE_INFO;
 
-
-typedef struct __attribute__((__packed__)) _APP_CONFIG 
+// Application-dependent structure used to contain address information
+typedef struct __attribute__((__packed__)) appConfigStruct 
 {
-	IP_ADDR		MyIPAddr;
-	IP_ADDR		MyMask;
-	IP_ADDR		MyGateway;
-	IP_ADDR		PrimaryDNSServer;
-	IP_ADDR		SecondaryDNSServer;
-	IP_ADDR		DefaultIPAddr;
-	IP_ADDR		DefaultMask;
-	BYTE		NetBIOSName[16];
+	IP_ADDR		MyIPAddr;               // IP address
+	IP_ADDR		MyMask;                 // Subnet mask
+	IP_ADDR		MyGateway;              // Default Gateway
+	IP_ADDR		PrimaryDNSServer;       // Primary DNS Server
+	IP_ADDR		SecondaryDNSServer;     // Secondary DNS Server
+	IP_ADDR		DefaultIPAddr;          // Default IP address
+	IP_ADDR		DefaultMask;            // Default subnet mask
+	BYTE		NetBIOSName[16];        // NetBIOS name
 	struct
 	{
 		unsigned char : 6;
 		unsigned char bIsDHCPEnabled : 1;
 		unsigned char bInConfigMode : 1;
-	} Flags;
-	MAC_ADDR	MyMACAddr;
+	} Flags;                            // Flag structure
+	MAC_ADDR	MyMACAddr;              // Application MAC address
 
-#if defined(ZG_CS_TRIS)
-	BYTE		MySSID[32];
+#if defined(WF_CS_TRIS)
+    BYTE	MySSID[32];             // Wireless SSID (if using MRF24W)
+    BYTE        SsidLength;             // number of bytes in SSID
+    BYTE        SecurityMode;           // WF_SECURITY_OPEN or one of the other security modes
+    BYTE        SecurityKey[64];        // WiFi Security key, or passphrase.
+    BYTE        SecurityKeyLength;      // number of bytes in security key (can be 0)
+    BYTE        WepKeyIndex;            // WEP key index (only valid for WEP)
+    BYTE        dataValid;
+    BYTE        networkType;
+    #if defined(EZ_CONFIG_STORE)        // WLAN configuration data stored to NVM
+    BYTE        saveSecurityInfo;       // Save 32-byte PSK
+    #endif
 #endif
 	
-#if defined(STACK_USE_SNMP_SERVER)
+#if defined(STACK_USE_SNMP_SERVER) || defined(STACK_USE_SNMPV3_SERVER)
 	// SNMPv2C Read community names
 	// SNMP_COMMUNITY_MAX_LEN (8) + 1 null termination byte
 	BYTE readCommunity[SNMP_MAX_COMMUNITY_SUPPORT][SNMP_COMMUNITY_MAX_LEN+1]; 
@@ -114,6 +129,8 @@ typedef struct __attribute__((__packed__)) _APP_CONFIG
 	// SNMPv2C Write community names
 	// SNMP_COMMUNITY_MAX_LEN (8) + 1 null termination byte
 	BYTE writeCommunity[SNMP_MAX_COMMUNITY_SUPPORT][SNMP_COMMUNITY_MAX_LEN+1];
+
+	UINT32 SnmpEngineBootRcrd;
 #endif
 
 } APP_CONFIG;
@@ -126,5 +143,4 @@ typedef struct __attribute__((__packed__)) _APP_CONFIG
 void StackInit(void);
 void StackTask(void);
 void StackApplications(void);
-
 #endif

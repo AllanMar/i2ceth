@@ -177,6 +177,302 @@ void UDPInit(void)
 
 
 /*****************************************************************************
+Function:
+	UDP_SOCKET UDPOpenEx(DWORD remoteHost, BYTE remoteHostType, UDP_PORT localPort,
+	UDP_PORT remotePort)
+
+ Summary:
+    Opens a UDP socket for a client.
+
+ Description:
+    Provides a unified method for opening UDP sockets. This function can open both client and 
+    server   sockets. For client sockets, it can accept a host name string to query in DNS, an IP
+    address as a string, an IP address in binary form, or a previously resolved NODE_INFO 
+    structure containing the remote IP address and associated MAC address. When a host name
+    or IP address only is provided, UDP module will internally perform the necessary DNSResolve
+    and/or ARP resolution steps before reporting that the UDP socket is connected (via a call to
+    UDPISOpen returning TRUE). Server sockets ignore this destination parameter and listen 
+    only on the indicated port.	Sockets are statically allocated on boot, but can be claimed with
+    this function and freed using UDPClose .
+
+Conditions:
+UDPInit should be called.
+
+Input:
+    remoteHost -     Pointer to remote node info (MAC and IP address) for this connection.  
+    If this is a     server socket (receives the first packet) or the destination is the broadcast 
+    address, then this parameter should be NULL. For client sockets only. Provide a pointer to
+    a null-terminated string of the remote host name (ex\:"www.microchip.com" or 
+    "192.168.1.123"), a literal destination IP address (ex\: 0x7B01A8C0 or an IP_ADDR data type),
+    or a pointer to a NODE_INFO structure with the remote IP address and remote node or gateway
+    MAC address specified, If a string is provided.
+    
+    remoteHostType - Any one of the following flags to identify the meaning of the remoteHost parameter:
+    	- UDP_OPEN_SERVER   = Open a server socket and ignore the remoteHost parameter. 
+    		(e.g. - SNMP agent, DHCP server, Announce)
+    	- UDP_OPEN_IP_ADDRESS = Open a client socket and connect it to a remote IP address.
+    		Ex: 0x7B01A8C0 for 192.168.1.123 (DWORD type). Note that the byte ordering is big endian.
+    	- UDP_OPEN_NODE_INFO = Open a client socket and connect it to a remote IP and MAC 
+    		addresses pair stored in a NODE_INFO structure.
+     	- UDP_OPEN_RAM_HOST = Open a client socket and connect it to a remote host who's 
+     		name is stored as a null terminated string in a RAM array. Ex:"www.microchip.com" or
+     		"192.168.0.123"
+     	- UDP_OPEN_ROM_HOST = Open a client socket and connect it to a remote host who's
+     		name is stored as a null terminated string in a literal string or ROM array. Ex: 
+     		"www.microchip.com" or "192.168.0.123" 
+
+    localPort - UDP port number to listen on.  If 0, stack will dynamically assign a unique port 
+    number to use.
+
+    remotePort - For client sockets, the remote port number.
+
+Return Values:
+  	Success - 
+		A UDP socket handle that can be used for subsequent UDP API calls.
+	Failure -
+		INVALID_UDP_SOCKET.  This function fails when no more UDP socket
+		handles are available.  Increase MAX_UDP_SOCKETS to make more sockets 	available.
+Remarks:
+	When finished using the UDP socket handle, call the UDPClose() function to free the 
+	socket and delete the handle.
+
+*****************************************************************************/
+UDP_SOCKET UDPOpenEx(DWORD remoteHost, BYTE remoteHostType, UDP_PORT localPort,
+		UDP_PORT remotePort)
+{
+	UDP_SOCKET s;
+	UDP_SOCKET_INFO *p;
+
+	// Local temp port numbers.
+	static WORD NextPort __attribute__((persistent));
+
+
+	p = UDPSocketInfo;
+	for ( s = 0; s < MAX_UDP_SOCKETS; s++ )
+	{
+		if(p->localPort == INVALID_UDP_PORT)
+		{
+		 	p->localPort = localPort;  
+			if(localPort == 0x0000u)
+		   	{
+			   if(NextPort > LOCAL_UDP_PORT_END_NUMBER || NextPort < LOCAL_UDP_PORT_START_NUMBER)
+				   NextPort = LOCAL_UDP_PORT_START_NUMBER;
+
+			   p->localPort    = NextPort++;
+		   	}
+			if((remoteHostType == UDP_OPEN_SERVER) || (remoteHost == 0))
+			{
+				  //Set remote node as 0xFF ( broadcast address)
+				  // else Set broadcast address
+				  memset((void*)&p->remote.remoteNode, 0xFF, sizeof(p->remote));
+				  p->smState = UDP_OPENED;
+			}
+			else
+			{
+				switch(remoteHostType)
+				{
+#if defined (STACK_CLIENT_MODE)
+#if defined (STACK_USE_DNS)
+					case UDP_OPEN_RAM_HOST:
+					case UDP_OPEN_ROM_HOST:
+						//set the UDP state to UDP_GET_DNS_MODULE
+						p->remote.remoteHost = remoteHost;
+						p->flags.bRemoteHostIsROM = (remoteHostType == UDP_OPEN_ROM_HOST);
+						p->smState = UDP_DNS_RESOLVE;
+					break;
+#endif
+					case UDP_OPEN_IP_ADDRESS:
+					// remoteHost is a literal IP address.	This doesn't need DNS and can skip directly to the Gateway ARPing step. 	
+					//Next UDP state UDP_GATEWAY_SEND_ARP;
+					p->remote.remoteNode.IPAddr.Val = remoteHost;
+					p->retryCount = 0;
+					p->retryInterval = (TICK_SECOND/4)/256;
+					p->smState = UDP_GATEWAY_SEND_ARP;
+					break;
+#endif						
+					case UDP_OPEN_NODE_INFO:
+					//skip DNS and ARP resolution steps if connecting to a remote node which we've already
+						memcpy((void*)(BYTE*)&p->remote,(void*)(BYTE*)(PTR_BASE)remoteHost,sizeof(p->remote));
+						p->smState = UDP_OPENED;
+					// CALL UDPFlushto transmit incluind peding data.
+					break;
+					default:
+						break;
+				}
+			}
+			p->remotePort   = remotePort;
+
+			// Mark this socket as active.
+			// Once an active socket is set, subsequent operation can be
+			// done without explicitely supply socket identifier.
+			activeUDPSocket = s;
+			return s;
+		}
+		p++;
+	}
+
+	return (UDP_SOCKET)INVALID_UDP_SOCKET;
+
+}
+
+
+/******************************************************************************
+Function:
+	void UDPTask(void)
+
+  Summary:
+  	Performs periodic UDP tasks.
+
+  Description:
+	This function performs any required periodic UDP tasks.  Each socket's state machine is 
+	checked, and any elapsed timeout periods are handled.
+
+  Precondition:
+	UDP is initialized.
+
+  Parameters:
+	None
+
+  Returns:
+	None
+
+******************************************************************************/
+void UDPTask(void)
+{
+	UDP_SOCKET ss;
+	
+	for ( ss = 0; ss < MAX_UDP_SOCKETS; ss++ )
+	{
+
+		// need to put Extra check if UDP has opened or NOT
+
+		if((UDPSocketInfo[ss].smState == UDP_OPENED) ||
+			(UDPSocketInfo[ss].smState == UDP_CLOSED))
+			continue;
+		// A timeout has occured.  Respond to this timeout condition
+		// depending on what state this socket is in.
+		switch(UDPSocketInfo[ss].smState)
+		{
+			#if defined(STACK_CLIENT_MODE)
+			#if defined(STACK_USE_DNS)
+			case UDP_DNS_RESOLVE:
+			if(DNSBeginUsage())
+			{
+				// call DNS Resolve function and move to UDP next State machine
+				UDPSocketInfo[ss].smState = UDP_DNS_IS_RESOLVED;
+				if(UDPSocketInfo[ss].flags.bRemoteHostIsROM)
+					DNSResolveROM((ROM BYTE*)(ROM_PTR_BASE)UDPSocketInfo[ss].remote.remoteHost, DNS_TYPE_A);
+				else
+					DNSResolve((BYTE*)(PTR_BASE)UDPSocketInfo[ss].remote.remoteHost, DNS_TYPE_A);
+			}
+			break;				
+			case UDP_DNS_IS_RESOLVED:
+			{
+				IP_ADDR ipResolvedDNSIP;
+				// See if DNS resolution has finished.	Note that if the DNS 
+				// fails, the &ipResolvedDNSIP will be written with 0x00000000. 
+				// MyTCB.remote.dwRemoteHost is unioned with 
+				// MyTCB.remote.niRemoteMACIP.IPAddr, so we can't directly write 
+				// the DNS result into MyTCB.remote.niRemoteMACIP.IPAddr.  We 
+				// must copy it over only if the DNS is resolution step was 
+				// successful.
+				
+				if(DNSIsResolved(&ipResolvedDNSIP))
+				{
+					if(DNSEndUsage())
+					{
+						UDPSocketInfo[ss].remote.remoteNode.IPAddr.Val = ipResolvedDNSIP.Val;
+						UDPSocketInfo[ss].smState = UDP_GATEWAY_SEND_ARP;
+						UDPSocketInfo[ss].retryCount = 0;
+						UDPSocketInfo[ss].retryInterval = (TICK_SECOND/4)/256;
+					}
+					else
+					{
+						UDPSocketInfo[ss].smState = UDP_DNS_RESOLVE;
+					}
+				}			
+			}
+			break;
+			#endif // #if defined(STACK_USE_DNS)
+
+			case UDP_GATEWAY_SEND_ARP:
+				// Obtain the MAC address associated with the server's IP address 
+				//(either direct MAC address on same subnet, or the MAC address of the Gateway machine)
+				UDPSocketInfo[ss].eventTime = (WORD)TickGetDiv256();
+				ARPResolve(&UDPSocketInfo[ss].remote.remoteNode.IPAddr);
+				UDPSocketInfo[ss].smState = UDP_GATEWAY_GET_ARP;
+				break;
+
+			case UDP_GATEWAY_GET_ARP:
+			if(!ARPIsResolved(&UDPSocketInfo[ss].remote.remoteNode.IPAddr, 
+								&UDPSocketInfo[ss].remote.remoteNode.MACAddr))
+			{
+				// Time out if too much time is spent in this state
+				// Note that this will continuously send out ARP 
+				// requests for an infinite time if the Gateway 
+				// never responds
+				if((WORD)TickGetDiv256() - UDPSocketInfo[ss].eventTime> (WORD)UDPSocketInfo[ss].retryInterval)
+				{
+					// Exponentially increase timeout until we reach 6 attempts then stay constant
+					if(UDPSocketInfo[ss].retryCount < 6u)
+					{
+						UDPSocketInfo[ss].retryCount++;
+						UDPSocketInfo[ss].retryInterval <<= 1;
+					}
+					// Retransmit ARP request
+					UDPSocketInfo[ss].smState = UDP_GATEWAY_SEND_ARP;
+				}				
+			}
+			else
+			{
+				UDPSocketInfo[ss].smState = UDP_OPENED;
+			}
+			break;
+			default:
+			case UDP_OPENED:
+			case UDP_CLOSED:
+			// not used
+			break;
+#endif // #if defined(STACK_CLIENT_MODE)
+		}
+	}
+} 
+
+/******************************************************************************
+ 
+  Function:
+	  BOOL UDPISOpened(UDP_SOCKET socket)
+  
+ Summary:
+	  Determines if a socket has an established connection.
+
+ Description:
+	This function determines if a socket has an established connection to a remote node .  
+	Call this function after calling UDPOpen to determine when the connection is set up 
+	and ready for use.  
+
+ Precondition:
+	UDP is initialized.
+
+ Parameters:
+	socket - The socket to check.
+
+ Return Values:
+	TRUE - The socket has been opened and ARP has been resolved.
+	FALSE - The socket is not currently connected.
+
+ Remarks:
+	None
+ 
+ *****************************************************************************/
+BOOL UDPIsOpened(UDP_SOCKET socket)
+{
+	return (UDPSocketInfo[socket].smState == UDP_OPENED);
+}
+
+
+#if 0
+/*****************************************************************************
   Function:
 	void UDPTask(void)
 
@@ -296,7 +592,7 @@ UDP_SOCKET UDPOpen(UDP_PORT localPort,
     return (UDP_SOCKET)INVALID_UDP_SOCKET;
 }
 
-
+#endif
 
 
 /*****************************************************************************
@@ -314,7 +610,8 @@ UDP_SOCKET UDPOpen(UDP_PORT localPort,
 	UDPInit() must have been previously called.
 
   Parameters:
-	s - The socket handle to be released.
+	s - The socket handle to be released.  If an illegal handle value is 
+		provided, the function safely does nothing.
 
   Returns:
   	None
@@ -324,11 +621,12 @@ UDP_SOCKET UDPOpen(UDP_PORT localPort,
   ***************************************************************************/
 void UDPClose(UDP_SOCKET s)
 {
-	if(s == INVALID_UDP_SOCKET)
+	if(s >= MAX_UDP_SOCKETS)
 		return;
 
 	UDPSocketInfo[s].localPort = INVALID_UDP_PORT;
-	UDPSocketInfo[s].remoteNode.IPAddr.Val = 0x00000000;
+	UDPSocketInfo[s].remote.remoteNode.IPAddr.Val = 0x00000000;
+	UDPSocketInfo[s].smState = UDP_CLOSED;
 }
 
 
@@ -661,8 +959,6 @@ void UDPFlush(void)
 {
     UDP_HEADER      h;
     UDP_SOCKET_INFO *p;
-    WORD 			wReadPtrSave;
-    WORD			wChecksum;
     WORD			wUDPLength;
 
     p = &UDPSocketInfo[activeUDPSocket];
@@ -682,7 +978,7 @@ void UDPFlush(void)
 		PSEUDO_HEADER   pseudoHeader;
 		
 		pseudoHeader.SourceAddress	= AppConfig.MyIPAddr;
-		pseudoHeader.DestAddress    = p->remoteNode.IPAddr;
+		pseudoHeader.DestAddress    = p->remote.remoteNode.IPAddr;
 		pseudoHeader.Zero           = 0x0;
 		pseudoHeader.Protocol       = IP_PROT_UDP;
 		pseudoHeader.Length			= wUDPLength;
@@ -696,7 +992,7 @@ void UDPFlush(void)
 	MACSetWritePtr(BASE_TX_ADDR + sizeof(ETHER_HEADER));
 	
 	// Write IP header to packet
-	IPPutHeader(&p->remoteNode, IP_PROT_UDP, wUDPLength);
+	IPPutHeader(&p->remote.remoteNode, IP_PROT_UDP, wUDPLength);
 
     // Write UDP header to packet
     MACPutArray((BYTE*)&h, sizeof(h));
@@ -704,8 +1000,13 @@ void UDPFlush(void)
 	// Calculate the final UDP checksum and write it in, if enabled
 	#if defined(UDP_USE_TX_CHECKSUM)
 	{
+        PTR_BASE	wReadPtrSave;
+        WORD		wChecksum;
+
 		wReadPtrSave = MACSetReadPtr(BASE_TX_ADDR + sizeof(ETHER_HEADER) + sizeof(IP_HEADER));
 		wChecksum = CalcIPBufferChecksum(wUDPLength);
+		if(wChecksum == 0x0000u)
+			wChecksum = 0xFFFF;
 		MACSetReadPtr(wReadPtrSave);
 		MACSetWritePtr(BASE_TX_ADDR + sizeof(ETHER_HEADER) + sizeof(IP_HEADER) + 6);	// 6 is the offset to the Checksum field in UDP_HEADER
 		MACPutArray((BYTE*)&wChecksum, sizeof(wChecksum));
@@ -809,15 +1110,18 @@ BOOL UDPGet(BYTE *v)
 	Reads an array of bytes from the currently active socket.
 	
   Description:
-	This function reads an array from bytes to the currently active UDP socket, 
-	while decrementing the remaining buffer length.  UDPIsGetReady should be 
+	This function reads an array of bytes from the currently active UDP socket, 
+	while decrementing the remaining bytes available. UDPIsGetReady should be 
 	used before calling this function to specify the currently active socket.
 
   Precondition:
-	UDPIsPutReady() was previously called to specify the current socket.
+	UDPIsGetReady() was previously called to specify the current socket.
 
   Parameters:
-	cData - The buffer to receive the bytes being read.
+	cData - The buffer to receive the bytes being read.  If NULL, the bytes are 
+			simply discarded without being written anywhere (effectively skips 
+			over the bytes in the RX buffer, although if you need to skip a lot 
+			of data, seeking using the UDPSetRxBuffer() will be more efficient).
 	wDateLen - Number of bytes to be read from the socket.
 	
   Returns:
@@ -1003,46 +1307,58 @@ static UDP_SOCKET FindMatchingSocket(UDP_HEADER *h,
                                      NODE_INFO *remoteNode,
                                      IP_ADDR *localIP)
 {
-    UDP_SOCKET s;
-    UDP_SOCKET partialMatch;
-    UDP_SOCKET_INFO *p;
+	UDP_SOCKET s;
+	UDP_SOCKET partialMatch;
+	UDP_SOCKET_INFO *p;
 
-    partialMatch = INVALID_UDP_SOCKET;
+// This is commented out because most applications don't need this type of filtering.  It comes at a performance cost.
+//	// Filter out unicast packets that aren't for our IP address, but accept 
+//	// all multicast and broadcast traffic
+//	if(!((localIP->Val == AppConfig.MyIPAddr.Val) || (localIP->v[0] & 0x80) || (localIP->Val == (AppConfig.MyIPAddr.Val | (~AppConfig.MyMask.Val)))))
+//		return INVALID_UDP_SOCKET;
 
-    p = UDPSocketInfo;
-    for ( s = 0; s < MAX_UDP_SOCKETS; s++ )
-    {
-        // This packet is said to be matching with current socket:
-        // 1. If its destination port matches with our local port and
-        // 2. Packet source IP address matches with socket remote IP address.
-        //    OR this socket had transmitted packet with destination address as broadcast (subnet or limited broadcast).
-        if ( p->localPort == h->DestinationPort )
-        {
-            if(p->remotePort == h->SourcePort)
-            {
-                if( (p->remoteNode.IPAddr.Val == remoteNode->IPAddr.Val) ||
-                    (localIP->Val == 0xFFFFFFFFul) || 
-					(localIP->Val == (AppConfig.MyIPAddr.Val | (~AppConfig.MyMask.Val))))
-                {
-                    return s;
-                }
-            }
+	// Discard any packets received that were generated by ourself.  In 
+	// structured Wi-Fi networks, the Access Point rebroadcasts our broadcast 
+	// and multicast packets, causing self-reception to occur unless filtered 
+	// out.
+	if(remoteNode->IPAddr.Val == AppConfig.MyIPAddr.Val)
+		return INVALID_UDP_SOCKET;
 
-            partialMatch = s;
-        }
-        p++;
-    }
+	partialMatch = INVALID_UDP_SOCKET;
 
-    if ( partialMatch != INVALID_UDP_SOCKET )
-    {
-        p = &UDPSocketInfo[partialMatch];
+	p = UDPSocketInfo;
+    for(s = 0; s < MAX_UDP_SOCKETS; s++)
+	{
+		// This packet is said to be matching with current socket:
+		// 1. If its destination port matches with our local port and
+		// 2. Packet source IP address matches with previously saved socket remote IP address and
+		// 3. Packet source port number matches with previously saved socket remote port number
+		if(p->localPort == h->DestinationPort)
+		{
+			if(p->remotePort == h->SourcePort)
+			{
+				if(p->remote.remoteNode.IPAddr.Val == remoteNode->IPAddr.Val)
+				{
+					return s;
+				}
+			}
 
-        memcpy((void*)&p->remoteNode,
-                (const void*)remoteNode, sizeof(p->remoteNode) );
+			partialMatch = s;
+		}
+		p++;
+	}
 
-        p->remotePort = h->SourcePort;
-    }
-    return partialMatch;
+	if(partialMatch != INVALID_UDP_SOCKET)
+	{
+		p = &UDPSocketInfo[partialMatch];
+
+		memcpy((void*)&p->remote.remoteNode,
+				(const void*)remoteNode, sizeof(p->remote.remoteNode) );
+
+		p->remotePort = h->SourcePort;
+	}
+
+	return partialMatch;
 }
 
 

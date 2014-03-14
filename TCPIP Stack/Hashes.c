@@ -239,7 +239,7 @@ void MD5AddData(HASH_SUM* theSum, BYTE* data, WORD len)
 	theSum->bytesSoFar += len;
 
 	// Copy data into the partial block
-	while(len != 0)
+	while(len != 0u)
 	{
 		*blockPtr++ = *data++;
 
@@ -288,7 +288,7 @@ void MD5AddROMData(HASH_SUM* theSum, ROM BYTE* data, WORD len)
 	theSum->bytesSoFar += len;
 
 	// Copy data into the partial block
-	while(len != 0)
+	while(len != 0u)
 	{
 		*blockPtr++ = *data++;
 
@@ -331,10 +331,7 @@ void MD5AddROMData(HASH_SUM* theSum, ROM BYTE* data, WORD len)
 
   Returns:
   	None
-  
-  Internal:
-  	TODO convert data to a DWORD* or read from the pointer using byte
-  	accesses only to avoid any accidental alignment errors
+
   ***************************************************************************/
 static void MD5HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2, DWORD* h3)
 {
@@ -348,19 +345,19 @@ static void MD5HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2, DWORD* h3)
 	d = *h3;
 
 	// Main mixer loop for 64 operations
-	for(i = 0; i < 64; i++)
+	for(i = 0; i < 64u; i++)
 	{
-		if(i <= 15)
+		if(i <= 15u)
 		{
 			f = (b & c) | ((~b) & d);
 			j = i;
 		}
-		else if(i > 15 && i <= 31)
+		else if(i > 15u && i <= 31u)
 		{
 			f = (d & b) | ((~d) & c);
 			j = (5 * i + 1) & 0x0f;
 		}
-		else if(i > 31 && i <= 47)
+		else if(i > 31u && i <= 47u)
 		{
 			f = (b ^ c ^ d);
 			j = (3 * i + 5) & 0x0f;
@@ -433,10 +430,10 @@ void MD5Calculate(HASH_SUM* theSum, BYTE* result)
 	lastBlock[i++] = 0x80;
 
 	// If there's 8 or more bytes left to 64, then this is the last block
-	if(i > 56)
+	if(i > 56u)
 	{// If there's not enough space, then zero fill this and add a new block
 		// Zero pad the remainder
-		for( ; i < 64; lastBlock[i++] = 0x00);
+		for( ; i < 64u; lastBlock[i++] = 0x00);
 
 		// Calculate a hash on this block and add it to the sum
 		MD5HashBlock(lastBlock, &h0, &h1, &h2, &h3);
@@ -446,7 +443,7 @@ void MD5Calculate(HASH_SUM* theSum, BYTE* result)
 	}
 
 	// Zero fill the rest of the block
-	for( ; i < 56; lastBlock[i++] = 0x00);
+	for( ; i < 56u; lastBlock[i++] = 0x00);
 
 	// Fill in the size, in bits, in little-endian
 	lastBlock[56] = theSum->bytesSoFar << 3;
@@ -535,7 +532,7 @@ void SHA1AddData(HASH_SUM* theSum, BYTE* data, WORD len)
 	theSum->bytesSoFar += len;
 
 	// Copy data into the partial block
-	while(len != 0)
+	while(len != 0u)
 	{
 		*blockPtr++ = *data++;
 
@@ -585,7 +582,7 @@ void SHA1AddROMData(HASH_SUM* theSum, ROM BYTE* data, WORD len)
 	theSum->bytesSoFar += len;
 
 	// Copy data into the partial block
-	while(len != 0)
+	while(len != 0u)
 	{
 		*blockPtr++ = *data++;
 
@@ -630,10 +627,7 @@ void SHA1AddROMData(HASH_SUM* theSum, ROM BYTE* data, WORD len)
 
   Returns:
   	None
-  
-  Internal:
-  	TODO convert data to a DWORD* or read from the pointer using byte
-  	accesses only to avoid any accidental alignment errors
+
   ***************************************************************************/
 static void SHA1HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2, 
 							DWORD* h3, DWORD* h4)
@@ -652,7 +646,7 @@ static void SHA1HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2,
 	// Set up the w[] vector
 	if(lastBlock == data)
 	{// If they're the same, just swap endian-ness
-		for(i = 0; i < 16; i++)
+		for(i = 0; i < 16u; i++)
 		{
 			back3 = data[3];
 			data[3] = data[0];
@@ -665,7 +659,7 @@ static void SHA1HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2,
 	}
 	else
 	{// Otherwise, copy values in swaping endian-ness as we go
-		for(i = 0; i < 16; i++)
+		for(i = 0; i < 16u; i++)
 		{
 			w[i].v[3] = *data++;
 			w[i].v[2] = *data++;
@@ -678,19 +672,19 @@ static void SHA1HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2,
 	back14 = 2;
 
 	// Main mixer loop for 80 operations
-	for(i = 0; i < 80; i++)
+	for(i = 0; i < 80u; i++)
 	{
-		if(i <= 19)
+		if(i <= 19u)
 		{
 			f = (b & c) | ((~b) & d);
 			k = 0x5A827999;
 		}
-		else if(i >= 20 && i <= 39)
+		else if(i >= 20u && i <= 39u)
 		{
 			f = b ^ c ^ d;
 			k = 0x6ED9EBA1;
 		}
-		else if(i >= 40 && i <= 59)
+		else if(i >= 40u && i <= 59u)
 		{
 			f = (b & c) | (b & d) | (c & d);
 			k = 0x8F1BBCDC;
@@ -702,7 +696,7 @@ static void SHA1HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2,
 		}
 
 		// Calculate the w[] value and store it in the array for future use
-		if(i >= 16)
+		if(i >= 16u)
 		{
 			#if defined(HI_TECH_C)
 			// This section is unrolled for HI_TECH_C because it cannot parse
@@ -748,7 +742,7 @@ static void SHA1HashBlock(BYTE* data, DWORD* h0, DWORD* h1, DWORD* h2,
 
 /*****************************************************************************
   Function:
-	void MD5Calculate(HASH_SUM* theSum, BYTE* result)
+	void SHA1Calculate(HASH_SUM* theSum, BYTE* result)
 
   Summary:
 	Calculates a SHA-1 hash
@@ -792,10 +786,10 @@ void SHA1Calculate(HASH_SUM* theSum, BYTE* result)
 	lastBlock[i++] = 0x80;
 
 	// If there's 8 or more bytes left to 64, then this is the last block
-	if(i > 56)
+	if(i > 56u)
 	{// If there's not enough space, then zero fill this and add a new block
 		// Zero pad the remainder
-		for( ; i < 64; lastBlock[i++] = 0x00);
+		for( ; i < 64u; lastBlock[i++] = 0x00);
 
 		// Calculate a hash on this block and add it to the sum
 		SHA1HashBlock(lastBlock, &h0, &h1, &h2, &h3, &h4);
@@ -805,7 +799,7 @@ void SHA1Calculate(HASH_SUM* theSum, BYTE* result)
 	}
 
 	// Zero fill the rest of the block
-	for( ; i < 56; lastBlock[i++] = 0x00);
+	for( ; i < 56u; lastBlock[i++] = 0x00);
 
 	// Fill in the size, in bits, in big-endian
 	lastBlock[63] = theSum->bytesSoFar << 3;
@@ -821,26 +815,26 @@ void SHA1Calculate(HASH_SUM* theSum, BYTE* result)
 	SHA1HashBlock(lastBlock, &h0, &h1, &h2, &h3, &h4);
 	
 	// Format the result in big-endian format
-	*result++ = h0 >> 24;
-	*result++ = h0 >> 16;
-	*result++ = h0 >> 8;
-	*result++ = h0;
-	*result++ = h1 >> 24;
-	*result++ = h1 >> 16;
-	*result++ = h1 >> 8;
-	*result++ = h1;
-	*result++ = h2 >> 24;
-	*result++ = h2 >> 16;
-	*result++ = h2 >> 8;
-	*result++ = h2;
-	*result++ = h3 >> 24;
-	*result++ = h3 >> 16;
-	*result++ = h3 >> 8;
-	*result++ = h3;
-	*result++ = h4 >> 24;
-	*result++ = h4 >> 16;
-	*result++ = h4 >> 8;
-	*result++ = h4;
+	*result++ = ((BYTE*)&h0)[3];
+	*result++ = ((BYTE*)&h0)[2];
+	*result++ = ((BYTE*)&h0)[1];
+	*result++ = ((BYTE*)&h0)[0];
+	*result++ = ((BYTE*)&h1)[3];
+	*result++ = ((BYTE*)&h1)[2];
+	*result++ = ((BYTE*)&h1)[1];
+	*result++ = ((BYTE*)&h1)[0];
+	*result++ = ((BYTE*)&h2)[3];
+	*result++ = ((BYTE*)&h2)[2];
+	*result++ = ((BYTE*)&h2)[1];
+	*result++ = ((BYTE*)&h2)[0];
+	*result++ = ((BYTE*)&h3)[3];
+	*result++ = ((BYTE*)&h3)[2];
+	*result++ = ((BYTE*)&h3)[1];
+	*result++ = ((BYTE*)&h3)[0];
+	*result++ = ((BYTE*)&h4)[3];
+	*result++ = ((BYTE*)&h4)[2];
+	*result++ = ((BYTE*)&h4)[1];
+	*result++ = ((BYTE*)&h4)[0];
 }
 
 #endif	//#end SHA-1

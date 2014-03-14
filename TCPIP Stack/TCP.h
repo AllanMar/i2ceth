@@ -69,7 +69,7 @@ typedef BYTE TCP_SOCKET;
   ***************************************************************************/
 
 // TCP States as defined by RFC 793
-typedef enum _TCP_STATE
+typedef enum
 {
 	TCP_GET_DNS_MODULE,		// Special state for TCP client mode sockets
 	TCP_DNS_RESOLVE,		// Special state for TCP client mode sockets
@@ -91,7 +91,7 @@ typedef enum _TCP_STATE
     TCP_CLOSED_BUT_RESERVED	// Special state for TCP client mode sockets.  Socket is idle, but still allocated pending application closure of the handle.
 } TCP_STATE;
 
-typedef enum _SSL_STATE
+typedef enum
 {
 	SSL_NONE = 0,			// No security is enabled
 	SSL_HANDSHAKING,		// Handshake is progressing (no application data allowed)
@@ -105,8 +105,8 @@ typedef enum _SSL_STATE
   ***************************************************************************/
 
 // TCP Control Block (TCB) stub data storage.  Stubs are stored in local PIC RAM for speed.
-// Current size is 29 bytes (PIC18), 30 bytes (PIC24/dsPIC), or 48 (PIC32)
-typedef struct _TCB_STUB
+// Current size is 34 bytes (PIC18), 36 bytes (PIC24/dsPIC), or 56 (PIC32)
+typedef struct
 {
 	PTR_BASE bufferTxStart;		// First byte of TX buffer
 	PTR_BASE bufferRxStart;		// First byte of RX buffer.  TX buffer ends 1 byte prior
@@ -155,8 +155,8 @@ typedef struct _TCB_STUB
 
 // Remainder of TCP Control Block data.
 // The rest of the TCB is stored in Ethernet buffer RAM or elsewhere as defined by vMemoryMedium.
-// Current size is 37 (PIC18), 38 (PIC24/dsPIC), or 40 bytes (PIC32)
-typedef struct _TCB
+// Current size is 41 (PIC18), 42 (PIC24/dsPIC), or 48 bytes (PIC32)
+typedef struct
 {
 	DWORD		retryInterval;			// How long to wait before retrying transmission
 	DWORD		MySEQ;					// Local sequence number
@@ -168,12 +168,9 @@ typedef struct _TCB
 	WORD		wFutureDataSize;		// How much out-of-order data has been received
 	union
 	{
-		NODE_INFO	niRemoteMACIP;		// 6 bytes for MAC and IP address
+		NODE_INFO	niRemoteMACIP;		// 10 bytes for MAC and IP address
 		DWORD		dwRemoteHost;		// RAM or ROM pointer to a hostname string (ex: "www.microchip.com")
 	} remote;
-    #if defined(STACK_USE_SSL)
-    WORD_VAL	localSSLPort;			// Local SSL port number (for listening sockets)
-    #endif
 	SHORT		sHoleSize;				// Size of the hole, or -1 for none exists.  (0 indicates hole has just been filled)
     struct
     {
@@ -184,12 +181,16 @@ typedef struct _TCB
 		unsigned char bRXNoneACKed2 : 1;	// A second duplicate ACK was likely received
 		unsigned char filler : 3;		// future use
     } flags;
+	WORD		wRemoteMSS;				// Maximum Segment Size option advirtised by the remote node during initial handshaking
+    #if defined(STACK_USE_SSL)
+    WORD_VAL	localSSLPort;			// Local SSL port number (for listening sockets)
+    #endif
 	BYTE		retryCount;				// Counter for transmission retries
 	BYTE		vSocketPurpose;			// Purpose of socket (as defined in TCPIPConfig.h)
 } TCB;
 
 // Information about a socket
-typedef struct _SOCKET_INFO
+typedef struct
 {
 	NODE_INFO remote;		// NODE_INFO structure for remote node
 	WORD_VAL remotePort;	// Port number associated with remote node
@@ -205,6 +206,7 @@ SOCKET_INFO* TCPGetRemoteInfo(TCP_SOCKET hTCP);
 BOOL TCPWasReset(TCP_SOCKET hTCP);
 BOOL TCPIsConnected(TCP_SOCKET hTCP);
 void TCPDisconnect(TCP_SOCKET hTCP);
+void TCPClose(TCP_SOCKET hTCP);
 WORD TCPIsPutReady(TCP_SOCKET hTCP);
 BOOL TCPPut(TCP_SOCKET hTCP, BYTE byte);
 WORD TCPPutArray(TCP_SOCKET hTCP, BYTE* Data, WORD Len);
@@ -213,6 +215,8 @@ WORD TCPIsGetReady(TCP_SOCKET hTCP);
 WORD TCPGetRxFIFOFree(TCP_SOCKET hTCP);
 BOOL TCPGet(TCP_SOCKET hTCP, BYTE* byte);
 WORD TCPGetArray(TCP_SOCKET hTCP, BYTE* buffer, WORD count);
+BYTE TCPPeek(TCP_SOCKET hTCP, WORD wStart);
+WORD TCPPeekArray(TCP_SOCKET hTCP, BYTE *vBuffer, WORD wLen, WORD wStart);
 WORD TCPFindEx(TCP_SOCKET hTCP, BYTE cFind, WORD wStart, WORD wSearchLen, BOOL bTextCompare);
 WORD TCPFindArrayEx(TCP_SOCKET hTCP, BYTE* cFindArray, WORD wLen, WORD wStart, WORD wSearchLen, BOOL bTextCompare);
 void TCPDiscard(TCP_SOCKET hTCP);
@@ -221,13 +225,13 @@ void TCPTick(void);
 void TCPFlush(TCP_SOCKET hTCP);
 
 // Create a server socket and ignore dwRemoteHost.
-#define TCP_OPEN_SERVER		0
+#define TCP_OPEN_SERVER		0u
 #if defined(STACK_CLIENT_MODE)
 	#if defined(STACK_USE_DNS)
 		// Create a client socket and use dwRemoteHost as a RAM pointer to a hostname string.
-		#define TCP_OPEN_RAM_HOST	1
+		#define TCP_OPEN_RAM_HOST	1u
 		// Create a client socket and use dwRemoteHost as a ROM pointer to a hostname string.
-		#define TCP_OPEN_ROM_HOST	2
+		#define TCP_OPEN_ROM_HOST	2u
 	#else
 		// Emit an undeclared identifier diagnostic if code tries to use TCP_OPEN_RAM_HOST while the DNS client module is not enabled. 
 		#define TCP_OPEN_RAM_HOST	You_need_to_enable_STACK_USE_DNS_to_use_TCP_OPEN_RAM_HOST
@@ -235,9 +239,9 @@ void TCPFlush(TCP_SOCKET hTCP);
 		#define TCP_OPEN_ROM_HOST	You_need_to_enable_STACK_USE_DNS_to_use_TCP_OPEN_ROM_HOST
 	#endif
 	// Create a client socket and use dwRemoteHost as a literal IP address.
-	#define TCP_OPEN_IP_ADDRESS	3
+	#define TCP_OPEN_IP_ADDRESS	3u
 	// Create a client socket and use dwRemoteHost as a pointer to a NODE_INFO structure containing the exact remote IP address and MAC address to use.
-	#define TCP_OPEN_NODE_INFO	4
+	#define TCP_OPEN_NODE_INFO	4u
 #else
 	// Emit an undeclared identifier diagnostic if code tries to use TCP_OPEN_RAM_HOST while STACK_CLIENT_MODE feature is not enabled. 
 	#define TCP_OPEN_RAM_HOST	You_need_to_enable_STACK_CLIENT_MODE_to_use_TCP_OPEN_RAM_HOST
@@ -286,13 +290,14 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 
 #if defined(STACK_USE_SSL)
 BOOL TCPStartSSLClient(TCP_SOCKET hTCP, BYTE* host);
+BOOL TCPStartSSLClientEx(TCP_SOCKET hTCP, BYTE* host, void * buffer, BYTE suppDataType);
 BOOL TCPStartSSLServer(TCP_SOCKET hTCP);
 BOOL TCPAddSSLListener(TCP_SOCKET hTCP, WORD port);
 BOOL TCPRequestSSLMessage(TCP_SOCKET hTCP, BYTE msg);
 BOOL TCPSSLIsHandshaking(TCP_SOCKET hTCP);
 BOOL TCPIsSSL(TCP_SOCKET hTCP);
 void TCPSSLHandshakeComplete(TCP_SOCKET hTCP);
-void TCPSSLDecryptMAC(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, WORD len, BOOL inPlace);
+void TCPSSLDecryptMAC(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, WORD len);
 void TCPSSLInPlaceMACEncrypt(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, BYTE* MACSecret, WORD len);
 void TCPSSLPutRecordHeader(TCP_SOCKET hTCP, BYTE* hdr, BOOL recDone);
 WORD TCPSSLGetPendingTxSize(TCP_SOCKET hTCP);

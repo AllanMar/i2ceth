@@ -12,10 +12,7 @@
 
 // Include functions specific to this stack application
 #include "Main.h"
-#include "sw_spi.h"
 #include "eeprom.h"
-#include "sram.h"
-#include <delays.h>
 
 // Declare AppConfig structure and some other supporting stack variables
 APP_CONFIG AppConfig;

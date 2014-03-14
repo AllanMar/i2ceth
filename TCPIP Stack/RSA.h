@@ -47,11 +47,6 @@
  * various third parties.  It is your responsibility to obtain 
  * information regarding any applicable licensing obligations.
  *
- *
- * Author               Date		Comment
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Elliott Wood	        2/14/07		Original
- * Elliott Wood			10/15/07	Modified API to support both ops
  ********************************************************************/
 
 #ifndef __RSA_H
@@ -107,9 +102,9 @@ typedef enum
   ***************************************************************************/
 
 void RSAInit(void);
-BOOL RSABeginUsage(RSA_OP op, BYTE vKeyByteLen);
+BOOL RSABeginUsage(RSA_OP op, WORD vKeyByteLen);
 void RSAEndUsage(void);
-void RSASetData(BYTE* data, BYTE len, RSA_DATA_FORMAT format);
+void RSASetData(BYTE* data, WORD len, RSA_DATA_FORMAT format);
 void RSASetResult(BYTE* data, RSA_DATA_FORMAT format);
 RSA_STATUS RSAStep(void);
 

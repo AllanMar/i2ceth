@@ -1,59 +1,59 @@
 /*********************************************************************
- *
- *	Medium Access Control (MAC) Layer for Microchip PIC18F97J60 family
- *  Module for Microchip TCP/IP Stack
- *	 -Provides access to PIC18F97J60 family Ethernet controller
- *	 -Reference: PIC18F97J60 Family data sheet, IEEE 802.3 Standard
- *
- *********************************************************************
- * FileName:        ETH97J60.c
- * Dependencies:    ETH97J60.h
- *					MAC.h
- *					string.h
- *                  StackTsk.h
- *                  Helpers.h
- *					Delay.h
- * Processor:       PIC18F97J60 Family
- * Compiler:        Microchip C18 v3.30 or higher
- *					HI-TECH PICC-18 PRO 9.63PL2 or higher
- * Company:         Microchip Technology, Inc.
- *
- * Software License Agreement
- *
- * Copyright (C) 2002-2009 Microchip Technology Inc.  All rights
- * reserved.
- *
- * Microchip licenses to you the right to use, modify, copy, and
- * distribute:
- * (i)  the Software when embedded on a Microchip microcontroller or
- *      digital signal controller product ("Device") which is
- *      integrated into Licensee's product; or
- * (ii) ONLY the Software driver source files ENC28J60.c, ENC28J60.h,
- *		ENCX24J600.c and ENCX24J600.h ported to a non-Microchip device
- *		used in conjunction with a Microchip ethernet controller for
- *		the sole purpose of interfacing with the ethernet controller.
- *
- * You should refer to the license agreement accompanying this
- * Software for additional information regarding your rights and
- * obligations.
- *
- * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
- * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
- * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
- * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
- * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
- * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
- * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
- * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE. *
- * Author               Date   	 Comment
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Rawin Rojvanit       07/26/05 Stuff
- * Howard Schlunder     11/17/05 Ported to PIC18F97J60
- * Howard Schlunder		06/16/06 Synchronized with ENC28J60 code
- * Howard Schlunder		05/21/07 Fixed a TX lockup problem
+ PIC18F97J60 Family Ethernet Driver
+  - This is a driver module for Microchip TCPIP stack
+  - PIC18F97J60 family data sheet
+  - IEEE 802.3 standard
+ 
+ FileName:      ETH97J60.c
+ Dependencies:	See INCLUDES section
+ Processor:		PIC18F97J60 Family
+ Complier:  	Microchip C18 (for PIC18)
+ Company:		Microchip Technology, Inc.
+ Misc:          Medium Access Control (MAC) Layer for Microchip 
+                PIC18F97J60 family
+ 
+  Software License Agreement
+ 
+  Copyright (C) 2002-2010 Microchip Technology Inc.  All rights
+  reserved.
+ 
+  Microchip licenses to you the right to use, modify, copy, and
+  distribute:
+  (i)  the Software when embedded on a Microchip microcontroller or
+       digital signal controller product ("Device") which is
+       integrated into Licensee's product; or
+  (ii) ONLY the Software driver source files ENC28J60.c, ENC28J60.h,
+ 		ENCX24J600.c and ENCX24J600.h ported to a non-Microchip device
+ 		used in conjunction with a Microchip ethernet controller for
+ 		the sole purpose of interfacing with the ethernet controller.
+ 
+  You should refer to the license agreement accompanying this
+  Software for additional information regarding your rights and
+  obligations.
+ 
+  THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
+  WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
+  LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+  MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
+  CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
+  PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
+  BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
+  THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
+  SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
+  (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
+ 
+********************************************************************
+ File Description:
+
+ Change History:
+  Rev   Description
+  ----  -----------------------------------------
+  1.0   Initial release
+
+  5.31  Added support for external auto-parity detection/correction
+  
+  5.36  Fixed a run-time bug in MACPut() when using extended instruction set
 ********************************************************************/
 #define __ETH97J60_C
 
@@ -62,7 +62,7 @@
 // Make sure that this hardware profile has a PIC18F97J60 family device in it
 #if (defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
 	  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60)) \
-	&& !defined(ENC_CS_TRIS) && !defined(ENC100_INTERFACE_MODE) && !defined(ZG_CS_TRIS)
+	&& !defined(ENC_CS_TRIS) && !defined(ENC100_INTERFACE_MODE) && !defined(WF_CS_TRIS)
 
 #include "TCPIP Stack/TCPIP.h"
 
@@ -83,7 +83,7 @@
 #define ETHER_ARP	(0x06u)
 
 // A header appended at the start of all RX frames by the hardware
-typedef struct _ENC_PREAMBLE
+typedef struct
 {
     WORD			NextPacketPointer;
     RXSTATUS		StatusVector;
@@ -97,8 +97,31 @@ typedef struct _ENC_PREAMBLE
 // Internal MAC level variables and flags.
 static WORD_VAL NextPacketLocation;
 static WORD_VAL CurrentPacketLocation;
-static BOOL WasDiscarded;
-static WORD wTXWatchdog;
+static union
+{
+	unsigned char v;
+	struct
+	{
+		unsigned char bWasDiscarded : 1;
+		unsigned char bRXPolarityValid : 1;
+		unsigned char bRXPolarityTimerOnTX	: 1;
+		unsigned char bRXPolarityAtNextTX : 1;
+		unsigned char filler : 4;
+	} bits;
+} flags;
+static WORD wTXWatchdog;	// Time of last transmission (high resolution); used for determining when TX hardware may need software intervention
+#if defined(ETH_RX_POLARITY_SWAP_TRIS)
+	static WORD wRXPolarityTimer;	// Time of last transmission (long duration); used for determining when a RX polarity swap may be needed
+#endif
+
+#if defined(HI_TECH_C)
+	// Define a temporary register for passing data to inline assembly 
+	// statements.  MPLAB C18 uses PRODL and therefore doesn't need this temp 
+	// byte, but the HI-TECH PICC-18 compiler uses PRODL differently and doesn't 
+	// allow it to be used as a temporary byte.
+	static unsigned char errataTempL @ 0xE7E;	// Six least significant address bits must not be '110110' for Ethernet MIIM Errata workaround (issue #5).
+	static unsigned char errataTempH @ 0xE7F;	// Six least significant address bits must not be '110110' for Ethernet MIIM Errata workaround (issue #5).
+#endif
 
 
 /******************************************************************************
@@ -123,17 +146,23 @@ void MACInit(void)
 {
 	BYTE i;
 
+	TRISA &= 0xFC;			// Clear TRISA0 and TRISA1 to set LED0 and LED1 as outputs for Ethernet module status
+    ECON2bits.ETHEN = 1;	// Enable Ethernet!
 
-    TRISAbits.TRISA0 = 0;   // Set LED0 as output
-    TRISAbits.TRISA1 = 0;   // Set LED1 as output
-    ECON2bits.ETHEN = 1;    // Enable Ethernet!
+	// If Ethernet TPIN+/- RX polarity swap hardware exists, start controlling 
+	// it and default it to the non-swapped state.
+	#if defined(ETH_RX_POLARITY_SWAP_TRIS)
+		ETH_RX_POLARITY_SWAP_TRIS = 0;
+		ETH_RX_POLARITY_SWAP_IO = 0;
+	#endif
 
 	// Wait for PHYRDY to become set.
     while(!ESTATbits.PHYRDY);
 
 	// Configure the receive buffer boundary pointers
 	// and the buffer write protect pointer (receive buffer read pointer)
-	WasDiscarded = TRUE;
+	flags.v = 0;
+	flags.bits.bWasDiscarded = 1;
 	NextPacketLocation.Val = RXSTART;
 	ERXST = RXSTART;
 	ERXRDPTL = LOW(RXSTOP);	// Write low byte first
@@ -294,9 +323,9 @@ void MACDiscardRx(void)
 	WORD_VAL NewRXRDLocation;
 
 	// Make sure the current packet was not already discarded
-	if(WasDiscarded)
+	if(flags.bits.bWasDiscarded)
 		return;
-	WasDiscarded = TRUE;
+	flags.bits.bWasDiscarded = 1;
 
 	// Decrement the next packet pointer before writing it into
 	// the ERXRDPT registers.  This is a silicon errata workaround.
@@ -320,11 +349,6 @@ void MACDiscardRx(void)
 	// high byte last.
     ERXRDPTL = NewRXRDLocation.v[0];
 	ERXRDPTH = NewRXRDLocation.v[1];
-
-	// The PKTIF flag should automatically be cleared by hardware, but
-	// early beta silicon requires that you manually clear it.  This should be
-	// unneeded for production A0 silicon and later.
-	EIRbits.PKTIF = 0;
 }
 
 
@@ -407,13 +431,52 @@ BOOL MACGetHeader(MAC_ADDR *remote, BYTE* type)
 	ENC_PREAMBLE header;
 
 	// Test if at least one packet has been received and is waiting
-    if(EPKTCNT == 0u)
-    {
-        return FALSE;
-    }
+	if(EPKTCNT == 0u)
+	{
+		// If we've never received a packet, see if it is appropraite to swap 
+		// the RX polarity right now
+		#if defined(ETH_RX_POLARITY_SWAP_TRIS)
+		{
+			// See if the polarty swap timer has expired (happens every 429ms)
+			if((WORD)TickGetDiv256() - wRXPolarityTimer > (WORD)(TICK_SECOND*3/7/256))
+			{
+				// Check if the Ethernet link is up.  If it isn't we need to 
+				// clear the bRXPolarityValid flag because the user could plug 
+				// the node into a different network device which has opposite 
+				// polarity.
+				if(ReadPHYReg(PHSTAT2).PHSTAT2bits.LSTAT)
+				{// Linked
+					// See if we have received a packet already or not.  If we 
+					// haven't the RX polarity may not be correct.
+					if(!flags.bits.bRXPolarityValid)
+					{
+						// Swap the TPIN+/- polarity
+						ETH_RX_POLARITY_SWAP_IO ^= 1;
+					}
+				}
+				else
+				{// Not linked
+					flags.bits.bRXPolarityValid = 0;
+					flags.bits.bRXPolarityAtNextTX = 0;
+					ETH_RX_POLARITY_SWAP_IO = 0;	// Default back to IEEE 802.3 correct polarity
+				}
+	
+				// Reset timer for next polarity swap test
+				wRXPolarityTimer = (WORD)TickGetDiv256();
+				flags.bits.bRXPolarityTimerOnTX = 0;
+			}
+		}
+		#endif
+	    
+		return FALSE;
+	}
+
+	// Flag that we have received a packet so that we don't swap the RX polarity 
+	// anymore.
+	flags.bits.bRXPolarityValid = 1;
 
 	// Make absolutely certain that any previous packet was discarded
-	if(WasDiscarded == FALSE)
+	if(flags.bits.bWasDiscarded == 0u)
 	{
 		MACDiscardRx();
 		return FALSE;
@@ -459,7 +522,7 @@ BOOL MACGetHeader(MAC_ADDR *remote, BYTE* type)
     }
 
     // Mark this packet as discardable
-    WasDiscarded = FALSE;
+    flags.bits.bWasDiscarded = 0;
 	return TRUE;
 }
 
@@ -547,6 +610,32 @@ void MACFlush(void)
 	{volatile BYTE i = 8; while(i--);}
 	EIRbits.TXERIF = 0;
 
+	// Since we are about to transmit something (which usually results in RX 
+	// traffic), start a timer to look for RX traffic and control RX polarity 
+	// swapping.
+	#if defined(ETH_RX_POLARITY_SWAP_TRIS)
+	{
+		// See if we have received a packet already or not.  If we haven't the 
+		// RX polarity may not be correct.
+		if(!flags.bits.bRXPolarityValid)
+		{
+			// See if we transmitted a packet and twidled with the polarity 
+			// already in the last 429ms.
+			if(!flags.bits.bRXPolarityTimerOnTX)
+			{
+				// Reset the timer and swap the polarity
+				wRXPolarityTimer = (WORD)TickGetDiv256();
+				flags.bits.bRXPolarityTimerOnTX = 1;
+				if(flags.bits.bRXPolarityAtNextTX)
+					ETH_RX_POLARITY_SWAP_IO = 1;
+				else
+					ETH_RX_POLARITY_SWAP_IO = 0;
+				flags.bits.bRXPolarityAtNextTX ^= 1;	// Swap for next time
+			}
+		}
+	}
+	#endif
+
 	// Start the transmission
 	// After transmission completes (MACIsTxReady() returns TRUE), the packet
 	// can be modified and transmitted again by calling MACFlush() again.
@@ -598,7 +687,7 @@ void MACSetReadPtrInRx(WORD offset)
 
 
 /******************************************************************************
- * Function:        WORD MACSetWritePtr(WORD Address)
+ * Function:        PTR_BASE MACSetWritePtr(PTR_BASE Address)
  *
  * PreCondition:    None
  *
@@ -613,7 +702,7 @@ void MACSetReadPtrInRx(WORD offset)
  *
  * Note:			None
  *****************************************************************************/
-WORD MACSetWritePtr(WORD address)
+PTR_BASE MACSetWritePtr(PTR_BASE address)
 {
 	WORD oldVal;
 
@@ -623,7 +712,7 @@ WORD MACSetWritePtr(WORD address)
 }
 
 /******************************************************************************
- * Function:        WORD MACSetReadPtr(WORD Address)
+ * Function:        PTR_BASE MACSetReadPtr(PTR_BASE Address)
  *
  * PreCondition:    None
  *
@@ -638,7 +727,7 @@ WORD MACSetWritePtr(WORD address)
  *
  * Note:			None
  *****************************************************************************/
-WORD MACSetReadPtr(WORD address)
+PTR_BASE MACSetReadPtr(PTR_BASE address)
 {
 	WORD oldVal;
 
@@ -839,16 +928,16 @@ WORD CalcIPBufferChecksum(WORD len)
 }
 
 /******************************************************************************
- * Function:        void MACMemCopyAsync(WORD destAddr, WORD sourceAddr, WORD len)
+ * Function:        void MACMemCopyAsync(PTR_BASE destAddr, PTR_BASE sourceAddr, WORD len)
  *
  * PreCondition:    None
  *
  * Input:           destAddr:	Destination address in the Ethernet memory to
- *								copy to.  If the MSb is set, the current EWRPT
- *								value will be used instead.
- *					sourceAddr:	Source address to read from.  If the MSb is
- *								set, the current ERDPT value will be used
- *								instead.
+ *								copy to.  If (PTR_BASE)-1 is specified, the 
+ *								current EWRPT value will be used instead.
+ *					sourceAddr:	Source address to read from.  If (PTR_BASE)-1 is
+ *                              specified, the current ERDPT value will be used
+ *                              instead.
  *					len:		Number of bytes to copy
  *
  * Output:          None
@@ -862,18 +951,18 @@ WORD CalcIPBufferChecksum(WORD len)
  *					calling this function, this function will block until it
  *					can start this transfer.
  *****************************************************************************/
-void MACMemCopyAsync(WORD destAddr, WORD sourceAddr, WORD len)
+void MACMemCopyAsync(PTR_BASE destAddr, PTR_BASE sourceAddr, WORD len)
 {
 	WORD_VAL ReadSave, WriteSave;
 	BOOL UpdateWritePointer = FALSE;
 	BOOL UpdateReadPointer = FALSE;
 
-	if(((WORD_VAL*)&destAddr)->bits.b15)
+	if(destAddr == (PTR_BASE)-1)
 	{
 		UpdateWritePointer = TRUE;
 		destAddr = EWRPT;
 	}
-	if(((WORD_VAL*)&sourceAddr)->bits.b15)
+	if(sourceAddr == (PTR_BASE)-1)
 	{
 		UpdateReadPointer = TRUE;
 		sourceAddr = ERDPT;
@@ -989,7 +1078,12 @@ BOOL MACIsMemCopyDone(void)
  *****************************************************************************/
 BYTE MACGet()
 {
-    return EDATA;
+	#if defined(HI_TECH_C)
+		asm("movff	0xF61, _errataTempL");	// movff EDATA, errataTempL
+		return errataTempL;
+	#else
+		return EDATA;
+	#endif
 }//end MACGet
 
 
@@ -1014,21 +1108,33 @@ BYTE MACGet()
 WORD MACGetArray(BYTE *val, WORD len)
 {
     WORD w;
-	volatile BYTE i;
 
     w = len;
 	if(val)
 	{
 	    while(w--)
 	    {
-	        *val++ = EDATA;
+			#if defined(HI_TECH_C)
+				asm("movff	0xF61, _errataTempL");	// movff EDATA, errataTempL
+				*val++ = errataTempL;
+			#else
+				*val++ = EDATA;
+			#endif
 	    }
 	}
 	else
 	{
 		while(w--)
 		{
-			i = EDATA;
+			#if defined(HI_TECH_C)
+			{
+				asm("movff	0xF61, _errataTempL");	// movff EDATA, errataTempL
+			}
+			#else
+			{	
+				volatile BYTE i = EDATA;
+			}
+			#endif
 		}
 	}
 
@@ -1057,10 +1163,11 @@ void MACPut(BYTE val)
 	// Note:  Due to a PIC18F97J60 bug, you must use the MOVFF instruction to
 	// write to EDATA or else the read pointer (ERDPT) will inadvertently
 	// increment.
-	PRODL = val;
 	#if defined(HI_TECH_C)
-		asm("movff	_PRODL, _EDATA");
+		errataTempL = val;
+		asm("movff	_errataTempL, 0xF61");	// movff errataTempL, EDATA
 	#else
+		PRODL = val;
 		_asm movff	PRODL, EDATA _endasm
 	#endif
 }//end MACPut
@@ -1091,10 +1198,11 @@ void MACPutArray(BYTE *val, WORD len)
 		// Note:  Due to a PIC18F97J60 bug, you must use the MOVFF instruction to
 		// write to EDATA or else the read pointer (ERDPT) will inadvertently
 		// increment.
-		PRODL = *val++;
 		#if defined(HI_TECH_C)
-			asm("movff	_PRODL, _EDATA");
+			errataTempL = *val++;
+			asm("movff	_errataTempL, 0xF61");	// movff errataTempL, EDATA
 		#else
+			PRODL = *val++;
 			_asm movff	PRODL, EDATA _endasm
 		#endif
 	}
@@ -1107,10 +1215,11 @@ void MACPutROMArray(ROM BYTE *val, WORD len)
 		// Note:  Due to a PIC18F97J60 bug, you must use the MOVFF instruction to
 		// write to EDATA or else the read pointer (ERDPT) will inadvertently
 		// increment.
-		PRODL = *val++;
 		#if defined(HI_TECH_C)
-			asm("movff	_PRODL, _EDATA");
+			errataTempL = *val++;
+			asm("movff	_errataTempL, 0xF61");	// movff errataTempL, EDATA
 		#else
+			PRODL = *val++;
 			_asm movff	PRODL, EDATA _endasm
 		#endif
 	}
@@ -1193,15 +1302,19 @@ void WritePHYReg(BYTE Register, WORD Data)
 	// 0xFF4:0xFF3.  These addresses have LSb address bits of 0x14 and 0x13.
 	// Interrupts must be disabled to prevent arbitrary ISR code from accessing
 	// memory with LSb bits of 0x16 and corrupting the MIWRL value.
-	PRODL = ((WORD_VAL*)&Data)->v[0];
-	PRODH = ((WORD_VAL*)&Data)->v[1];
-	GIESave = INTCON & 0xC0;		// Save GIEH and GIEL bits
-	INTCON &= 0x3F;					// Clear INTCONbits.GIEH and INTCONbits.GIEL
 	#if defined(HI_TECH_C)
-		asm("movff	_PRODL, _MIWRL");
+		errataTempL = ((BYTE*)&Data)[0];
+		errataTempH = ((BYTE*)&Data)[1];
+		GIESave = INTCON & 0xC0;		// Save GIEH and GIEL bits
+		INTCON &= 0x3F;					// Clear INTCONbits.GIEH and INTCONbits.GIEL
+		asm("movff	_errataTempL, 0xEB6");	// movff errataTempL, MIWRL
 		asm("nop");
-		asm("movff	_PRODH, _MIWRH");
+		asm("movff	_errataTempH, 0xEB7");	// movff errataTempH, MIWRH
 	#else
+		PRODL = ((BYTE*)&Data)[0];
+		PRODH = ((BYTE*)&Data)[1];
+		GIESave = INTCON & 0xC0;		// Save GIEH and GIEL bits
+		INTCON &= 0x3F;					// Clear INTCONbits.GIEH and INTCONbits.GIEL
 		_asm
 		movff	PRODL, MIWRL
 		nop
@@ -1293,31 +1406,70 @@ void MACPowerUp(void)
 /******************************************************************************
  * Function:        void SetRXHashTableEntry(MAC_ADDR DestMACAddr)
  *
- * PreCondition:    SPI bus must be initialized (done in MACInit()).
+ * PreCondition:    None
  *
- * Input:           DestMACAddr: 6 byte group destination MAC address to allow
- *								 through the Hash Table Filter
+ * Input:           DestMACAddr: 6 byte group destination MAC address to allow 
+ *								 through the Hash Table Filter.  If DestMACAddr 
+ *								 is set to 00-00-00-00-00-00, then the hash 
+ *								 table will be cleared of all entries and the 
+ *								 filter will be disabled.
  *
- * Output:          Sets the appropriate bit in the EHT* registers to allow
- *					packets sent to DestMACAddr to be received if the Hash
- *					Table receive filter is enabled
+ * Output:          Sets the appropriate bit in the EHT* registers to allow 
+ *					packets sent to DestMACAddr to be received and enables the 
+ *					Hash Table receive filter (if not already).
  *
  * Side Effects:    None
  *
- * Overview:        Calculates a CRC-32 using polynomial 0x4C11DB7 and then,
- *					using bits 28:23 of the CRC, sets the appropriate bit in
- *					the EHT* registers
+ * Overview:        Calculates a CRC-32 using polynomial 0x4C11DB7 and then, 
+ *					using bits 28:23 of the CRC, sets the appropriate bit in 
+ *					the EHT0-EHT7 registers.
  *
- * Note:            This code is commented out to save code space on systems
- *					that do not need this function.  Change the "#if 0" line
- *					to "#if 1" to uncomment it.
+ * Note:            This code is commented out to save code space on systems 
+ *					that do not need this function.  Change the 
+ *					"#if STACK_USE_ZEROCONF_MDNS_SD" line to "#if 1" to 
+ *					uncomment it, assuming you aren't using the Zeroconf module, 
+ *					which requires mutlicast support and enables this function 
+ *					automatically.
+ *
+ *					There is no way to individually unset destination MAC 
+ *					addresses from the hash table since it is possible to have 
+ *					a hash collision and therefore multiple MAC addresses 
+ *					relying on the same hash table bit.  The stack would have 
+ *					to individually store each 6 byte MAC address to support 
+ *					this feature, which would waste a lot of RAM and be 
+ *					unnecessary in most applications.  As a simple compromise, 
+ *					you can call SetRXHashTableEntry() using a 
+ *					00-00-00-00-00-00 destination MAC address, which will clear 
+ *					the entire hash table and disable the hash table filter.  
+ *					This will allow you to then re-add the necessary 
+ *					destination address(es).
+ *
+ *					This function is intended to be used when 
+ *					ERXFCONbits.ANDOR == 0 (OR).
  *****************************************************************************/
-#if 0
+#if defined(STACK_USE_ZEROCONF_MDNS_SD)
 void SetRXHashTableEntry(MAC_ADDR DestMACAddr)
 {
 	DWORD_VAL CRC = {0xFFFFFFFF};
 	BYTE *HTRegister;
 	BYTE i, j;
+
+	if((DestMACAddr.v[0] | DestMACAddr.v[1] | DestMACAddr.v[2] | DestMACAddr.v[3] | DestMACAddr.v[4] | DestMACAddr.v[5]) == 0x00u)
+	{
+		// Disable the Hash Table receive filter and clear the hash table
+		ERXFCONbits.HTEN = 0;
+		EHT0 = 0x00;
+		EHT1 = 0x00;
+		EHT2 = 0x00;
+		EHT3 = 0x00;
+		EHT4 = 0x00;
+		EHT5 = 0x00;
+		EHT6 = 0x00;
+		EHT7 = 0x00;
+
+		return;
+	}
+
 
 	// Calculate a CRC-32 over the 6 byte MAC address
 	// using polynomial 0x4C11DB7
@@ -1351,6 +1503,9 @@ void SetRXHashTableEntry(MAC_ADDR DestMACAddr)
 
 	// Set the proper bit in the Hash Table
 	*HTRegister |= 1<<i;
+
+	// Ensure that the Hash Table receive filter is enabled
+	ERXFCONbits.HTEN = 1;
 }
 #endif
 

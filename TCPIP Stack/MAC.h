@@ -58,16 +58,16 @@
 
 #include "HardwareProfile.h"
 
-#if defined(ZG_CS_TRIS)
+#if defined(WF_CS_TRIS)
 	// Do not use the DMA and other goodies that Microchip Ethernet modules have
 	#define NON_MCHP_MAC
 #endif
 
-#if defined(ENC_CS_TRIS) && defined(ZG_CS_TRIS)
-	#error "Error in HardwareProfile.h.  Must select either the ENC28J60 or the ZG2100 but not both ENC_CS_TRIS and ZG_CS_TRIS."
+#if defined(ENC_CS_TRIS) && defined(WF_CS_TRIS)
+	#error "Error in HardwareProfile.h.  Must select either the ENC28J60 or the MRF24WB10 but not both ENC_CS_TRIS and WF_CS_TRIS."
 #endif
-#if defined(ENC100_INTERFACE_MODE) && defined(ZG_CS_TRIS)
-	#error "Error in HardwareProfile.h.  Must select either the ENCX24J60 or the ZG2100 but not both ENC100_INTERFACE_MODE and ZG_CS_TRIS."
+#if defined(ENC100_INTERFACE_MODE) && defined(WF_CS_TRIS)
+	#error "Error in HardwareProfile.h.  Must select either the ENCX24J600 or the MRF24WB10 but not both ENC100_INTERFACE_MODE and WF_CS_TRIS."
 #endif
 #if defined(ENC100_INTERFACE_MODE) && defined(ENC_CS_TRIS)
 	#error "Error in HardwareProfile.h.  Must select either the ENC28J60 or the ENCX24J600 but not both ENC_CS_TRIS and ENC100_INTERFACE_MODE."
@@ -75,17 +75,19 @@
 
 
 
-#if !defined(ENC_CS_TRIS) && !defined(ZG_CS_TRIS) && !defined(ENC100_INTERFACE_MODE) && \
+#if !defined(ENC_CS_TRIS) && !defined(WF_CS_TRIS) && !defined(ENC100_INTERFACE_MODE) && \
 	 (defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
 	  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60))
 	#include "TCPIP Stack/ETH97J60.h"
-#elif defined(ENC_CS_TRIS) || defined(ZG_CS_TRIS)
+#elif defined(ENC_CS_TRIS) || defined(WF_CS_TRIS)
 	#include "TCPIP Stack/ENC28J60.h"
 #elif defined(ENC100_INTERFACE_MODE)
 	#include "TCPIP Stack/ENCX24J600.h"
 	#define PHYREG WORD
+#elif defined(__PIC32MX__) && defined(_ETH)
+	// extra includes for PIC32MX with embedded ETH Controller
 #else
-	#error No Ethernet/WiFi controller defined in HardwareProfile.h.  Defines for an ENC28J60, ENC424J600/624J600, or ZeroG ZG2100 must be present.
+	#error No Ethernet/WiFi controller defined in HardwareProfile.h.  Defines for an ENC28J60, ENC424J600/624J600, or WiFi MRF24WB10 must be present.
 #endif
 
 
@@ -114,7 +116,7 @@ typedef struct  __attribute__((aligned(2), packed))
 	#define RESERVED_SSL_MEMORY 0ul
 #endif
 
-#if defined(ZG_CS_TRIS)
+#if defined(WF_CS_TRIS)
     #define MAX_PACKET_SIZE     (1514ul)
 #endif
 
@@ -131,16 +133,23 @@ typedef struct  __attribute__((aligned(2), packed))
 	#define BASE_HTTPB_ADDR (BASE_TCB_ADDR + TCP_ETH_RAM_SIZE)
 	#define BASE_SSLB_ADDR	(BASE_HTTPB_ADDR + RESERVED_HTTP_MEMORY)
 	#define BASE_CRYPTOB_ADDR	(BASE_SSLB_ADDR + RESERVED_SSL_MEMORY)
-#elif defined(ZG_CS_TRIS)
-    #define RAMSIZE			8192ul
-    #define TXSTART			(RAMSIZE - (4ul + MAX_PACKET_SIZE + 4ul) - TCP_ETH_RAM_SIZE - RESERVED_HTTP_MEMORY - RESERVED_SSL_MEMORY)
-	#define RXSTART			(0ul)
-	#define	RXSTOP			((TXSTART-2ul) | 0x0001ul)
+#elif defined(WF_CS_TRIS)
+	#define RAMSIZE 		(14170ul - 8192ul - RESERVED_HTTP_MEMORY - RESERVED_SSL_MEMORY)
+	#define TXSTART 		(RAMSIZE - (4ul + MAX_PACKET_SIZE + 4ul))
+	#define RXSTART 		(0ul)
+	#define RXSTOP			((TXSTART-2ul) | 0x0001ul)
 	#define RXSIZE			(RXSTOP-RXSTART+1ul)
-    #define BASE_TX_ADDR	(TXSTART + 4ul)
-    #define BASE_TCB_ADDR	(BASE_TX_ADDR + (MAX_PACKET_SIZE + 4ul))
-	#define BASE_HTTPB_ADDR (BASE_TCB_ADDR + TCP_ETH_RAM_SIZE)
+	#define BASE_TX_ADDR	(TXSTART + 4ul)
+	#define BASE_SCRATCH_ADDR (BASE_TX_ADDR + (MAX_PACKET_SIZE + 4ul))
+	#define BASE_HTTPB_ADDR  (BASE_SCRATCH_ADDR)
 	#define BASE_SSLB_ADDR	(BASE_HTTPB_ADDR + RESERVED_HTTP_MEMORY)
+	#define BASE_TCB_ADDR	(BASE_SSLB_ADDR + RESERVED_SSL_MEMORY)
+#elif defined(__PIC32MX__) && defined(_ETH) && !defined(ENC_CS_TRIS)
+	#define BASE_TX_ADDR	(MACGetTxBaseAddr())
+	#define BASE_HTTPB_ADDR	(MACGetHttpBaseAddr())
+	#define BASE_SSLB_ADDR	(MACGetSslBaseAddr())
+	#define RXSIZE			(EMAC_RX_BUFF_SIZE)
+	#define RAMSIZE			(2*RXSIZE)	// not used but silences the compiler
 #else	// ENC28J60 or PIC18F97J60 family internal Ethernet controller
 	#define RAMSIZE			(8*1024ul)
 	#define TXSTART 		(RAMSIZE - (1ul+1518ul+7ul) - TCP_ETH_RAM_SIZE - RESERVED_HTTP_MEMORY - RESERVED_SSL_MEMORY)
@@ -163,16 +172,17 @@ WORD 	CalcIPBufferChecksum(WORD len);
 void	MACPowerDown(void);
 void	MACEDPowerDown(void);
 void 	MACPowerUp(void);
+#if defined(ENC_CS_TRIS) || defined(ENC100_INTERFACE_MODE) || \
+	(defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
+	  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60))
 void	WritePHYReg(BYTE Register, WORD Data);
 PHYREG	ReadPHYReg(BYTE Register);
+#endif
 void	SetRXHashTableEntry(MAC_ADDR DestMACAddr);
 
 // ENC28J60 specific
 void	SetCLKOUT(BYTE NewConfig);
 BYTE	GetCLKOUT(void);
-
-// ZG2100 specific
-void	ZGISR(void);
 
 /******************************************************************************
  * Macro:        	void SetLEDConfig(WORD NewConfig)
@@ -280,13 +290,13 @@ BOOL MACIsLinked(void);
 
 BOOL MACGetHeader(MAC_ADDR *remote, BYTE* type);
 void MACSetReadPtrInRx(WORD offset);
-WORD MACSetWritePtr(WORD address);
-WORD MACSetReadPtr(WORD address);
+PTR_BASE MACSetWritePtr(PTR_BASE address);
+PTR_BASE MACSetReadPtr(PTR_BASE address);
 BYTE MACGet(void);
 WORD MACGetArray(BYTE *val, WORD len);
 void MACDiscardRx(void);
 WORD MACGetFreeRxSize(void);
-void MACMemCopyAsync(WORD destAddr, WORD sourceAddr, WORD len);
+void MACMemCopyAsync(PTR_BASE destAddr, PTR_BASE sourceAddr, WORD len);
 BOOL MACIsMemCopyDone(void);
 
 void MACPutHeader(MAC_ADDR *remote, BYTE type, WORD dataLen);
@@ -303,4 +313,12 @@ void MACFlush(void);
 	#define MACPutROMArray(a,b)	MACPutArray((BYTE*)a,b)
 #endif
 
+// PIC32MX with embedded ETHC functions
+#if defined(__PIC32MX__) && defined(_ETH)
+	PTR_BASE MACGetTxBaseAddr(void);
+	PTR_BASE MACGetHttpBaseAddr(void);
+	PTR_BASE MACGetSslBaseAddr(void);
+#endif
+
+	
 #endif
