@@ -1,5 +1,5 @@
 MPLINK 4.37, Linker
-Linker Map File - Created Fri Mar 14 10:48:24 2014
+Linker Map File - Created Wed May 21 10:23:57 2014
 
                                  Section Info
                   Section       Type    Address   Location Size(Bytes)
@@ -54,65 +54,64 @@ Linker Map File - Created Fri Mar 14 10:48:24 2014
              _startup_scn       code   0x017ef0    program   0x00001c
                     STDIO       code   0x017f0c    program   0x00001c
       .romdata_vfprintf.o    romdata   0x017f28    program   0x000011
-           .idata_SSL.o_i    romdata   0x017f39    program   0x000000
-           .romdata_SSL.o    romdata   0x017f39    program   0x000000
-    .romdata_BTnic_Comm.o    romdata   0x017f39    program   0x000000
-          .romdata_sram.o    romdata   0x017f39    program   0x000000
-          .idata_sram.o_i    romdata   0x017f39    program   0x000000
-      .idata_clrcsspi.o_i    romdata   0x017f39    program   0x000000
-      .romdata_clrcsspi.o    romdata   0x017f39    program   0x000000
-      .idata_opensspi.o_i    romdata   0x017f39    program   0x000000
-        .romdata_eeprom.o    romdata   0x017f39    program   0x000000
-        .idata_eeprom.o_i    romdata   0x017f39    program   0x000000
-      .romdata_opensspi.o    romdata   0x017f39    program   0x000000
        .romdata_wrtsspi.o    romdata   0x017f39    program   0x000000
-       .idata_wrtsspi.o_i    romdata   0x017f39    program   0x000000
-      .idata_setcsspi.o_i    romdata   0x017f39    program   0x000000
-      .romdata_setcsspi.o    romdata   0x017f39    program   0x000000
-         .idata_c018i.o_i    romdata   0x017f39    program   0x000000
-         .romdata_c018i.o    romdata   0x017f39    program   0x000000
-    .romdata__user_putc.o    romdata   0x017f39    program   0x000000
-    .idata__user_putc.o_i    romdata   0x017f39    program   0x000000
           .romdata_putc.o    romdata   0x017f39    program   0x000000
-          .idata_putc.o_i    romdata   0x017f39    program   0x000000
-      .idata_vfprintf.o_i    romdata   0x017f39    program   0x000000
-       .romdata_sprintf.o    romdata   0x017f39    program   0x000000
-       .idata_sprintf.o_i    romdata   0x017f39    program   0x000000
-        .romdata___init.o    romdata   0x017f39    program   0x000000
-        .idata___init.o_i    romdata   0x017f39    program   0x000000
-       .romdata_fxm3232.o    romdata   0x017f39    program   0x000000
-       .idata_fxm3232.o_i    romdata   0x017f39    program   0x000000
-      .romdata_fxd3232u.o    romdata   0x017f39    program   0x000000
-      .idata_fxd3232u.o_i    romdata   0x017f39    program   0x000000
+       .idata_wrtsspi.o_i    romdata   0x017f39    program   0x000000
+      .romdata_setcsspi.o    romdata   0x017f39    program   0x000000
+      .idata_setcsspi.o_i    romdata   0x017f39    program   0x000000
+      .romdata_opensspi.o    romdata   0x017f39    program   0x000000
+      .idata_opensspi.o_i    romdata   0x017f39    program   0x000000
+    .idata__user_putc.o_i    romdata   0x017f39    program   0x000000
+      .romdata_clrcsspi.o    romdata   0x017f39    program   0x000000
+      .idata_clrcsspi.o_i    romdata   0x017f39    program   0x000000
+    .romdata__user_putc.o    romdata   0x017f39    program   0x000000
+    .romdata_BTnic_Comm.o    romdata   0x017f39    program   0x000000
+           .romdata_SSL.o    romdata   0x017f39    program   0x000000
+           .idata_SSL.o_i    romdata   0x017f39    program   0x000000
+           .romdata_RSA.o    romdata   0x017f39    program   0x000000
       .romdata_fxd1616u.o    romdata   0x017f39    program   0x000000
       .idata_fxd1616u.o_i    romdata   0x017f39    program   0x000000
- .romdata_CustomSSLCert.o    romdata   0x017f39    program   0x000000
+      .idata_fxd3232u.o_i    romdata   0x017f39    program   0x000000
+      .romdata_fxd3232u.o    romdata   0x017f39    program   0x000000
+       .idata_fxm3232.o_i    romdata   0x017f39    program   0x000000
       .romdata_SPIFlash.o    romdata   0x017f39    program   0x000000
+       .romdata_fxm3232.o    romdata   0x017f39    program   0x000000
       .idata_SPIFlash.o_i    romdata   0x017f39    program   0x000000
-           .romdata_UDP.o    romdata   0x017f39    program   0x000000
-          .romdata_ICMP.o    romdata   0x017f39    program   0x000000
-         .romdata_MPFS2.o    romdata   0x017f39    program   0x000000
-          .romdata_Main.o    romdata   0x017f39    program   0x000000
-         .romdata_Delay.o    romdata   0x017f39    program   0x000000
-          .romdata_SNTP.o    romdata   0x017f39    program   0x000000
-        .idata_Reboot.o_i    romdata   0x017f39    program   0x000001
-        .romdata_Reboot.o    romdata   0x017f39    program   0x000000
+        .idata___init.o_i    romdata   0x017f39    program   0x000000
+        .romdata___init.o    romdata   0x017f39    program   0x000000
+       .idata_sprintf.o_i    romdata   0x017f39    program   0x000000
+       .romdata_sprintf.o    romdata   0x017f39    program   0x000000
+      .idata_vfprintf.o_i    romdata   0x017f39    program   0x000000
+          .romdata_sram.o    romdata   0x017f39    program   0x000000
+          .idata_sram.o_i    romdata   0x017f39    program   0x000000
+        .romdata_eeprom.o    romdata   0x017f39    program   0x000000
+        .idata_eeprom.o_i    romdata   0x017f39    program   0x000000
+          .idata_putc.o_i    romdata   0x017f39    program   0x000000
           .romdata_NBNS.o    romdata   0x017f39    program   0x000000
-      .romdata_Announce.o    romdata   0x017f39    program   0x000000
-          .romdata_Tick.o    romdata   0x017f39    program   0x000000
-       .romdata_ARCFOUR.o    romdata   0x017f39    program   0x000000
-        .romdata_BigInt.o    romdata   0x017f39    program   0x000000
-      .romdata_StackTsk.o    romdata   0x017f39    program   0x000000
+        .romdata_Reboot.o    romdata   0x017f39    program   0x000000
+        .idata_Reboot.o_i    romdata   0x017f39    program   0x000001
+          .romdata_SNTP.o    romdata   0x017f39    program   0x000000
+         .romdata_MPFS2.o    romdata   0x017f39    program   0x000000
+          .romdata_ICMP.o    romdata   0x017f39    program   0x000000
+           .romdata_UDP.o    romdata   0x017f39    program   0x000000
           .romdata_DHCP.o    romdata   0x017f39    program   0x000000
-       .romdata_Helpers.o    romdata   0x017f39    program   0x000000
-           .romdata_RSA.o    romdata   0x017f39    program   0x000000
-      .romdata_ETH97J60.o    romdata   0x017f39    program   0x000000
-            .romdata_IP.o    romdata   0x017f39    program   0x000000
-        .romdata_Random.o    romdata   0x017f39    program   0x000000
  .romdata_CustomHTTPApp.o    romdata   0x017f39    program   0x000000
-           .romdata_DNS.o    romdata   0x017f39    program   0x000000
+          .romdata_Main.o    romdata   0x017f39    program   0x000000
+          .romdata_Tick.o    romdata   0x017f39    program   0x000000
+      .romdata_StackTsk.o    romdata   0x017f39    program   0x000000
+            .romdata_IP.o    romdata   0x017f39    program   0x000000
+       .romdata_Helpers.o    romdata   0x017f39    program   0x000000
+      .romdata_ETH97J60.o    romdata   0x017f39    program   0x000000
+         .romdata_Delay.o    romdata   0x017f39    program   0x000000
            .romdata_ARP.o    romdata   0x017f39    program   0x000000
+         .romdata_c018i.o    romdata   0x017f39    program   0x000000
+         .idata_c018i.o_i    romdata   0x017f39    program   0x000000
+      .romdata_Announce.o    romdata   0x017f39    program   0x000000
+        .romdata_Random.o    romdata   0x017f39    program   0x000000
+       .romdata_ARCFOUR.o    romdata   0x017f39    program   0x000000
         .romdata_Hashes.o    romdata   0x017f39    program   0x000000
+           .romdata_DNS.o    romdata   0x017f39    program   0x000000
+        .romdata_BigInt.o    romdata   0x017f39    program   0x000000
          .code_opensspi.o       code   0x017f3a    program   0x000010
            .romdata_TCP.o    romdata   0x017f4a    program   0x00000c
            .idata_UDP.o_i    romdata   0x017f56    program   0x000002
@@ -120,37 +119,35 @@ Linker Map File - Created Fri Mar 14 10:48:24 2014
            .idata_TCP.o_i    romdata   0x017f5c    program   0x000002
       .idata_StackTsk.o_i    romdata   0x017f5e    program   0x000002
           .idata_SNTP.o_i    romdata   0x017f60    program   0x00000a
-          .idata_NBNS.o_i    romdata   0x017f6a    program   0x000000
+           .idata_RSA.o_i    romdata   0x017f6a    program   0x000000
         .idata_Random.o_i    romdata   0x017f6a    program   0x000000
           .idata_Main.o_i    romdata   0x017f6a    program   0x000004
-           .idata_RSA.o_i    romdata   0x017f6a    program   0x000000
+          .idata_NBNS.o_i    romdata   0x017f6a    program   0x000000
             .idata_IP.o_i    romdata   0x017f6e    program   0x000002
          .idata_MPFS2.o_i    romdata   0x017f6e    program   0x000000
        .idata_Helpers.o_i    romdata   0x017f70    program   0x000004
           .idata_ICMP.o_i    romdata   0x017f70    program   0x000000
       .idata_ETH97J60.o_i    romdata   0x017f74    program   0x000000
-         .idata_Delay.o_i    romdata   0x017f74    program   0x000000
          .idata_HTTP2.o_i    romdata   0x017f74    program   0x000000
-           .idata_DNS.o_i    romdata   0x017f74    program   0x000003
         .idata_Hashes.o_i    romdata   0x017f74    program   0x000000
+         .idata_Delay.o_i    romdata   0x017f74    program   0x000000
+           .idata_DNS.o_i    romdata   0x017f74    program   0x000003
           .idata_DHCP.o_i    romdata   0x017f77    program   0x000001
- .idata_CustomSSLCert.o_i    romdata   0x017f78    program   0x000000
  .idata_CustomHTTPApp.o_i    romdata   0x017f78    program   0x000002
         .idata_BigInt.o_i    romdata   0x017f7a    program   0x000000
     .idata_BTnic_Comm.o_i    romdata   0x017f7a    program   0x000004
       .idata_Announce.o_i    romdata   0x017f7e    program   0x000001
            .idata_ARP.o_i    romdata   0x017f7f    program   0x000001
+              .code_RSA.o       code   0x017f80    program   0x000000
             .code_c018i.o       code   0x017f80    program   0x000000
-            .code_Delay.o       code   0x017f80    program   0x000000
-    .code_CustomSSLCert.o       code   0x017f80    program   0x000000
+           .code_Random.o       code   0x017f80    program   0x000000
              .code_NBNS.o       code   0x017f80    program   0x000000
+            .code_Delay.o       code   0x017f80    program   0x000000
        .idata_ARCFOUR.o_i    romdata   0x017f80    program   0x000000
+              .code_SSL.o       code   0x017f80    program   0x000000
+           .code_Hashes.o       code   0x017f80    program   0x000000
           .code_ARCFOUR.o       code   0x017f80    program   0x000000
            .code_BigInt.o       code   0x017f80    program   0x000000
-           .code_Hashes.o       code   0x017f80    program   0x000000
-           .code_Random.o       code   0x017f80    program   0x000000
-              .code_SSL.o       code   0x017f80    program   0x000000
-              .code_RSA.o       code   0x017f80    program   0x000000
      .config_1fff8_Main.o    romdata   0x01fff8    program   0x000001
      .config_1fff9_Main.o    romdata   0x01fff9    program   0x000001
      .config_1fffa_Main.o    romdata   0x01fffa    program   0x000001
@@ -191,18 +188,16 @@ Linker Map File - Created Fri Mar 14 10:48:24 2014
             .idata_DHCP.o      idata   0x0002b0       data   0x000001
         .idata_Announce.o      idata   0x0002b1       data   0x000001
              .idata_ARP.o      idata   0x0002b2       data   0x000001
-   .idata_CustomSSLCert.o      idata   0x0002b3       data   0x000000
-   .udata_CustomSSLCert.o      udata   0x0002b3       data   0x000000
-        .idata_SPIFlash.o      idata   0x0002b3       data   0x000000
-         .idata_wrtsspi.o      idata   0x0002b3       data   0x000000
+        .udata_setcsspi.o      udata   0x0002b3       data   0x000000
+        .idata_opensspi.o      idata   0x0002b3       data   0x000000
+        .idata_setcsspi.o      idata   0x0002b3       data   0x000000
            .idata_HTTP2.o      idata   0x0002b3       data   0x000000
            .udata_HTTP2.o      udata   0x0002b3       data   0x000000
             .idata_sram.o      idata   0x0002b3       data   0x000000
-          .udata_eeprom.o      udata   0x0002b3       data   0x000000
-        .udata_setcsspi.o      udata   0x0002b3       data   0x000000
             .udata_sram.o      udata   0x0002b3       data   0x000000
           .idata_eeprom.o      idata   0x0002b3       data   0x000000
-        .idata_setcsspi.o      idata   0x0002b3       data   0x000000
+          .udata_eeprom.o      udata   0x0002b3       data   0x000000
+         .idata_wrtsspi.o      idata   0x0002b3       data   0x000000
       .idata__user_putc.o      idata   0x0002b3       data   0x000000
       .udata__user_putc.o      udata   0x0002b3       data   0x000000
             .idata_putc.o      idata   0x0002b3       data   0x000000
@@ -219,10 +214,7 @@ Linker Map File - Created Fri Mar 14 10:48:24 2014
         .udata_fxd3232u.o      udata   0x0002b3       data   0x000000
         .idata_fxd1616u.o      idata   0x0002b3       data   0x000000
         .udata_fxd1616u.o      udata   0x0002b3       data   0x000000
-           .idata_c018i.o      idata   0x0002b3       data   0x000000
-           .udata_Delay.o      udata   0x0002b3       data   0x000000
-          .idata_BigInt.o      idata   0x0002b3       data   0x000000
-          .udata_BigInt.o      udata   0x0002b3       data   0x000000
+        .idata_SPIFlash.o      idata   0x0002b3       data   0x000000
          .idata_ARCFOUR.o      idata   0x0002b3       data   0x000000
          .udata_ARCFOUR.o      udata   0x0002b3       data   0x000000
             .idata_NBNS.o      idata   0x0002b3       data   0x000000
@@ -231,9 +223,13 @@ Linker Map File - Created Fri Mar 14 10:48:24 2014
            .idata_MPFS2.o      idata   0x0002b3       data   0x000000
             .idata_ICMP.o      idata   0x0002b3       data   0x000000
             .udata_ICMP.o      udata   0x0002b3       data   0x000000
-           .idata_Delay.o      idata   0x0002b3       data   0x000000
-        .idata_ETH97J60.o      idata   0x0002b3       data   0x000000
    .udata_CustomHTTPApp.o      udata   0x0002b3       data   0x000000
+        .idata_ETH97J60.o      idata   0x0002b3       data   0x000000
+           .idata_Delay.o      idata   0x0002b3       data   0x000000
+           .udata_Delay.o      udata   0x0002b3       data   0x000000
+           .idata_c018i.o      idata   0x0002b3       data   0x000000
+          .udata_BigInt.o      udata   0x0002b3       data   0x000000
+          .idata_BigInt.o      idata   0x0002b3       data   0x000000
           .udata_Hashes.o      udata   0x0002b3       data   0x000000
           .idata_Hashes.o      idata   0x0002b3       data   0x000000
           .udata_Random.o      udata   0x0002b3       data   0x000000
@@ -245,7 +241,6 @@ Linker Map File - Created Fri Mar 14 10:48:24 2014
         .udata_clrcsspi.o      udata   0x0002b3       data   0x000000
         .idata_clrcsspi.o      idata   0x0002b3       data   0x000000
         .udata_opensspi.o      udata   0x0002b3       data   0x000000
-        .idata_opensspi.o      idata   0x0002b3       data   0x000000
                   BUFFERS      udata   0x000500       data   0x000800
                    .stack      udata   0x000d00       data   0x000100
             .udata_Main.o      udata   0x000e00       data   0x00006a
