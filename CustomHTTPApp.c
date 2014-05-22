@@ -563,7 +563,7 @@ static HTTP_IO_RESULT HTTPPostBTCom(void)
 
 void HTTPPrint_BTVer(void)
 {
-	TCPPutROMString(sktHTTP, (ROM void*)"2.5 Build 0");
+	TCPPutROMString(sktHTTP, (ROM void*)"2.5 Build 1");
 }
 
 void HTTPPrint_BTState(void)

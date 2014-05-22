@@ -69,7 +69,7 @@
         #define HTTPS_PORT				(443u)	// Listening port for HTTPS server (when SSL enabled)
     #endif
     #if !defined(HTTP_MAX_DATA_LEN)
-        #define HTTP_MAX_DATA_LEN		(100u)
+        #define HTTP_MAX_DATA_LEN		(200u)
     #endif
     #if !defined(HTTP_MIN_CALLBACK_FREE)
         #define HTTP_MIN_CALLBACK_FREE	(16u)
