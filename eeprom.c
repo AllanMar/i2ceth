@@ -7,7 +7,7 @@ void eepromReadBytes(char *dest, unsigned char addr, unsigned char len)
 	WriteSWSPI( EEPROM_CMD_READ );
 	WriteSWSPI( addr );
 
-	while (len--) *pDest++ = ReadSWSPI();
+	while (len--) *pDest++ = WriteSWSPI(0);
 	eepromDisable();
 }
 
@@ -17,7 +17,7 @@ char eepromReadByte(unsigned char addr)
 	eepromEnable();
 	WriteSWSPI( EEPROM_CMD_READ );
 	WriteSWSPI( addr );
-	data = ReadSWSPI();
+	data = WriteSWSPI(0);
 	eepromDisable();
 	return data;
 }

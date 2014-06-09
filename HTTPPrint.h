@@ -20,13 +20,9 @@ extern BYTE curHTTPID;
 void HTTPPrint(DWORD callbackID);
 void HTTPPrint_BTVer(void);
 void HTTPPrint_BTNic_CGI(void);
-void HTTPPrint_SSP1CON1(void);
-void HTTPPrint_SSP1CON2(void);
-void HTTPPrint_SSP1STAT(void);
 void HTTPPrint_BTCommTimer(void);
 void HTTPPrint_TickGet(void);
 void HTTPPrint_BTState(void);
-void HTTPPrint_BTBuffer(void);
 void HTTPPrint_status_fail(void);
 void HTTPPrint_config_mac(void);
 void HTTPPrint_config_hostname(void);
@@ -37,14 +33,48 @@ void HTTPPrint_config_subnet(void);
 void HTTPPrint_config_dns1(void);
 void HTTPPrint_config_dns2(void);
 void HTTPPrint_reboot(void);
-void HTTPPrint_Data_CGI(void);
 void HTTPPrint_config_httpPort(void);
 void HTTPPrint_config_httpsPort(void);
-void HTTPPrint_config_reqhttps(void);
 void HTTPPrint_config_user(void);
 void HTTPPrint_config_pass(void);
 void HTTPPrint_config_reqauth(void);
 void HTTPPrint_MEMDUMP(WORD);
+void HTTPPrint_BTRequestBuffer(void);
+void HTTPPrint_BTResponseBuffer(void);
+void HTTPPrint_BTRequestLen(void);
+void HTTPPrint_BTResponseLen(void);
+void HTTPPrint_SSP1CON1_WCOL(void);
+void HTTPPrint_SSP1CON1_SSPOV(void);
+void HTTPPrint_SSP1CON1_SSPEN(void);
+void HTTPPrint_SSP1CON1_CKP(void);
+void HTTPPrint_SSP1CON1_SSPM3(void);
+void HTTPPrint_SSP1CON1_SSPM2(void);
+void HTTPPrint_SSP1CON1_SSPM1(void);
+void HTTPPrint_SSP1CON1_SSPM0(void);
+void HTTPPrint_SSP1CON2_GCEN(void);
+void HTTPPrint_SSP1CON2_ACKSTAT(void);
+void HTTPPrint_SSP1CON2_ADMSK5(void);
+void HTTPPrint_SSP1CON2_ADMSK4(void);
+void HTTPPrint_SSP1CON2_ADMSK3(void);
+void HTTPPrint_SSP1CON2_ADMSK2(void);
+void HTTPPrint_SSP1CON2_ADMSK1(void);
+void HTTPPrint_SSP1CON2_SEN(void);
+void HTTPPrint_SSP1STAT_SMP(void);
+void HTTPPrint_SSP1STAT_CKE(void);
+void HTTPPrint_SSP1STAT_P(void);
+void HTTPPrint_SSP1STAT_S(void);
+void HTTPPrint_SSP1STAT_UA(void);
+void HTTPPrint_SSP1STAT_BF(void);
+void HTTPPrint_config_stateTimeIdle(void);
+void HTTPPrint_config_stateTimeBuffering(void);
+void HTTPPrint_config_stateTimeTXReady(void);
+void HTTPPrint_config_stateTimeTX(void);
+void HTTPPrint_config_stateTimeWait(void);
+void HTTPPrint_config_stateTimeRX(void);
+void HTTPPrint_config_stateTimeMsg(void);
+void HTTPPrint_SSP1STAT_DA(void);
+void HTTPPrint_SSP1STAT_RW(void);
+void HTTPPrint_FLASHSTATUS(void);
 
 void HTTPPrint(DWORD callbackID)
 {
@@ -56,15 +86,6 @@ void HTTPPrint(DWORD callbackID)
         case 0x00000002:
 			HTTPPrint_BTNic_CGI();
 			break;
-        case 0x00000004:
-			HTTPPrint_SSP1CON1();
-			break;
-        case 0x00000005:
-			HTTPPrint_SSP1CON2();
-			break;
-        case 0x00000006:
-			HTTPPrint_SSP1STAT();
-			break;
         case 0x00000007:
 			HTTPPrint_BTCommTimer();
 			break;
@@ -73,9 +94,6 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x00000009:
 			HTTPPrint_BTState();
-			break;
-        case 0x0000000a:
-			HTTPPrint_BTBuffer();
 			break;
         case 0x0000000c:
 			HTTPPrint_status_fail();
@@ -107,17 +125,11 @@ void HTTPPrint(DWORD callbackID)
         case 0x00000015:
 			HTTPPrint_reboot();
 			break;
-        case 0x00000019:
-			HTTPPrint_Data_CGI();
-			break;
         case 0x0000001a:
 			HTTPPrint_config_httpPort();
 			break;
         case 0x0000001b:
 			HTTPPrint_config_httpsPort();
-			break;
-        case 0x0000001c:
-			HTTPPrint_config_reqhttps();
 			break;
         case 0x0000001d:
 			HTTPPrint_config_user();
@@ -136,6 +148,114 @@ void HTTPPrint(DWORD callbackID)
 			break;
         case 0x00000026:
 			HTTPPrint_MEMDUMP(0);
+			break;
+        case 0x00000027:
+			HTTPPrint_BTRequestBuffer();
+			break;
+        case 0x00000028:
+			HTTPPrint_BTResponseBuffer();
+			break;
+        case 0x00000029:
+			HTTPPrint_BTRequestLen();
+			break;
+        case 0x0000002a:
+			HTTPPrint_BTResponseLen();
+			break;
+        case 0x0000002c:
+			HTTPPrint_SSP1CON1_WCOL();
+			break;
+        case 0x0000002d:
+			HTTPPrint_SSP1CON1_SSPOV();
+			break;
+        case 0x0000002e:
+			HTTPPrint_SSP1CON1_SSPEN();
+			break;
+        case 0x0000002f:
+			HTTPPrint_SSP1CON1_CKP();
+			break;
+        case 0x00000030:
+			HTTPPrint_SSP1CON1_SSPM3();
+			break;
+        case 0x00000031:
+			HTTPPrint_SSP1CON1_SSPM2();
+			break;
+        case 0x00000032:
+			HTTPPrint_SSP1CON1_SSPM1();
+			break;
+        case 0x00000033:
+			HTTPPrint_SSP1CON1_SSPM0();
+			break;
+        case 0x00000034:
+			HTTPPrint_SSP1CON2_GCEN();
+			break;
+        case 0x00000035:
+			HTTPPrint_SSP1CON2_ACKSTAT();
+			break;
+        case 0x00000036:
+			HTTPPrint_SSP1CON2_ADMSK5();
+			break;
+        case 0x00000037:
+			HTTPPrint_SSP1CON2_ADMSK4();
+			break;
+        case 0x00000038:
+			HTTPPrint_SSP1CON2_ADMSK3();
+			break;
+        case 0x00000039:
+			HTTPPrint_SSP1CON2_ADMSK2();
+			break;
+        case 0x0000003a:
+			HTTPPrint_SSP1CON2_ADMSK1();
+			break;
+        case 0x0000003b:
+			HTTPPrint_SSP1CON2_SEN();
+			break;
+        case 0x0000003c:
+			HTTPPrint_SSP1STAT_SMP();
+			break;
+        case 0x0000003d:
+			HTTPPrint_SSP1STAT_CKE();
+			break;
+        case 0x0000003e:
+			HTTPPrint_SSP1STAT_P();
+			break;
+        case 0x0000003f:
+			HTTPPrint_SSP1STAT_S();
+			break;
+        case 0x00000040:
+			HTTPPrint_SSP1STAT_UA();
+			break;
+        case 0x00000041:
+			HTTPPrint_SSP1STAT_BF();
+			break;
+        case 0x00000042:
+			HTTPPrint_config_stateTimeIdle();
+			break;
+        case 0x00000043:
+			HTTPPrint_config_stateTimeBuffering();
+			break;
+        case 0x00000044:
+			HTTPPrint_config_stateTimeTXReady();
+			break;
+        case 0x00000045:
+			HTTPPrint_config_stateTimeTX();
+			break;
+        case 0x00000046:
+			HTTPPrint_config_stateTimeWait();
+			break;
+        case 0x00000047:
+			HTTPPrint_config_stateTimeRX();
+			break;
+        case 0x00000048:
+			HTTPPrint_config_stateTimeMsg();
+			break;
+        case 0x00000049:
+			HTTPPrint_SSP1STAT_DA();
+			break;
+        case 0x0000004a:
+			HTTPPrint_SSP1STAT_RW();
+			break;
+        case 0x0000004b:
+			HTTPPrint_FLASHSTATUS();
 			break;
 		default:
 			// Output notification for undefined values

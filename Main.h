@@ -2,6 +2,7 @@
 #define _MAIN_H
 
 #include "TCPIP Stack/StackTsk.h"
+#include "BTnic_Comm.h"
 
 // Define a header structure for validating the AppConfig data structure in EEPROM/Flash
 typedef struct
@@ -21,10 +22,11 @@ typedef struct
 	BYTE	AuthPwd[16];
 	struct
 	{
-		unsigned char : 6;
+		unsigned char : 5;
 		unsigned char DataRequireHTTPS : 1;
 		unsigned char DataRequireAuth : 1;
 	} Flags;
+	unsigned int StateTimeout[NUM_COMMSTATES];
 } WEBSRV_CONFIG;
 
 #define WEBSRV_DEFAULTUSER	"admin"

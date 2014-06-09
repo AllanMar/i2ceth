@@ -116,7 +116,7 @@
  *   Supported serial flash parts include the SST25VFxxxB series.
  */
 //#define MPFS_USE_EEPROM
-//#define MPFS_USE_SPI_FLASH
+#define MPFS_USE_SPI_FLASH
 
 /* EEPROM Addressing Selection
  *   If using the 1Mbit EEPROM, uncomment this line
@@ -131,13 +131,15 @@
  *   For MPFS Classic, this setting must match the Reserved setting
  *	 on the Advanced Settings page of the MPFS2 Utility.
  */
-//#define MPFS_RESERVE_BLOCK                (4096ul)
+
+//3MB: 3145728ul
+#define MPFS_RESERVE_BLOCK                (3145728ul)
 
 /* MPFS File Handles
  *   Maximum number of simultaneously open MPFS2 files.
  *   For MPFS Classic, this has no effect.
  */
-#define MAX_MPFS_HANDLES				(7ul)
+#define MAX_MPFS_HANDLES				(5ul)
 
 
 // =======================================================================
@@ -335,7 +337,7 @@
  */
 	// Allocate how much total RAM (in bytes) you want to allocate
 	// for use by your TCP TCBs, RX FIFOs, and TX FIFOs.
-	#define TCP_ETH_RAM_SIZE					(2586ul)
+	#define TCP_ETH_RAM_SIZE					(3900ul)
 	#define TCP_PIC_RAM_SIZE					(0ul)
 	#define TCP_SPI_RAM_SIZE					(0ul)
 	#define TCP_SPI_RAM_BASE_ADDRESS			(0x00)
@@ -386,8 +388,9 @@
 			//{TCP_PURPOSE_TCP_PERFORMANCE_TX, TCP_ETH_RAM, 200, 1},
 			//{TCP_PURPOSE_TCP_PERFORMANCE_RX, TCP_ETH_RAM, 40, 1500},
 			//{TCP_PURPOSE_UART_2_TCP_BRIDGE, TCP_ETH_RAM, 256, 256},
-			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
-			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
+			//{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 512, 512},
+			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 1024, 200},
+			{TCP_PURPOSE_HTTP_SERVER, TCP_ETH_RAM, 1024, 200},
 			{TCP_PURPOSE_DEFAULT, TCP_ETH_RAM, 200, 200},
 			//{TCP_PURPOSE_BERKELEY_SERVER, TCP_ETH_RAM, 25, 20},
 			//{TCP_PURPOSE_BERKELEY_CLIENT, TCP_ETH_RAM, 125, 100},
@@ -434,8 +437,8 @@
 
 	// Configure MPFS over HTTP updating
 	// Comment this line to disable updating via HTTP
-	//#define HTTP_MPFS_UPLOAD		"mpfsupload"
-	//#define HTTP_MPFS_UPLOAD_REQUIRES_AUTH	// Require password for MPFS uploads
+	#define HTTP_MPFS_UPLOAD		"mpfsupload"
+	#define HTTP_MPFS_UPLOAD_REQUIRES_AUTH	// Require password for MPFS uploads
 		// Certain firewall and router combinations cause the MPFS2 Utility to fail
 		// when uploading.  If this happens, comment out this definition.
 

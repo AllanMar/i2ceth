@@ -1,4 +1,4 @@
-#pragma config WDT = OFF, STVR = ON, XINST = OFF, CP0 = OFF, FOSC = HSPLL, FOSC2 = ON, FCMEN = ON, IESO = ON, WDTPS = 32768, ETHLED = ON
+#pragma config WDT = OFF, STVR = ON, XINST = OFF, CP0 = OFF, FOSC = HSPLL, FOSC2 = ON, FCMEN = ON, IESO = ON, WDTPS = 512, ETHLED = ON
 
 /*
  * This macro uniquely defines this file as the main entry point.
@@ -12,12 +12,7 @@
 
 // Include functions specific to this stack application
 #include "Main.h"
-#include "BTnic_Comm.h"
-#include "sw_spi.h"
 #include "eeprom.h"
-#include "dataflash.h"
-#include "sram.h"
-#include <delays.h>
 
 // Declare AppConfig structure and some other supporting stack variables
 APP_CONFIG AppConfig;
@@ -48,7 +43,10 @@ void LowISR(void)
 #pragma interruptlow HighISR
 void HighISR(void)
 {
-	if (PIR1bits.SSP1IF) BTCommRX();
+	if (PIR1bits.SSP1IF) {
+		BTCommRX();
+		PIR1bits.SSP1IF = 0; //Clear SSPIF Interrupt Flag
+	}
 }
 
 #pragma code lowVector=0x18
@@ -103,8 +101,9 @@ void main(void)
 	// application modules (HTTP, SNMP, etc.)
     StackInit();
 	BTCommInit();
-
-    while(1)
+	WDTCONbits.SWDTEN = 1; //enable watchdog timer
+    
+	while(1)
     {
         if(TickGet() - t >= TICK_SECOND/4ul)
         {
@@ -127,6 +126,7 @@ void main(void)
 
         // This tasks invokes each of the core stack application tasks
         StackApplications();
+		ClrWdt();
 	}
 }
 
@@ -250,6 +250,14 @@ static void InitWebSrvConfig(void)
 		memcpypgm2ram(WebSrvConfig.AuthPwd, (ROM void*)WEBSRV_DEFAULTPWD, 16);
 		WebSrvConfig.HTTPPort = WEBSRV_DEFAULTHTTP;
 		WebSrvConfig.HTTPSPort = WEBSRV_DEFAULTHTTPS;
+
+		WebSrvConfig.StateTimeout[COMMSTATE_IDLE] = 0;
+		WebSrvConfig.StateTimeout[COMMSTATE_BUFFERING] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_TXREADY] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_TX] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_WAIT] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_RX] = 500;
+		WebSrvConfig.StateTimeout[COMMSTATE_MSG] = 500;
 
 		// Compute the checksum of the AppConfig defaults as loaded from ROM
 		wOriginalWebSrvConfigChecksum = CalcIPChecksum((BYTE*)&WebSrvConfig, sizeof(WebSrvConfig));
